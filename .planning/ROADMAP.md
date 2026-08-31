@@ -31,7 +31,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. The `require_key()` auth stub is covered in all three modes — open, valid key, invalid key — so swapping in real auth later is a verified change rather than a leap
   3. A concurrent solve + pool-refresh test runs green repeatedly, making the cache/lock race observable in tests instead of only in production
   4. `npm run dev` serves a React (Vite, TypeScript 6.x) app whose routes for all 8 pages resolve, fetching `web/data/*.json` and `/api` at runtime through the dev proxy — with no pipeline data bundled into the build
-**Plans**: TBD
+**Plans**: 5 plans (3 waves)
+- [ ] 01-01-PLAN.md — Repo baseline (`.gitignore` + initial source commit) and the blocking package-legitimacy gate
+- [ ] 01-02-PLAN.md — API contract tracer: `_initial_state()` seam, autouse reset fixture, `/health` + `/meta` + `/solve` with bounds and precision
+- [ ] 01-03-PLAN.md — `/team` and `/rate` against a `responses`-mocked FPL API, three-mode `require_key` coverage, and the concurrency race test
+- [ ] 01-04-PLAN.md — React dev-seam tracer: Vite + React Router 7 + TanStack Query scaffold, `/api` and `/data` proxy, design tokens, shell chrome, Vitest harness
+- [ ] 01-05-PLAN.md — All 8 routes with per-route error boundaries, the loading/error/empty/404 states, and the three UI-SPEC backstop tests
 **UI hint**: yes
 
 **Research flags**: async + `threading.Lock` interaction in FastAPI may need a spike before APIT-03; TypeScript 6.x (not 7.x — ESLint support unstable in 7.0).
@@ -127,7 +132,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Test Base Layer & App Skeleton | 0/TBD | Not started | - |
+| 1. Test Base Layer & App Skeleton | 0/5 | Planned | - |
 | 2. Data Layer & Non-Pitch Pages | 0/TBD | Not started | - |
 | 3. Pitch Renderer & Squad Views | 0/TBD | Not started | - |
 | 4. E2E Regression Suite | 0/TBD | Not started | - |
