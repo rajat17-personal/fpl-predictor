@@ -32,9 +32,9 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### API Tests
 
-- [ ] **APIT-01**: FastAPI TestClient integration tests for /solve, /rate, /team, /health, /meta with mocked FPL API
-- [ ] **APIT-02**: Auth stub (`require_key`) tests — open mode, valid key, invalid key
-- [ ] **APIT-03**: Concurrency test for pool refresh + solve-cache race, with autouse state-reset fixture (adds DI seam as needed)
+- [x] **APIT-01**: FastAPI TestClient integration tests for /solve, /rate, /team, /health, /meta with mocked FPL API
+- [x] **APIT-02**: Auth stub (`require_key`) tests — open mode, valid key, invalid key
+- [x] **APIT-03**: Concurrency test for pool refresh + solve-cache race, with autouse state-reset fixture (adds DI seam as needed)
 
 ### Playwright E2E
 
@@ -115,9 +115,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | UI-01 | Phase 1 | Pending |
-| APIT-01 | Phase 1 | Pending |
-| APIT-02 | Phase 1 | Pending |
-| APIT-03 | Phase 1 | Pending |
+| APIT-01 | Phase 1 | Complete |
+| APIT-02 | Phase 1 | Complete |
+| APIT-03 | Phase 1 | Complete |
 | UI-02 | Phase 2 | Pending |
 | UI-03 | Phase 2 | Pending |
 | UI-04 | Phase 2 | Pending |
@@ -156,6 +156,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CUT-01 | Phase 7 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 40 total
 - Mapped to phases: 40 ✓
 - Unmapped: 0
