@@ -1,0 +1,63 @@
+{
+  "project": "fpl-ml",
+  "description": "FPL team predictor: LightGBM xP model + ILP squad/transfer/chip optimizer",
+  "generated": "2026-08-21",
+  "language": "python",
+  "python_env": "conda:python314 (3.14)",
+  "loc": 2400,
+  "docs": {"README.md": "quick start + architecture", "PLAN.md": "build log + experiments + findings"},
+  "config": "config.py",
+  "dependencies": {
+    "lightgbm": "xP model", "pulp": "integer linear programming", "pandas": "data",
+    "numpy": "numeric", "pyarrow": "parquet", "scikit-learn": "isotonic + joblib",
+    "requests": "http", "soccerdata": "optional FBref", "seleniumbase": "optional FBref browser"
+  },
+  "entry_points": [
+    {"cmd": "python -m data.ingest", "purpose": "download vaastav + live FPL API"},
+    {"cmd": "python -m data.id_map", "purpose": "stable player_code map"},
+    {"cmd": "python -m data.odds", "purpose": "bookmaker odds -> implied probs"},
+    {"cmd": "python -m data.fbref --scrape", "purpose": "optional FBref stats (needs Chrome)"},
+    {"cmd": "python -m data.build_table", "purpose": "-> player_gw.parquet"},
+    {"cmd": "python -m features.engineer", "purpose": "-> features.parquet"},
+    {"cmd": "python -m models.train", "purpose": "train xP model + eval"},
+    {"cmd": "python -m models.tune", "purpose": "hyperparameter search"},
+    {"cmd": "python -m optimize.squad_ilp", "purpose": "demo optimal squad"},
+    {"cmd": "python -m backtest.season", "purpose": "simulate one season"},
+    {"cmd": "python -m backtest.walk_forward", "purpose": "multi-season backtest"},
+    {"cmd": "python -m predict.live", "purpose": "live weekly recommendation"}
+  ],
+  "modules": [
+    {"path": "config.py", "purpose": "constants, paths, seasons/splits, FPL rules, feature lists",
+     "exports": ["SEASONS", "TRAIN_SEASONS", "VAL_SEASON", "TEST_SEASONS", "WINDOWS", "BUDGET", "POSITION_QUOTA", "SET_PIECE_COLS", "ODDS_COLS", "FBREF_COLS"]},
+    {"path": "data/ingest.py", "purpose": "download raw data", "exports": ["fetch_vaastav_season", "fetch_fpl_live"]},
+    {"path": "data/id_map.py", "purpose": "stable cross-season player_code", "exports": ["load_id_map", "attach_code"]},
+    {"path": "data/odds.py", "purpose": "football-data odds -> implied probabilities", "exports": ["load_odds"]},
+    {"path": "data/fbref.py", "purpose": "optional FBref advanced stats (direct-URL scrape)", "exports": ["scrape_to_cache", "load_fbref", "attach"]},
+    {"path": "data/build_table.py", "purpose": "canonical player-GW table", "exports": ["build", "main"]},
+    {"path": "features/engineer.py", "purpose": "leakage-safe rolling features + targets", "exports": ["add_features", "ROLL_STATS", "CONTEXT_COLS"]},
+    {"path": "models/train.py", "purpose": "two-stage hurdle xP model per position", "exports": ["load_features", "train_predict", "train_position", "predict_xp", "RankCalibrated", "ComponentModel", "feature_cols"]},
+    {"path": "models/tune.py", "purpose": "validation-scored hyperparameter search", "exports": ["main"]},
+    {"path": "optimize/squad_ilp.py", "purpose": "squad + XI + captain ILP", "exports": ["build_gw_pool", "pick_squad", "print_result"]},
+    {"path": "optimize/transfers.py", "purpose": "weekly transfer ILP (+TC/BB)", "exports": ["optimize_gw", "CAPT_BONUS", "POINT_MULT"]},
+    {"path": "optimize/pricing.py", "purpose": "selling price with 50% sell-on fee", "exports": ["selling_price"]},
+    {"path": "optimize/chips.py", "purpose": "chip scheduling (DGW/BGW + xP fallback)", "exports": ["default_schedule"]},
+    {"path": "backtest/season.py", "purpose": "season state machine + autosubs", "exports": ["run_season"]},
+    {"path": "backtest/walk_forward.py", "purpose": "multi-season backtest + baselines", "exports": ["leakage_safe_plan", "main", "TEST_SEASONS", "DATA_SEASONS"]},
+    {"path": "predict/live.py", "purpose": "live weekly recommendation from FPL API", "exports": ["build_pool", "build_horizon_pool", "main"], "cli_flags": ["--horizon", "--force", "--entry", "--free-transfers"]}
+  ],
+  "artifacts": {
+    "data/processed/player_gw.parquet": "canonical player-gameweek table (~253k rows, 10 seasons)",
+    "data/processed/features.parquet": "model-ready features (leakage-safe)",
+    "data/processed/id_map.parquet": "(season, player_id) -> player_code + names + set-piece",
+    "data/processed/odds.parquet": "per-fixture team-perspective implied probabilities",
+    "data/processed/test_predictions.parquet": "held-out season predictions for the optimizer",
+    "data/processed/walk_forward_results.csv": "multi-season backtest totals",
+    "models/artifacts/xp_model.joblib": "trained per-position two-stage xP model"
+  },
+  "model": {
+    "type": "two-stage hurdle, per position (GK/DEF/MID/FWD)",
+    "formula": "xP = P(play) * E[points | played]",
+    "objectives": {"med": "L1/median (default)", "mean": "L2", "rank": "LambdaRank+isotonic (opt-in)", "cs": "clean-sheet component (opt-in)"},
+    "validation": "strict time-based split; multi-season walk-forward"
+  }
+}

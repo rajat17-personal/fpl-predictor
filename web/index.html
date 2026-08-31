@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FPL ML — expected points, honestly measured</title>
+<meta name="description" content="Machine-learned FPL expected points with uncertainty bands, an optimal squad, and a public accuracy scoreboard.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<script src="config.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="index.html">FPL<span>ML</span></a>
+  <nav class="site" aria-label="Site">
+    <a href="index.html" data-page="index">xP table</a>
+    <a href="fixtures.html" data-page="fixtures">Fixtures</a>
+    <a href="league.html" data-page="league">League</a>
+    <a href="differentials.html" data-page="differentials">Differentials</a>
+    <a href="prices.html" data-page="prices">Prices</a>
+    <a href="team.html" data-page="team">Rate my team</a>
+    <a href="scoreboard.html" data-page="scoreboard">Scoreboard</a>
+    <a href="methodology.html" data-page="methodology">Method</a>
+  </nav>
+  <span class="deadline">loading…</span>
+</header>
+
+<h1>Projected points, with the uncertainty shown</h1>
+<p class="sub">Every player's expected points for the next gameweek from a model
+that beats FPL's own projections. The band next to each xP is the range the
+player's actual score lands in 8 gameweeks out of 10.
+<a href="scoreboard.html">Track its accuracy live</a>.</p>
+
+<div class="controls">
+  <button class="chip" aria-pressed="true" data-pos="ALL">All</button>
+  <button class="chip" aria-pressed="false" data-pos="GK">GK</button>
+  <button class="chip" aria-pressed="false" data-pos="DEF">DEF</button>
+  <button class="chip" aria-pressed="false" data-pos="MID">MID</button>
+  <button class="chip" aria-pressed="false" data-pos="FWD">FWD</button>
+  <input type="search" id="q" placeholder="Search player or team" aria-label="Search player or team">
+</div>
+
+<div class="tablewrap">
+<table id="xp">
+  <thead><tr>
+    <th data-key="position">Pos</th>
+    <th data-key="name">Player</th>
+    <th data-key="team_short">Team</th>
+    <th data-key="price_m" data-num>£m</th>
+    <th data-key="ownership" data-num>Own %</th>
+    <th data-key="xp" data-num>xP (10–90% band)</th>
+    <th data-key="xp_capt" data-num>Captain xP</th>
+  </tr></thead>
+  <tbody></tbody>
+</table>
+</div>
+<p class="note">Showing the top 50 by xP — the free preview. The full table,
+CSV download and your-team transfer planning are coming with the Pro tier.</p>
+<p class="sub"><strong>Reading the numbers:</strong> xP is the <em>median</em>
+outcome — the metric that ranks players best for picking a team. Football
+scoring is skewy, so medians look modest; the band shows the haul potential.
+<strong>Captain xP</strong> is the <em>mean</em> outcome, used for the armband
+because doubling rewards ceiling. Early season both lean on price and fixture
+priors and sharpen from around GW4 as real form accumulates.</p>
+
+<h2>Captain picks</h2>
+<div class="tablewrap">
+<table id="capt">
+  <thead><tr><th>Player</th><th>Team</th><th data-num>£m</th><th data-num>Own %</th><th data-num>Captain xP</th></tr></thead>
+  <tbody></tbody>
+</table>
+</div>
+
+<footer class="site">
+  <p>Predictions are statistics, not certainties. This site hosts no contests and
+  takes no stakes. Not affiliated with the Premier League or the official Fantasy
+  Premier League game. <a href="methodology.html">How the model works</a>.</p>
+</footer>
+</div>
+
+<script type="module">
+import { initChrome, loadJSON, makeSortable, statusFlag, bandCell } from "./assets/app.js";
+
+const meta = await initChrome("index");
+const table = await loadJSON("xp_table.json");
+const top = table.slice(0, 50);
+const maxHi = Math.max(...top.map((r) => r.p90 ?? r.xp));
+
+let posFilter = "ALL", query = "";
+const tbody = document.querySelector("#xp tbody");
+
+function rows() {
+  return top.filter((r) =>
+    (posFilter === "ALL" || r.position === posFilter) &&
+    (!query || r.name.toLowerCase().includes(query) ||
+     r.team.toLowerCase().includes(query) ||
+     r.team_short.toLowerCase().includes(query)));
+}
+function render(list) {
+  tbody.innerHTML = list.map((r) => `<tr>
+    <td class="pos">${r.position}</td>
+    <td>${r.name}${statusFlag(r)}</td>
+    <td class="pos">${r.team_short}</td>
+    <td class="n">${r.price_m.toFixed(1)}</td>
+    <td class="n">${r.ownership?.toFixed(1) ?? "–"}</td>
+    <td>${bandCell(r, maxHi)}</td>
+    <td class="n">${r.xp_capt?.toFixed(2) ?? "–"}</td>
+  </tr>`).join("");
+}
+render(rows());
+makeSortable(document.querySelector("#xp"), rows, render);
+document.querySelectorAll(".chip[data-pos]").forEach((c) =>
+  c.addEventListener("click", () => {
+    document.querySelectorAll(".chip[data-pos]").forEach((x) =>
+      x.setAttribute("aria-pressed", x === c ? "true" : "false"));
+    posFilter = c.dataset.pos; render(rows());
+  }));
+document.querySelector("#q").addEventListener("input", (e) => {
+  query = e.target.value.trim().toLowerCase(); render(rows());
+});
+
+const capt = await loadJSON("captains.json");
+document.querySelector("#capt tbody").innerHTML = capt.slice(0, 5).map((r) => `<tr>
+  <td>${r.name}</td><td>${r.team}</td>
+  <td class="n">${r.price_m.toFixed(1)}</td>
+  <td class="n">${r.ownership?.toFixed(1)}</td>
+  <td class="n">${r.xp_capt.toFixed(2)}</td></tr>`).join("");
+
+</script>
+</body>
+</html>

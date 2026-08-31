@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How the model works — FPL ML</title>
+<meta name="description" content="A two-stage ML model plus integer programming, validated over six seasons of walk-forward backtests.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<script src="config.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="index.html">FPL<span>ML</span></a>
+  <nav class="site" aria-label="Site">
+    <a href="index.html" data-page="index">xP table</a>
+    <a href="fixtures.html" data-page="fixtures">Fixtures</a>
+    <a href="league.html" data-page="league">League</a>
+    <a href="differentials.html" data-page="differentials">Differentials</a>
+    <a href="prices.html" data-page="prices">Prices</a>
+    <a href="team.html" data-page="team">Rate my team</a>
+    <a href="scoreboard.html" data-page="scoreboard">Scoreboard</a>
+    <a href="methodology.html" data-page="methodology">Method</a>
+  </nav>
+  <span class="deadline">loading…</span>
+</header>
+
+<h1>How the model works</h1>
+<p class="sub">"Best team" is two chained problems: predict expected points per
+player, then select the best legal squad. Machine learning can't output a legal
+15; optimization can't invent good predictions. We do both, and we publish how
+wrong we are.</p>
+
+<h2>Prediction</h2>
+<p>A per-position two-stage model: first the probability a player features
+(calibrated — injuries, rotation, suspensions), then their conditional points if
+they do. Gradient-boosted trees over rolling form at several horizons, fixture
+difficulty, days of rest, home/away, set-piece duty, price, ownership, and
+bookmaker-implied win/clean-sheet probabilities. Trained on ten seasons of
+per-gameweek history, validated with strictly time-ordered splits — the model
+never sees the future it is graded on.</p>
+
+<h2>Uncertainty</h2>
+<p>The 10–90% bands come from the model's real errors on a fully held-out
+season, bucketed by position and prediction size — not from a formula. Measured
+coverage is 86%, slightly conservative. Football is high-variance; anyone
+selling you certainty is selling you something else.</p>
+
+<h2>Selection</h2>
+<p>Integer linear programming over the full player pool enforces every FPL rule
+— budget, 2/5/5/3 squad, three per club, legal formations, captaincy, transfer
+hits, the 50% sell-on fee, chip mechanics. The solver returns the provably
+optimal team for the predictions, not a greedy guess.</p>
+
+<h2>The receipts</h2>
+<div class="tiles">
+  <div class="tile"><p class="k">Fixture MAE</p><p class="v">0.87 <span class="vs">vs FPL 1.07</span></p><p class="d">held-out season, per fixture</p></div>
+  <div class="tile"><p class="k">Rank correlation</p><p class="v">0.74 <span class="vs">vs FPL 0.30</span></p><p class="d">Spearman, predicted vs actual</p></div>
+  <div class="tile"><p class="k">Season points</p><p class="v">~2260</p><p class="d">full system, 6-season walk-forward average</p></div>
+  <div class="tile"><p class="k">Edge over form-picking</p><p class="v">+102</p><p class="d">points/season vs an ML-free baseline</p></div>
+</div>
+<p>Those are backtest numbers — walk-forward, retrained each season, with
+chips, autosubs and transfer costs simulated. The live version of that claim is
+the <a href="scoreboard.html">scoreboard</a>, which scores every published
+gameweek automatically. Early season the model leans on price and fixture
+priors (there's little current form to roll up), so expect it to sharpen from
+around GW4.</p>
+
+<h2>Honesty policy</h2>
+<ul>
+  <li>Predictions are frozen before the deadline and scored after — never edited.</li>
+  <li>Negative results stay documented; features that didn't help were kept out.</li>
+  <li>These are statistics about a free fantasy game, not betting advice. No
+  stakes are hosted here and none should be placed on this.</li>
+</ul>
+
+<footer class="site">
+  <p>Data: official FPL API, historical per-gameweek archives, football-data.co.uk
+  odds. Not affiliated with the Premier League or the official Fantasy Premier
+  League game.</p>
+</footer>
+</div>
+<script type="module">
+import { initChrome } from "./assets/app.js";
+await initChrome("methodology");
+</script>
+</body>
+</html>

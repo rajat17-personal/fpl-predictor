@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fixture ticker — FPL ML</title>
+<meta name="description" content="Next six gameweeks of fixture difficulty for every Premier League club.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<script src="config.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="index.html">FPL<span>ML</span></a>
+  <nav class="site" aria-label="Site">
+    <a href="index.html" data-page="index">xP table</a>
+    <a href="fixtures.html" data-page="fixtures">Fixtures</a>
+    <a href="league.html" data-page="league">League</a>
+    <a href="differentials.html" data-page="differentials">Differentials</a>
+    <a href="prices.html" data-page="prices">Prices</a>
+    <a href="team.html" data-page="team">Rate my team</a>
+    <a href="scoreboard.html" data-page="scoreboard">Scoreboard</a>
+    <a href="methodology.html" data-page="methodology">Method</a>
+  </nav>
+  <span class="deadline">loading…</span>
+</header>
+
+<h1>Fixture ticker</h1>
+<p class="sub">The next six gameweeks for every club, sorted by ease of run.
+Each cell shows the opponent and venue (H/A); color is FPL fixture difficulty
+from easy (blue) through neutral to hard (red). xG and xGC forecast the club's
+expected goals scored / conceded in its <strong>next fixture</strong> —
+season-to-date attack and defence rates adjusted for the opponent and venue
+(early season the samples are small; it sharpens weekly).</p>
+
+<div class="tablewrap">
+<table id="ticker"><thead><tr><th>Team</th></tr></thead><tbody></tbody></table>
+</div>
+<div class="legend" aria-hidden="true">
+  <span>Easy</span>
+  <span class="fdr fdr1">1</span><span class="fdr fdr2">2</span>
+  <span class="fdr fdr3">3</span><span class="fdr fdr4">4</span>
+  <span class="fdr fdr5">5</span>
+  <span>Hard</span>
+  <span style="margin-left:12px">— = blank gameweek</span>
+</div>
+
+<footer class="site">
+  <p>Not affiliated with the Premier League or the official Fantasy Premier League game.</p>
+</footer>
+</div>
+
+<script type="module">
+import { initChrome, loadJSON } from "./assets/app.js";
+await initChrome("fixtures");
+const ticker = await loadJSON("fixtures.json");
+
+const gws = ticker[0].gws.map((g) => g.gw);
+document.querySelector("#ticker thead tr").innerHTML =
+  `<th>Team</th><th data-num>xG next</th><th data-num>xGC next</th>` +
+  `${gws.map((g) => `<th>GW${g}</th>`).join("")}<th data-num>Ease</th>`;
+
+document.querySelector("#ticker tbody").innerHTML = ticker.map((t) => `<tr>
+  <td><strong>${t.short}</strong> <span class="pos">${t.team}</span></td>
+  <td class="n">${t.xg_next?.toFixed(2) ?? "–"}</td>
+  <td class="n">${t.xgc_next?.toFixed(2) ?? "–"}</td>
+  ${t.gws.map((g) => {
+    if (!g.fixtures.length)
+      return `<td class="cellpad"><span class="fdr fdr3" title="Blank gameweek">—</span></td>`;
+    return `<td class="cellpad">${g.fixtures.map((f) => `
+      <span class="fdr fdr${f.fdr}" title="${f.home ? "Home" : "Away"} vs ${f.opp}, difficulty ${f.fdr}">
+        ${f.opp}<small>${f.home ? "H" : "A"}</small>
+      </span>`).join(" ")}</td>`;
+  }).join("")}
+  <td class="n">${t.ease.toFixed(2)}</td></tr>`).join("");
+</script>
+</body>
+</html>

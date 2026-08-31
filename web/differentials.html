@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Differentials — FPL ML</title>
+<meta name="description" content="High expected points, low ownership: template-breaking FPL picks.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<script src="config.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="index.html">FPL<span>ML</span></a>
+  <nav class="site" aria-label="Site">
+    <a href="index.html" data-page="index">xP table</a>
+    <a href="fixtures.html" data-page="fixtures">Fixtures</a>
+    <a href="league.html" data-page="league">League</a>
+    <a href="differentials.html" data-page="differentials">Differentials</a>
+    <a href="prices.html" data-page="prices">Prices</a>
+    <a href="team.html" data-page="team">Rate my team</a>
+    <a href="scoreboard.html" data-page="scoreboard">Scoreboard</a>
+    <a href="methodology.html" data-page="methodology">Method</a>
+  </nav>
+  <span class="deadline">loading…</span>
+</header>
+
+<h1>Differentials</h1>
+<p class="sub">Players the model rates that your mini-league rivals don't own —
+high xP, low ownership, currently available. Rank-climbing lives here.</p>
+
+<div class="controls">
+  <label for="own">Max ownership <span class="n" id="ownval">10%</span></label>
+  <input type="range" id="own" min="1" max="25" value="10" step="1">
+</div>
+
+<div class="tablewrap">
+<table id="diff">
+  <thead><tr>
+    <th>Pos</th><th>Player</th><th>Team</th>
+    <th data-num>£m</th><th data-num>Own %</th><th data-num>xP (10–90% band)</th>
+  </tr></thead>
+  <tbody></tbody>
+</table>
+</div>
+
+<footer class="site">
+  <p>Not affiliated with the Premier League or the official Fantasy Premier League game.</p>
+</footer>
+</div>
+
+<script type="module">
+import { initChrome, loadJSON, bandCell, statusFlag } from "./assets/app.js";
+await initChrome("differentials");
+const table = await loadJSON("xp_table.json");
+
+const slider = document.querySelector("#own");
+function render() {
+  const cap = Number(slider.value);
+  document.querySelector("#ownval").textContent = `${cap}%`;
+  const rows = table
+    .filter((r) => (r.ownership ?? 100) <= cap && r.status === "a")
+    .slice(0, 30);
+  const maxHi = Math.max(1, ...rows.map((r) => r.p90 ?? r.xp));
+  document.querySelector("#diff tbody").innerHTML = rows.map((r) => `<tr>
+    <td class="pos">${r.position}</td>
+    <td>${r.name}${statusFlag(r)}</td>
+    <td class="pos">${r.team_short}</td>
+    <td class="n">${r.price_m.toFixed(1)}</td>
+    <td class="n">${r.ownership?.toFixed(1)}</td>
+    <td>${bandCell(r, maxHi)}</td></tr>`).join("");
+}
+slider.addEventListener("input", render);
+render();
+</script>
+</body>
+</html>
