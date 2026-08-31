@@ -49,8 +49,16 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
                    allow_headers=["*"])
 
 _lock = threading.Lock()
-_state: dict = {"artifact": None, "boot": None, "fixtures": None, "gw": None,
-                "pools": {}, "loaded_at": 0.0}
+
+
+def _initial_state() -> dict:
+    """Factory for _state's pristine shape — single source of truth so tests
+    (and _refresh's cold-start check) never hardcode the dict's keys."""
+    return {"artifact": None, "boot": None, "fixtures": None, "gw": None,
+            "pools": {}, "loaded_at": 0.0}
+
+
+_state: dict = _initial_state()
 _solve_cache: dict = {}
 
 
