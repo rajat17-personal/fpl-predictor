@@ -114,13 +114,52 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated by roadmap) | | |
+| UI-01 | Phase 1 | Pending |
+| APIT-01 | Phase 1 | Pending |
+| APIT-02 | Phase 1 | Pending |
+| APIT-03 | Phase 1 | Pending |
+| UI-02 | Phase 2 | Pending |
+| UI-03 | Phase 2 | Pending |
+| UI-04 | Phase 2 | Pending |
+| UI-05 | Phase 2 | Pending |
+| UI-06 | Phase 2 | Pending |
+| UIX-02 | Phase 2 | Pending |
+| PITCH-01 | Phase 3 | Pending |
+| PITCH-02 | Phase 3 | Pending |
+| PITCH-03 | Phase 3 | Pending |
+| PITCH-04 | Phase 3 | Pending |
+| UI-07 | Phase 3 | Pending |
+| UIX-01 | Phase 3 | Pending |
+| UIX-03 | Phase 3 | Pending |
+| E2E-01 | Phase 4 | Pending |
+| E2E-02 | Phase 4 | Pending |
+| E2E-03 | Phase 4 | Pending |
+| E2E-04 | Phase 4 | Pending |
+| E2E-05 | Phase 4 | Pending |
+| CI-01 | Phase 5 | Pending |
+| CI-02 | Phase 5 | Pending |
+| CI-03 | Phase 5 | Pending |
+| CI-04 | Phase 5 | Pending |
+| CI-05 | Phase 5 | Pending |
+| SEC-02 | Phase 5 | Pending |
+| SEC-04 | Phase 5 | Pending |
+| SEC-01 | Phase 6 | Pending |
+| SEC-03 | Phase 6 | Pending |
+| REL-01 | Phase 6 | Pending |
+| REL-02 | Phase 6 | Pending |
+| REL-03 | Phase 6 | Pending |
+| REL-04 | Phase 6 | Pending |
+| REL-05 | Phase 6 | Pending |
+| OBS-01 | Phase 6 | Pending |
+| OBS-02 | Phase 6 | Pending |
+| OBS-03 | Phase 6 | Pending |
+| CUT-01 | Phase 7 | Pending |
 
 **Coverage:**
 - v1 requirements: 40 total
-- Mapped to phases: 0
-- Unmapped: 40 ⚠️
+- Mapped to phases: 40 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-08-31*
-*Last updated: 2026-08-31 after initial definition*
+*Last updated: 2026-08-31 after roadmap creation (traceability populated)*
