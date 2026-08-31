@@ -1,21 +1,29 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchJson, type MetaResponse } from "../lib/api";
+import { Spinner } from "../components/Spinner";
+import { ErrorState } from "../components/ErrorState";
+import { EmptyState } from "../components/EmptyState";
 
-/* Tracer route ("/"): proves the dev proxy reaches web/data/meta.json at runtime.
- * Plan 01-05 replaces the inline pending/error rendering below with the shared
- * <Spinner/> and <ErrorState/> components from the UI-SPEC contract. */
+/* Tracer route ("/"): proves the dev proxy reaches web/data/meta.json at
+ * runtime. Routes its pending/error/empty states through the shared shell
+ * components from the UI-SPEC contract rather than inline text. */
 export default function XpTable() {
-  const { data, isPending, isError, error } = useQuery({
+  const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ["meta"],
     queryFn: () => fetchJson<MetaResponse>("/data/meta.json"),
   });
 
   if (isPending) {
-    return <p>Loading…</p>;
+    return <Spinner />;
   }
 
   if (isError) {
-    return <p>{error instanceof Error ? error.message : "Failed to load meta.json"}</p>;
+    console.error(error);
+    return <ErrorState resource="the gameweek data" onRetry={() => refetch()} />;
+  }
+
+  if (!data) {
+    return <EmptyState />;
   }
 
   return (
