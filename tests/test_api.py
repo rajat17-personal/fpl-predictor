@@ -4,8 +4,12 @@ load via monkeypatched _load_live/_pool and the autouse conftest fixture that
 seeds a non-None artifact sentinel."""
 from __future__ import annotations
 
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import pandas as pd
 import pytest
+import responses
 
 import config
 
@@ -34,6 +38,21 @@ def fake_boot(n_per_pos=(3, 7, 7, 5)) -> dict:
     return {"elements": elements, "teams": TEAMS, "total_players": 1_000_000,
             "events": [{"id": 1, "is_next": True, "finished": False,
                         "deadline_time": "2026-09-04T17:30:00Z"}]}
+
+
+def fake_picks(boot: dict) -> dict:
+    """FPL-shaped `/entry/{id}/event/{gw}/picks/` body for a legal 15-man squad
+    (2 GK, 5 DEF, 5 MID, 3 FWD per config.POSITION_QUOTA) drawn from `boot`."""
+    quotas = {1: 2, 2: 5, 3: 5, 4: 3}
+    counts = {1: 0, 2: 0, 3: 0, 4: 0}
+    chosen = []
+    for el in boot["elements"]:
+        et = el["element_type"]
+        if counts[et] < quotas[et]:
+            chosen.append(el)
+            counts[et] += 1
+    return {"picks": [{"element": el["id"]} for el in chosen],
+            "entry_history": {"bank": 5, "value": 1000}}
 
 
 def fake_pool(boot: dict) -> pd.DataFrame:
@@ -200,3 +219,139 @@ def test_solve_resolution_and_rounding(monkeypatch):
     tied["name"] = ["Duplicate Name", "Duplicate Name"]
     tied["xp"] = [3.0, 7.0]
     assert m._resolve(tied, ["Duplicate Name"]) == [tie_hi]
+
+
+# ---------------------------------------------------------------- /api/team, /api/rate
+#
+# Synthetic fixture identities only — "Test FC" / "Test Manager" / entry 12345 — never
+# a real FPL manager's name, team, rank, or entry id (these endpoints return
+# third-party personal data and a committed fixture is a permanent public record).
+
+TEAM_ENTRY = 12345
+_SYNTHETIC_MANAGER = {
+    "name": "Test FC", "player_first_name": "Test", "player_last_name": "Manager",
+    "summary_overall_points": 100, "summary_overall_rank": 500000,
+    "summary_event_points": 50,
+}
+
+
+def _team_urls(entry: int, gw: int) -> tuple[str, str, str]:
+    base = config.FPL_API
+    return (f"{base}/entry/{entry}/event/{gw - 1}/picks/",
+            f"{base}/entry/{entry}/",
+            f"{base}/entry/{entry}/history/")
+
+
+@responses.activate
+def test_team_endpoint_contract(monkeypatch):
+    from fastapi.testclient import TestClient
+    import api.main as m
+
+    boot = fake_boot()
+    pool = fake_pool(boot)
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+
+    picks_url, summary_url, _ = _team_urls(TEAM_ENTRY, 1)
+    responses.add(responses.GET, picks_url, json=fake_picks(boot), status=200)
+    responses.add(responses.GET, summary_url, json=_SYNTHETIC_MANAGER, status=200)
+
+    c = TestClient(m.app)
+    r = c.get(f"/api/team/{TEAM_ENTRY}")
+    assert r.status_code == 200
+    body = r.json()
+    assert set(body.keys()) == {"entry", "picks", "bank", "value", "manager"}
+    assert body["entry"] == TEAM_ENTRY
+    assert body["bank"] == 0.5
+    assert body["value"] == 100.0
+    assert len(body["picks"]) == 15
+    for pick in body["picks"]:
+        assert set(pick.keys()) == {"player_code", "name", "team", "position", "price_m"}
+        assert pick["position"] in {"GK", "DEF", "MID", "FWD"}
+
+
+@responses.activate
+def test_team_endpoint_missing_picks(monkeypatch):
+    from fastapi.testclient import TestClient
+    import api.main as m
+
+    boot = fake_boot()
+    pool = fake_pool(boot)
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+
+    picks_url, _, _ = _team_urls(TEAM_ENTRY, 1)
+    responses.add(responses.GET, picks_url, status=404)
+
+    c = TestClient(m.app)
+    r = c.get(f"/api/team/{TEAM_ENTRY}")
+    assert r.status_code == 404
+    assert "GW" in r.json()["detail"]
+
+
+@responses.activate
+def test_team_endpoint_summary_failure_is_best_effort(monkeypatch):
+    """Manager-summary is a best-effort enrichment: a 500 there must not fail
+    the whole /api/team response, only leave `manager` empty."""
+    from fastapi.testclient import TestClient
+    import api.main as m
+
+    boot = fake_boot()
+    pool = fake_pool(boot)
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+
+    picks_url, summary_url, _ = _team_urls(TEAM_ENTRY, 1)
+    responses.add(responses.GET, picks_url, json=fake_picks(boot), status=200)
+    responses.add(responses.GET, summary_url, status=500)
+
+    c = TestClient(m.app)
+    r = c.get(f"/api/team/{TEAM_ENTRY}")
+    assert r.status_code == 200
+    assert r.json()["manager"] == {}
+
+
+@responses.activate
+def test_rate_endpoint_contract(monkeypatch):
+    from fastapi.testclient import TestClient
+    import api.main as m
+
+    boot = fake_boot()
+    pool = fake_pool(boot)
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.delenv("FPL_API_KEYS", raising=False)
+
+    picks_url, summary_url, history_url = _team_urls(TEAM_ENTRY, 1)
+    responses.add(responses.GET, picks_url, json=fake_picks(boot), status=200)
+    responses.add(responses.GET, summary_url, json=_SYNTHETIC_MANAGER, status=200)
+    responses.add(responses.GET, history_url,
+                  json={"current": [{"event": 1, "event_transfers": 0}], "chips": []},
+                  status=200)
+
+    c = TestClient(m.app)
+    r = c.get(f"/api/rate/{TEAM_ENTRY}")
+    assert r.status_code == 200
+    body = r.json()
+    assert set(body.keys()) == {"entry", "gw", "score", "xi_xp", "xi_p10", "xi_p90",
+                                "ideal_xi_xp", "captain", "best_move", "manager",
+                                "free_transfers", "xi"}
+    assert isinstance(body["score"], int)
+    assert 0 <= body["score"] <= 100
+
+
+@responses.activate
+def test_rate_endpoint_missing_history_leaves_free_transfers_null(monkeypatch):
+    from fastapi.testclient import TestClient
+    import api.main as m
+
+    boot = fake_boot()
+    pool = fake_pool(boot)
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.delenv("FPL_API_KEYS", raising=False)
+
+    picks_url, summary_url, history_url = _team_urls(TEAM_ENTRY, 1)
+    responses.add(responses.GET, picks_url, json=fake_picks(boot), status=200)
+    responses.add(responses.GET, summary_url, json=_SYNTHETIC_MANAGER, status=200)
+    responses.add(responses.GET, history_url, status=404)
+
+    c = TestClient(m.app)
+    r = c.get(f"/api/rate/{TEAM_ENTRY}")
+    assert r.status_code == 200
+    assert r.json()["free_transfers"] is None

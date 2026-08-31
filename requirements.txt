@@ -18,3 +18,6 @@ fastapi>=0.110
 uvicorn>=0.29
 httpx>=0.27         # FastAPI TestClient
 joblib>=1.3
+
+# Test-only
+responses>=0.25,<0.27   # FPL API HTTP mocking in tests
