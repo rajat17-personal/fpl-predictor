@@ -35,10 +35,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A concurrent solve + pool-refresh test runs green repeatedly, making the cache/lock race observable in tests instead of only in production
   4. `npm run dev` serves a React (Vite, TypeScript 6.x) app whose routes for all 8 pages resolve, fetching `web/data/*.json` and `/api` at runtime through the dev proxy — with no pipeline data bundled into the build
 
-**Plans**: 5 plans (3 waves)
+**Plans**: 1/5 plans executed (3 waves)
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Repo baseline (`.gitignore` + initial source commit) and the blocking package-legitimacy gate
+- [x] 01-01-PLAN.md — Repo baseline (`.gitignore` + initial source commit) and the blocking package-legitimacy gate
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -163,7 +163,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Test Base Layer & App Skeleton | 0/5 | Planned | - |
+| 1. Test Base Layer & App Skeleton | 1/5 | In Progress|  |
 | 2. Data Layer & Non-Pitch Pages | 0/TBD | Not started | - |
 | 3. Pitch Renderer & Squad Views | 0/TBD | Not started | - |
 | 4. E2E Regression Suite | 0/TBD | Not started | - |

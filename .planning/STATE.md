@@ -1,18 +1,18 @@
 ---
 gsd_state_version: 1.0
-current_phase: 1
+current_phase: 01
 current_phase_name: Test Base Layer & App Skeleton
 status: executing
-stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-08-31T16:14:56.051Z"
+stopped_at: Completed 01-01-PLAN.md (repo baseline + package legitimacy sign-off)
+last_updated: "2026-08-31T16:45:39.345Z"
 last_activity: 2026-08-31
-last_activity_desc: Roadmap created, 40 v1 requirements mapped across 7 phases
-state_head: cb443974584a7eff65e1375935d66fa59bc3c258
+last_activity_desc: Phase 01 execution started
+state_head: 1ee176af1007284d78048cdbdc85c09aeca6627c
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 5
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-31)
 
 **Core value:** The weekly recommendations (xP table, squad, captains, transfers) must keep flowing reliably — every change must leave the pipeline, API, and site at least as correct and more trustworthy than before.
-**Current focus:** Phase 1 — Test Base Layer & App Skeleton
+**Current focus:** Phase 01 — Test Base Layer & App Skeleton
 
 ## Current Position
 
-Phase: 1 (Test Base Layer & App Skeleton) — READY TO EXECUTE
-Plan: 0 of TBD in current phase
+Phase: 01 (Test Base Layer & App Skeleton) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-08-31 — Roadmap created, 40 v1 requirements mapped across 7 phases
+Last activity: 2026-08-31 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -54,6 +54,11 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: —
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 01 P01 | 6min | 2 tasks | 77 files |
 
 ## Accumulated Context
 
@@ -66,6 +71,7 @@ Recent decisions affecting current work:
 - Roadmap: API tests come before Playwright — E2E on an untested API inverts the pyramid
 - Roadmap: CI ends at a published Docker image, not a live deploy (hosting not purchased)
 - Roadmap: Cutover (CUT-01) is its own phase, gated on a full real gameweek cycle
+- [Phase 01]: Human approved full 13-package [SUS] install set for Phase 1 (react-router@7, @tanstack/react-query@5, vite@7.3.6, @vitejs/plugin-react@5.2.0, lucide-react, typescript-eslint, eslint-plugin-react-refresh, @types/node, vitest, @testing-library/react, @testing-library/jest-dom, responses[PyPI]) plus clean-verdict packages and two deliberate downgrade pins (typescript@6.0.3, vite@7.3.6+plugin-react@5.2.0) — Verbatim answer: Approved. Delivered via blocking-human gate, unblocks installs in plans 01-03/01-04.
 
 ### Pending Todos
 
@@ -93,6 +99,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-08-31T15:26:43.164Z
-Stopped at: Phase 1 UI-SPEC approved
-Resume file: .planning/phases/01-test-base-layer-app-skeleton/01-UI-SPEC.md
+Last session: 2026-08-31T16:45:39.329Z
+Stopped at: Completed 01-01-PLAN.md (repo baseline + package legitimacy sign-off)
+Resume file: None
