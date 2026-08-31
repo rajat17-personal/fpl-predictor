@@ -461,3 +461,48 @@ def test_unauthenticated_endpoints_stay_open(monkeypatch, env_value, header):
     headers = {"X-API-Key": header} if header is not None else {}
     assert c.get("/api/health", headers=headers).status_code == 200
     assert c.get("/api/meta", headers=headers).status_code == 200
+
+
+# ---------------------------------------------------------------- concurrency
+#
+# api/main.py `solve()` reads/writes `_solve_cache` with NO `_lock` held, while
+# `_refresh()` clears it INSIDE `_lock` — a race a sequential loop of TestClient
+# calls cannot reproduce, because overlapping requests are what create it. This
+# test asserts only "no crash, no corrupted state" — NOT cache-hit rate or
+# byte-identical bodies across concurrent calls, which api/main.py does not
+# guarantee today (that guarantee, and fixing the race, is Phase 6 REL-05's
+# job; this test's job is to make the race observable, not to fix it).
+
+def test_concurrent_solve_and_refresh(monkeypatch):
+    from fastapi.testclient import TestClient
+    import api.main as m
+
+    boot = fake_boot()
+    pool = fake_pool(boot)
+    calls = {"n": 0}
+
+    def slow_pool(horizon=1):
+        calls["n"] += 1
+        time.sleep(0.05)   # widen the overlap window deterministically
+        return pool, 1, boot
+
+    monkeypatch.setattr(m, "_pool", slow_pool)
+    monkeypatch.delenv("FPL_API_KEYS", raising=False)
+
+    c = TestClient(m.app)
+
+    def worker(i: int):
+        payload = {"horizon": 1 if i % 2 == 0 else 2, "free_transfers": i % 2}
+        return c.post("/api/solve", json=payload)
+
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        futures = [ex.submit(worker, i) for i in range(20)]
+        results = [f.result() for f in as_completed(futures)]
+
+    assert len(results) == 20
+    for r in results:
+        assert r.status_code == 200
+        body = r.json()
+        assert "gw" in body
+        assert len(body["squad"]) > 0
+    assert isinstance(m._state["pools"], dict)
