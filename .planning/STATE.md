@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 current_phase: 01
 current_phase_name: Test Base Layer & App Skeleton
-status: executing
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-08-31T17:24:52.187Z"
+status: verifying
+stopped_at: Completed 01-05-PLAN.md
+last_updated: "2026-08-31T17:42:51.311Z"
 last_activity: 2026-08-31
 last_activity_desc: Phase 01 execution started
-state_head: 969979b20bbacd6d14617f475925e67bc8d7eeb3
+state_head: 57cc7081a3c1cb9ddaf8336eaffe20af852637cb
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 5
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-08-31)
 
 Phase: 01 (Test Base Layer & App Skeleton) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-31 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P02 | 14min | 2 tasks | 3 files |
 | Phase 01 P04 | 21min | 3 tasks | 20 files |
 | Phase 01 P03 | 12min | 3 tasks | 2 files |
+| Phase 01-test-base-layer-app-skeleton P05 | 17min | 3 tasks | 19 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,8 @@ Recent decisions affecting current work:
 - [Phase 01]: [Phase 01 Plan 04]: All frontend installs pinned --save-exact to plan 01-01's approved package-legitimacy list; re-verified against the live npm registry immediately before each install with zero drift (typescript@6.0.3, vite@7.3.6, @vitejs/plugin-react@5.2.0, react-router@7.18.3, @tanstack/react-query@5.102.8, lucide-react@1.38.0, tailwindcss@4.3.3, @tailwindcss/vite@4.3.3, @types/node@26.4.0, vitest@4.1.11, jsdom@30.0.1, @testing-library/react@16.3.3, @testing-library/jest-dom@7.0.1).
 - [Phase 01]: [Phase 01 Plan 04]: Removed oxlint (create-vite@9.2.0's new default devDependency, not on the approved package list) before the first npm install, since this plan has no linting task in scope.
 - [Phase 01]: [Phase 01 Plan 03]: Task 1's plan-authored <verify> command called responses.__version__, which does not exist on installed responses==0.26.3 (within the approved >=0.25,<0.27 pin). Verified the same fact -- pin installed and recorded -- via importlib.metadata.version('responses') instead; documented as a Rule 3 deviation in the plan's verify command, not the implementation.
+- [Phase 01-test-base-layer-app-skeleton]: Split router.tsx's errorElement wiring into a plain ErrorState (no router hooks) plus a separate RouteErrorBoundary that calls useRouteError, so ErrorState stays safe to unit-test outside a data-router context. — useRouteError() throws outside a data-router context, so folding it into the presentational component would have broken direct unit tests of ErrorState.
+- [Phase 01-test-base-layer-app-skeleton]: NAV_LINKS order follows the UI-SPEC Routes table (not vanilla web/index.html's nav order); label text still reuses the vanilla nav's copy for parity. — The plan's Task 1 action and acceptance criteria explicitly specify UI-SPEC Routes-table order for both router registration and NAV_LINKS.
 
 ### Pending Todos
 
@@ -106,6 +109,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-08-31T17:24:43.616Z
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-08-31T17:42:51.294Z
+Stopped at: Completed 01-05-PLAN.md
 Resume file: None

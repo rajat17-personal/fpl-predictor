@@ -9,7 +9,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### React App
 
-- [ ] **UI-01**: React (Vite, TypeScript 6.x) app with routes for all 8 pages, dev-server proxy to the API, and runtime-fetched `web/data/*.json` (never bundled at build time)
+- [x] **UI-01**: React (Vite, TypeScript 6.x) app with routes for all 8 pages, dev-server proxy to the API, and runtime-fetched `web/data/*.json` (never bundled at build time)
 - [ ] **UI-02**: xP table page at parity — sortable/filterable by position, team, price, xP, ownership, form, with exact sort/format semantics matching the vanilla site
 - [ ] **UI-03**: Fixtures page with FDR ticker in the standard 1–5 green→red convention
 - [ ] **UI-04**: Prices page with watchlist rise/fall indicators
@@ -114,7 +114,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| UI-01 | Phase 1 | Pending |
+| UI-01 | Phase 1 | Complete |
 | APIT-01 | Phase 1 | Complete |
 | APIT-02 | Phase 1 | Complete |
 | APIT-03 | Phase 1 | Complete |

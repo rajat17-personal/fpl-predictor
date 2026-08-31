@@ -35,7 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A concurrent solve + pool-refresh test runs green repeatedly, making the cache/lock race observable in tests instead of only in production
   4. `npm run dev` serves a React (Vite, TypeScript 6.x) app whose routes for all 8 pages resolve, fetching `web/data/*.json` and `/api` at runtime through the dev proxy — with no pipeline data bundled into the build
 
-**Plans**: 3/5 plans executed (3 waves)
+**Plans**: 5/5 plans executed (3 waves)
 **Wave 1**
 
 - [x] 01-01-PLAN.md — Repo baseline (`.gitignore` + initial source commit) and the blocking package-legitimacy gate
@@ -47,8 +47,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-03-PLAN.md — `/team` and `/rate` against a `responses`-mocked FPL API, three-mode `require_key` coverage, and the concurrency race test
-- [ ] 01-05-PLAN.md — All 8 routes with per-route error boundaries, the loading/error/empty/404 states, and the three UI-SPEC backstop tests
+- [x] 01-03-PLAN.md — `/team` and `/rate` against a `responses`-mocked FPL API, three-mode `require_key` coverage, and the concurrency race test
+- [x] 01-05-PLAN.md — All 8 routes with per-route error boundaries, the loading/error/empty/404 states, and the three UI-SPEC backstop tests
 
 **UI hint**: yes
 
@@ -163,7 +163,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Test Base Layer & App Skeleton | 3/5 | In Progress|  |
+| 1. Test Base Layer & App Skeleton | 5/5 | In Progress|  |
 | 2. Data Layer & Non-Pitch Pages | 0/TBD | Not started | - |
 | 3. Pitch Renderer & Squad Views | 0/TBD | Not started | - |
 | 4. E2E Regression Suite | 0/TBD | Not started | - |
