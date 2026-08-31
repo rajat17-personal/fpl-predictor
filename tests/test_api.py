@@ -355,3 +355,109 @@ def test_rate_endpoint_missing_history_leaves_free_transfers_null(monkeypatch):
     r = c.get(f"/api/rate/{TEAM_ENTRY}")
     assert r.status_code == 200
     assert r.json()["free_transfers"] is None
+
+
+# ---------------------------------------------------------------- require_key
+#
+# Synthetic key values only (k1, k2, nope) — never a value that could be
+# mistaken for a live FPL_API_KEYS or ODDS_API_KEY credential.
+
+REQUIRE_KEY_CASES = [
+    # (FPL_API_KEYS env value or None-to-delete, X-API-Key header or None, expected status)
+    (None, None, 200),              # unset -> gate open (require_key's `if keys` is falsy)
+    ("k1,k2", "k2", 200),           # second key in a two-key list is valid too
+    ("k1,k2", "k1", 200),           # first key in a two-key list is valid
+    ("k1,k2", "nope", 401),         # wrong key
+    ("k1,k2", None, 401),           # missing header entirely
+    (" k1 , k2 ", "k1", 200),       # surrounding whitespace stripped per key
+    ("", None, 200),                # empty string -> set comprehension yields {} -> open
+    (",", None, 200),               # comma-only -> {} -> open
+    ("   ", None, 200),             # whitespace-only -> {} -> open
+]
+
+
+@pytest.mark.parametrize("env_value,header,expected_status", REQUIRE_KEY_CASES)
+def test_require_key_three_modes(monkeypatch, env_value, header, expected_status):
+    """Walks require_key's full mode matrix against /api/solve. Does not edit
+    api/main.py: these tests document the stub exactly as it stands today,
+    including its open-by-default behaviour on an empty/whitespace key list —
+    that baseline is what the Phase 6 auth swap will be diffed against."""
+    from fastapi.testclient import TestClient
+    import api.main as m
+
+    boot = fake_boot()
+    pool = fake_pool(boot)
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+
+    if env_value is None:
+        monkeypatch.delenv("FPL_API_KEYS", raising=False)
+    else:
+        monkeypatch.setenv("FPL_API_KEYS", env_value)
+
+    c = TestClient(m.app)
+    headers = {"X-API-Key": header} if header is not None else {}
+    r = c.post("/api/solve", json={}, headers=headers)
+    assert r.status_code == expected_status
+
+
+@responses.activate
+def test_rate_endpoint_require_key_modes(monkeypatch):
+    """/api/rate's 401 paths need no FPL mocking — require_key raises before the
+    handler body runs — so they're asserted here without duplicating Task 1's
+    full 200-path contract coverage (test_rate_endpoint_contract already proves
+    the open-mode 200 body); this test adds the wrong-key and missing-header
+    401s for the second protected endpoint."""
+    from fastapi.testclient import TestClient
+    import api.main as m
+
+    boot = fake_boot()
+    pool = fake_pool(boot)
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+
+    picks_url, summary_url, history_url = _team_urls(TEAM_ENTRY, 1)
+    responses.add(responses.GET, picks_url, json=fake_picks(boot), status=200)
+    responses.add(responses.GET, summary_url, json=_SYNTHETIC_MANAGER, status=200)
+    responses.add(responses.GET, history_url,
+                  json={"current": [{"event": 1, "event_transfers": 0}], "chips": []},
+                  status=200)
+
+    c = TestClient(m.app)
+
+    monkeypatch.delenv("FPL_API_KEYS", raising=False)
+    assert c.get(f"/api/rate/{TEAM_ENTRY}").status_code == 200
+
+    monkeypatch.setenv("FPL_API_KEYS", "k1,k2")
+    assert c.get(f"/api/rate/{TEAM_ENTRY}",
+                headers={"X-API-Key": "nope"}).status_code == 401
+    assert c.get(f"/api/rate/{TEAM_ENTRY}").status_code == 401
+
+
+STAY_OPEN_CASES = [
+    (None, None),
+    (None, "anything"),
+    ("k1,k2", None),
+    ("k1,k2", "nope"),
+    ("", None),
+    ("", "nope"),
+]
+
+
+@pytest.mark.parametrize("env_value,header", STAY_OPEN_CASES)
+def test_unauthenticated_endpoints_stay_open(monkeypatch, env_value, header):
+    """/api/health and /api/meta carry no require_key dependency and must stay
+    open in every mode, with or without an X-API-Key header."""
+    from fastapi.testclient import TestClient
+    import api.main as m
+
+    boot = fake_boot()
+    monkeypatch.setattr(m, "_load_live", lambda force=True: (boot, []))
+
+    if env_value is None:
+        monkeypatch.delenv("FPL_API_KEYS", raising=False)
+    else:
+        monkeypatch.setenv("FPL_API_KEYS", env_value)
+
+    c = TestClient(m.app)
+    headers = {"X-API-Key": header} if header is not None else {}
+    assert c.get("/api/health", headers=headers).status_code == 200
+    assert c.get("/api/meta", headers=headers).status_code == 200
