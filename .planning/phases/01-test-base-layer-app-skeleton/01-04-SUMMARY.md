@@ -312,3 +312,10 @@ None — no external service configuration required.
 ---
 *Phase: 01-test-base-layer-app-skeleton*
 *Completed: 2026-08-31*
+
+## Self-Check: PASSED
+
+- All 13 key files listed above verified present on disk with `[ -f ]`.
+- All 4 commits (`bb4a706`, `8e670d3`, `1c76cef`, `4380b08`) verified present in `git log --oneline --all`.
+- All three tasks' acceptance criteria re-verified passing at plan close: `npm --prefix frontend run build`, the pins check, `bash scripts/verify_dev_proxy.sh` (DEV PROXY OK, no leftover port listeners), `bash scripts/verify_frontend_build.sh` (BUILD PURITY OK), `npm --prefix frontend run typecheck`, `npm --prefix frontend run test`.
+- Plan-level `<verification>` automated commands all passed; `web/` confirmed unchanged (`git status --porcelain web` empty).
