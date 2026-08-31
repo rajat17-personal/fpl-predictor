@@ -95,3 +95,108 @@ def test_state_isolation_and_no_artifact_load(monkeypatch):
     c = TestClient(m.app)
     assert c.get("/api/health").status_code == 200
     assert c.get("/api/meta").status_code == 200
+
+
+# ---------------------------------------------------------------- /api/solve
+
+def test_solve_squad_contract(monkeypatch):
+    """From-scratch squad response: full contract, lock honoured, bad lock 422."""
+    from fastapi.testclient import TestClient
+    import api.main as m
+
+    boot = fake_boot()
+    pool = fake_pool(boot)
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.delenv("FPL_API_KEYS", raising=False)
+    c = TestClient(m.app)
+
+    lock_name = pool.iloc[0]["name"]
+    r = c.post("/api/solve", json={"locks": [lock_name]})
+    assert r.status_code == 200
+    body = r.json()
+    assert set(body.keys()) == {"gw", "kind", "squad", "captain", "formation",
+                                "cost", "xi_xp"}
+    assert body["kind"] == "squad"
+    assert len(body["squad"]) == 15
+    assert sum(p["starting"] for p in body["squad"]) == 11
+    assert sum(p["captain"] for p in body["squad"]) == 1
+    for row in body["squad"]:
+        assert set(row.keys()) == {"player_code", "name", "team", "position",
+                                   "price_m", "xp", "starting", "captain"}
+    assert body["cost"] <= config.BUDGET
+    assert lock_name in [p["name"] for p in body["squad"]]
+
+    bad = c.post("/api/solve", json={"locks": ["Nobody Real"]})
+    assert bad.status_code == 422
+
+
+BOUNDS_CASES = [
+    ({"free_transfers": 0}, 200),
+    ({"free_transfers": 5}, 200),
+    ({"free_transfers": 6}, 422),
+    ({"free_transfers": -1}, 422),
+    ({"horizon": 1}, 200),
+    ({"horizon": 6}, 200),
+    ({"horizon": 0}, 422),
+    ({"horizon": 7}, 422),
+    ({"max_transfers": 0}, 200),
+    ({"max_transfers": 15}, 200),
+    ({"max_transfers": 16}, 422),
+    ({"mode": "normal"}, 200),
+    ({"mode": "tc"}, 200),
+    ({"mode": "bb"}, 200),
+    ({"mode": "wildcard"}, 422),
+]
+
+
+@pytest.mark.parametrize("payload,expected_status", BOUNDS_CASES)
+def test_solve_request_bounds(monkeypatch, payload, expected_status):
+    """SolveRequest bounds at each edge and one step outside."""
+    from fastapi.testclient import TestClient
+    import api.main as m
+
+    boot = fake_boot()
+    pool = fake_pool(boot)
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.delenv("FPL_API_KEYS", raising=False)
+    c = TestClient(m.app)
+
+    r = c.post("/api/solve", json=payload)
+    assert r.status_code == expected_status
+
+
+def test_solve_resolution_and_rounding(monkeypatch):
+    """Exact money/xp rounding and _resolve's name tie-break rules."""
+    from fastapi.testclient import TestClient
+    import api.main as m
+
+    boot = fake_boot()
+    pool = fake_pool(boot)
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.delenv("FPL_API_KEYS", raising=False)
+    c = TestClient(m.app)
+
+    r = c.post("/api/solve", json={})
+    assert r.status_code == 200
+    body = r.json()
+    P = pool.set_index("player_code")
+    for row in body["squad"]:
+        code = row["player_code"]
+        assert row["price_m"] == float(P.price_m[code])
+        assert row["xp"] == round(float(P.xp[code]), 2)
+
+    # _resolve: exact match beats a substring danger ("saka" is a substring of
+    # "wan-bissaka" — a naive substring scan would wrongly match it).
+    saka_code, wanbissaka_code = 500001, 500002
+    named = pool.iloc[:2].copy()
+    named["player_code"] = [saka_code, wanbissaka_code]
+    named["name"] = ["Saka", "Wan-Bissaka"]
+    assert m._resolve(named, ["saka"]) == [saka_code]
+
+    # _resolve: identical names tie-break to the higher-xp player.
+    tie_lo, tie_hi = 500003, 500004
+    tied = pool.iloc[:2].copy()
+    tied["player_code"] = [tie_lo, tie_hi]
+    tied["name"] = ["Duplicate Name", "Duplicate Name"]
+    tied["xp"] = [3.0, 7.0]
+    assert m._resolve(tied, ["Duplicate Name"]) == [tie_hi]
