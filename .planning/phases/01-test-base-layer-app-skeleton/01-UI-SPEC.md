@@ -1,10 +1,11 @@
 ---
 phase: "1"
 slug: "test-base-layer-app-skeleton"
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: "2026-08-31"
+reviewed_at: "2026-08-31"
 ---
 
 # Phase 1 — UI Design Contract
@@ -192,22 +193,62 @@ first commit — later phases add *usage*, not new *tokens*.
 
 ## UI Considerations
 
-Applicable state considerations resolved: 9 covered, 3 backstop, 0 unresolved.
+Probe-verified state coverage (engine run post-checker-approval, 2026-08-31; user confirmed
+element kinds complete). 28 applicable across 5 surfaces: 17 resolved (explicit), 3 resolved
+(backstop), 8 dismissed with reason, 0 unresolved.
 
-| Category | Element(s) | Status | Resolution / Reason |
-|----------|------------|--------|---------------------|
-| loading | Nav | ✅ covered | Nav is a static route-link list, not data-driven — no loading state applies this phase (the live deadline countdown in the meta-banner slot is Phase 2, UI-06) |
-| error | Nav | ✅ covered | An unmatched path renders the catch-all `<NotFoundPage/>` (see Routes + Copywriting `404` rows) rather than a broken nav state |
-| overflow | Nav | ✅ covered | 8 nav links wrap to a second row via flexbox at narrow viewports (`flex-wrap: wrap`), matching the vanilla site's existing behavior — no hamburger menu this phase |
-| long-text | Nav | ✅ covered | Nav labels are 8 fixed, short, developer-authored strings — no variable-length or user-generated content risk |
-| empty | Route data fetch (`web/data/*.json` / `/api/*` via TanStack Query, per page) | ✅ covered | Generic empty-state copy (see Copywriting `Empty state` rows) renders when a fetch resolves with zero rows/items |
-| loading | Route data fetch | 🧪 backstop | `<Spinner/>` + "Loading…" renders while any page's query is in flight — needs a held-out test asserting the spinner is present during a delayed/pending fetch |
-| error | Route data fetch | 🧪 backstop | `<ErrorState/>` with `Retry` renders on fetch failure, and `Retry` re-triggers the request — needs a held-out test simulating a rejected fetch and asserting the retry affordance calls `refetch()` |
-| populated | Route data fetch | ✅ covered | Deferred by design — this phase intentionally does not define per-page populated-state visuals; Phase 2 (UI-02..UI-06) owns page content design against the same JSON contract |
-| partial | Route data fetch | 🧪 backstop | Each route owns its own error boundary, so one page's failed fetch (e.g. `fixtures.json` 404) leaves the nav shell and every other route fully functional — needs a held-out test that fails one route's fetch and asserts nav/sibling routes remain interactive |
-| zero-one-many | Route data fetch | ✅ covered | Deferred by design — singular/plural list-length copy is per-page content (Phase 2+); the shell-level empty-state fallback above is the only zero-item behavior this phase defines |
-| overflow | Placeholder page content | ✅ covered | Heading/body text lives in the same max-width (`68rem`) wrapped container as real content will later use — no fixed-height clipping |
-| long-text | Placeholder page content | ✅ covered | Placeholder copy is short and fixed per the Copywriting Contract, not user-generated — no truncation/ellipsis logic needed this phase |
+### E1 — Header navigation (static 8-link list)
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| populated | ✅ resolved (explicit) | 8 fixed links in a flex row; active link gets accent text + background; 44px touch targets on mobile |
+| loading | ✅ resolved (explicit) | Nav is a static route-link list, not data-driven — renders synchronously; no loading state this phase (the live deadline countdown in the meta-banner slot is Phase 2, UI-06) |
+| error | ✅ resolved (explicit) | An unmatched path renders the catch-all `<NotFoundPage/>` (see Routes + Copywriting `404` rows) rather than a broken nav state |
+| overflow | ✅ resolved (explicit) | 8 nav links wrap to a second row via flexbox at narrow viewports (`flex-wrap: wrap`), matching the vanilla site — no hamburger menu this phase |
+| long-text | ✅ resolved (explicit) | Nav labels are 8 fixed, short, developer-authored strings — no variable-length or user-generated content risk |
+| empty | ⊘ dismissed | Link set is developer-authored and fixed at build time — an empty nav cannot occur |
+| partial | ⊘ dismissed | Nav is not data-driven — no partial-data state exists |
+| zero-one-many | ⊘ dismissed | Cardinality fixed at 8 by the route table — no variable-count layout to design |
+
+### E2 — Route data fetch area (TanStack Query over `web/data/*.json` / `/api/*`)
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| empty | ✅ resolved (explicit) | Generic empty-state copy (see Copywriting `Empty state` rows) renders when a fetch resolves with zero rows/items |
+| loading | 🧪 resolved (backstop) | `<Spinner/>` + "Loading…" renders while any page's query is in flight — verification: backstop (held-out test asserting the spinner is present during a delayed/pending fetch) |
+| error | 🧪 resolved (backstop) | `<ErrorState/>` with `Retry` renders on fetch failure and re-triggers the request — verification: backstop (held-out test simulating a rejected fetch, asserting the retry affordance calls `refetch()`) |
+| partial | 🧪 resolved (backstop) | Each route owns its own error boundary, so one page's failed fetch (e.g. `fixtures.json` 404) leaves the nav shell and every other route functional — verification: backstop (held-out test failing one route's fetch, asserting nav/sibling routes stay interactive) |
+| populated | ✅ resolved (explicit) | Deferred by design — this phase intentionally does not define per-page populated-state visuals; Phase 2 (UI-02..UI-06) owns page content design against the same JSON contract |
+| zero-one-many | ✅ resolved (explicit) | Deferred by design — singular/plural list-length copy is per-page content (Phase 2+); the shell-level empty-state fallback above is the only zero-item behavior this phase defines |
+| overflow | ✅ resolved (explicit) | Content area lives in the `68rem` wrapper with normal page-level vertical scroll; wide-content scroll containers are a Phase 2 (tables) concern |
+| long-text | ✅ resolved (explicit) | Shell-level copy (error body incl. `{resource}` name) is short and developer-authored; wraps within the container, no truncation logic needed |
+
+### E3 — Placeholder page (static)
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| overflow | ✅ resolved (explicit) | Heading/body text lives in the same max-width (`68rem`) wrapped container real content will later use — no fixed-height clipping |
+| long-text | ✅ resolved (explicit) | Placeholder copy is short and fixed per the Copywriting Contract, not user-generated — no truncation/ellipsis logic needed |
+
+### E4 — Not Found page (static)
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| populated | ✅ resolved (explicit) | Fixed composition: "Page not found" heading (Heading token) + body + link to `/` (see Copywriting `404` rows) |
+| overflow | ✅ resolved (explicit) | Fixed copy inside the `68rem` wrapper — cannot exceed container |
+| long-text | ✅ resolved (explicit) | Copy is fixed and short — no truncation behavior needed |
+| empty | ⊘ dismissed | Page is fully static — no data to be absent |
+| loading | ⊘ dismissed | Renders synchronously from the route table — no async source |
+| error | ⊘ dismissed | No fetch or submit occurs — no failure mode beyond the shell's own error boundary |
+| partial | ⊘ dismissed | No data-driven content — partial state cannot occur |
+| zero-one-many | ⊘ dismissed | No item collection rendered |
+
+### E5 — Footer disclaimer (static)
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| overflow | ✅ resolved (explicit) | Fixed disclaimer text wraps across lines at narrow widths inside the wrapper — never clipped |
+| long-text | ✅ resolved (explicit) | Copy is fixed (Copywriting `Footer disclaimer` row) — wraps, never truncates |
 
 ---
 
@@ -221,12 +262,12 @@ Applicable state considerations resolved: 9 covered, 3 backstop, 0 unresolved.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** APPROVED (gsd-ui-checker, 2026-08-31 — 7/7 dimensions)
