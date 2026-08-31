@@ -35,7 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A concurrent solve + pool-refresh test runs green repeatedly, making the cache/lock race observable in tests instead of only in production
   4. `npm run dev` serves a React (Vite, TypeScript 6.x) app whose routes for all 8 pages resolve, fetching `web/data/*.json` and `/api` at runtime through the dev proxy — with no pipeline data bundled into the build
 
-**Plans**: 2/5 plans executed (3 waves)
+**Plans**: 3/5 plans executed (3 waves)
 **Wave 1**
 
 - [x] 01-01-PLAN.md — Repo baseline (`.gitignore` + initial source commit) and the blocking package-legitimacy gate
@@ -43,7 +43,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 01-02-PLAN.md — API contract tracer: `_initial_state()` seam, autouse reset fixture, `/health` + `/meta` + `/solve` with bounds and precision
-- [ ] 01-04-PLAN.md — React dev-seam tracer: Vite + React Router 7 + TanStack Query scaffold, `/api` and `/data` proxy, design tokens, shell chrome, Vitest harness
+- [x] 01-04-PLAN.md — React dev-seam tracer: Vite + React Router 7 + TanStack Query scaffold, `/api` and `/data` proxy, design tokens, shell chrome, Vitest harness
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -163,7 +163,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Test Base Layer & App Skeleton | 2/5 | In Progress|  |
+| 1. Test Base Layer & App Skeleton | 3/5 | In Progress|  |
 | 2. Data Layer & Non-Pitch Pages | 0/TBD | Not started | - |
 | 3. Pitch Renderer & Squad Views | 0/TBD | Not started | - |
 | 4. E2E Regression Suite | 0/TBD | Not started | - |

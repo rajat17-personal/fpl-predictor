@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 01
 current_phase_name: Test Base Layer & App Skeleton
 status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-08-31T16:54:07.208Z"
+stopped_at: Completed 01-04-PLAN.md
+last_updated: "2026-08-31T17:14:20.507Z"
 last_activity: 2026-08-31
 last_activity_desc: Phase 01 execution started
-state_head: dee426a33ce57c8ac296a3fe18e271098960b936
+state_head: 1c76ceffd3b646af6b04960e9c547c36217aea29
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 5
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-08-31)
 ## Current Position
 
 Phase: 01 (Test Base Layer & App Skeleton) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-08-31 — Phase 01 execution started
 
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 |------|----------|-------|-------|
 | Phase 01 P01 | 6min | 2 tasks | 77 files |
 | Phase 01 P02 | 14min | 2 tasks | 3 files |
+| Phase 01 P04 | 21min | 3 tasks | 20 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 - Roadmap: Cutover (CUT-01) is its own phase, gated on a full real gameweek cycle
 - [Phase 01]: Human approved full 13-package [SUS] install set for Phase 1 (react-router@7, @tanstack/react-query@5, vite@7.3.6, @vitejs/plugin-react@5.2.0, lucide-react, typescript-eslint, eslint-plugin-react-refresh, @types/node, vitest, @testing-library/react, @testing-library/jest-dom, responses[PyPI]) plus clean-verdict packages and two deliberate downgrade pins (typescript@6.0.3, vite@7.3.6+plugin-react@5.2.0) — Verbatim answer: Approved. Delivered via blocking-human gate, unblocks installs in plans 01-03/01-04.
 - [Phase 01]: Task 2 tdd=true task writes contract tests against an already-correct, unmodified production endpoint (test-only file list) — RED phase does not apply; all 17 new tests passed on first run as characterization tests, documented in SUMMARY TDD Gate Compliance section.
+- [Phase 01]: [Phase 01 Plan 04]: All frontend installs pinned --save-exact to plan 01-01's approved package-legitimacy list; re-verified against the live npm registry immediately before each install with zero drift (typescript@6.0.3, vite@7.3.6, @vitejs/plugin-react@5.2.0, react-router@7.18.3, @tanstack/react-query@5.102.8, lucide-react@1.38.0, tailwindcss@4.3.3, @tailwindcss/vite@4.3.3, @types/node@26.4.0, vitest@4.1.11, jsdom@30.0.1, @testing-library/react@16.3.3, @testing-library/jest-dom@7.0.1).
+- [Phase 01]: [Phase 01 Plan 04]: Removed oxlint (create-vite@9.2.0's new default devDependency, not on the approved package list) before the first npm install, since this plan has no linting task in scope.
 
 ### Pending Todos
 
@@ -101,6 +104,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-08-31T16:54:07.193Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-08-31T17:14:10.932Z
+Stopped at: Completed 01-04-PLAN.md
 Resume file: None
