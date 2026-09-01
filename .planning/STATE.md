@@ -1,18 +1,18 @@
 ---
 gsd_state_version: 1.0
 current_phase: 02
-current_phase_name: data-layer-non-pitch-pages
+current_phase_name: Data Layer & Non-Pitch Pages
 status: executing
-stopped_at: Phase 2 UI-SPEC approved
-last_updated: "2026-09-01T13:33:48.691Z"
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-09-01T14:06:11.009Z"
 last_activity: 2026-09-01
-last_activity_desc: Phase 01 complete, transitioned to Phase 2
-state_head: 41ba102bd08ad28b5d4082285ffea5a9579ee135
+last_activity_desc: Phase 02 execution started
+state_head: a3cab214421fdb6d48c63563ca877ad599106ce3
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 12
-  completed_plans: 6
+  completed_plans: 7
   percent: 14
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-01)
 
 **Core value:** The weekly recommendations (xP table, squad, captains, transfers) must keep flowing reliably — every change must leave the pipeline, API, and site at least as correct and more trustworthy than before.
-**Current focus:** Phase 2 — Data Layer & Non-Pitch Pages
+**Current focus:** Phase 02 — Data Layer & Non-Pitch Pages
 
 ## Current Position
 
-Phase: 02 (data-layer-non-pitch-pages) — READY TO EXECUTE
-Plan: Not started
+Phase: 02 (Data Layer & Non-Pitch Pages) — EXECUTING
+Plan: 2 of 6
 Status: Ready to execute
-Last activity: 2026-09-01 — Phase 01 complete, transitioned to Phase 2
+Last activity: 2026-09-01 — Phase 02 execution started
 
 Progress: [█░░░░░░░░░] 14% (1/7 phases, 6 plans complete)
 
@@ -64,6 +64,7 @@ Progress: [█░░░░░░░░░] 14% (1/7 phases, 6 plans complete)
 | Phase 01 P03 | 12min | 3 tasks | 2 files |
 | Phase 01-test-base-layer-app-skeleton P05 | 17min | 3 tasks | 19 files |
 | Phase 01 P06 | 13min | 2 tasks | 4 files |
+| Phase 02 P01 | 35min | 3 tasks | 19 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,8 @@ Recent decisions affecting current work:
 - [Phase 01-test-base-layer-app-skeleton]: Split router.tsx's errorElement wiring into a plain ErrorState (no router hooks) plus a separate RouteErrorBoundary that calls useRouteError, so ErrorState stays safe to unit-test outside a data-router context. — useRouteError() throws outside a data-router context, so folding it into the presentational component would have broken direct unit tests of ErrorState.
 - [Phase 01-test-base-layer-app-skeleton]: NAV_LINKS order follows the UI-SPEC Routes table (not vanilla web/index.html's nav order); label text still reuses the vanilla nav's copy for parity. — The plan's Task 1 action and acceptance criteria explicitly specify UI-SPEC Routes-table order for both router registration and NAV_LINKS.
 - [Phase 01]: [Phase 01-test-base-layer-app-skeleton]: [Plan 01-06]: Moved the 16px horizontal gutter (px-4), not just the 68rem width cap, onto the contained inner wrapper for both header and footer -- keeping it on the outer element (a literal reading of gap G-01-3's missing-item text) would have left chrome content 16px wider per side than main's content, replacing the stranded-nav bug with a new misalignment. — Vanilla's .wrap owns both the 68rem cap and the 16px gutter, and header.site/footer.site nest inside it -- so this restores true vanilla parity rather than a literal-but-broken reading of the gap's missing-item wording. Documented in the plan's gap_coverage_audit as a deliberate, in-scope extension of the same single concern (chrome containment geometry), not scope creep.
+- [Phase 02]: Preserved vanilla's literal 'undefined' text for a null captains-table ownership value (R18/Pitfall 3) instead of unifying it with the main table's en-dash fallback — Documented parity requirement per D-01/D-04 — not a bug to fix
+- [Phase 02]: Added aria-label 'xP table' / 'Captain picks' to the two tables — Disambiguates rows in tests and assistive tech once both tables can render overlapping player names
 
 ### Pending Todos
 
@@ -112,6 +115,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-01T12:21:51.700Z
-Stopped at: Phase 2 UI-SPEC approved
-Resume file: .planning/phases/02-data-layer-non-pitch-pages/02-UI-SPEC.md
+Last session: 2026-09-01T14:06:10.974Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None

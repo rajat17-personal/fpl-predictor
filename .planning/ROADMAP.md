@@ -71,11 +71,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. League, scoreboard, differentials, and methodology pages present the same information as their vanilla counterparts from the same JSON files
   5. A gameweek meta banner with a live deadline countdown is visible on every page, and a dark mode toggle persists across navigation and reload
 
-**Plans**: 6 plans (2 waves)
+**Plans**: 1/6 plans executed (2 waves)
 
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Parity tracer: the flagship xP table end to end, plus the shared sort/band/format/status-flag/page-meta utilities and the full JSON-contract interface set
+- [x] 02-01-PLAN.md — Parity tracer: the flagship xP table end to end, plus the shared sort/band/format/status-flag/page-meta utilities and the full JSON-contract interface set
 - [ ] 02-02-PLAN.md — Package-legitimacy gate, the single four-package install, and the parity deviation ledger
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -181,7 +181,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Test Base Layer & App Skeleton | 6/6 | Complete    | 2026-09-01 |
-| 2. Data Layer & Non-Pitch Pages | 0/6 | Planned | - |
+| 2. Data Layer & Non-Pitch Pages | 1/6 | In Progress|  |
 | 3. Pitch Renderer & Squad Views | 0/TBD | Not started | - |
 | 4. E2E Regression Suite | 0/TBD | Not started | - |
 | 5. Container Build & CI Pipeline | 0/TBD | Not started | - |
