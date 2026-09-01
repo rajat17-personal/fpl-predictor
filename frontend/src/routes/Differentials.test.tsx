@@ -30,7 +30,7 @@ function makeRow(overrides: Partial<XpRow> & { player_code: number; name: string
 }
 
 function mockFetchOnce(body: unknown) {
-  const fetchMock = vi.fn(() =>
+  const fetchMock = vi.fn((_path: string) =>
     Promise.resolve({
       ok: true,
       status: 200,
