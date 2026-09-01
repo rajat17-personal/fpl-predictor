@@ -1,6 +1,8 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-08-31
+<!-- refreshed: 2026-09-01 -->
+
+**Analysis Date:** 2026-09-01
 
 ## Tech Debt
 
@@ -40,6 +42,18 @@
 - Impact: Massive repo bloat; slows clone/pull; unused after FBref scrape was abandoned
 - Fix approach: Delete file; if browser automation needed again, document installation in README or CI config, never commit binary
 
+**Dual maintenance of vanilla site and React frontend:**
+- Issue: Both `web/` (vanilla HTML/JS) and `frontend/` (React/Vite) are live; changes must be synchronized across both codebases
+- Files: `web/*.html`, `web/assets/`, `frontend/src/`
+- Impact: Bug fixes and feature enhancements require double implementation; divergence risk is high; ongoing maintenance cost
+- Fix approach: Set a hard cutover date; pick one implementation as primary and freeze the other; remove old site after sunset
+
+**React and React-DOM versions use caret ranges instead of exact pins:**
+- Issue: `package.json` pins `react` and `react-dom` with caret ranges (`^19.2.8`) while all other dependencies use exact versions
+- Files: `frontend/package.json` (lines 19-20)
+- Impact: Minor version upgrades (19.2.9, 19.3.0) can introduce unexpected behavior changes or type mismatches in @types/react
+- Fix approach: Change to exact versions: `"react": "19.2.8"` and `"react-dom": "19.2.8"`; apply same to `@types/react` and `@types/react-dom` (lines 29-30)
+
 ## Known Bugs
 
 **File handles not closed (resource leak):**
@@ -70,6 +84,20 @@
 - Workaround: Re-run `python -m data.ingest`
 - Fix approach: Wrap JSON loads with try-except; log file path and error; exit cleanly with a helpful message; add a `--fetch-live` flag to explicitly refresh before proceeding
 
+**Model-mode price note renders "NaN%"/"undefined" if optional fields are absent:**
+- Symptom: `frontend/src/routes/Prices.tsx:92` force-unwraps `w.val_moved_hit!` in the model-mode note; if absent, renders "hit-rate on actual movers NaN% in validation" silently
+- Files: `frontend/src/routes/Prices.tsx::90-94`
+- Trigger: Emit a model-mode watchlist with missing `val_moved_hit` field; page displays malformed text instead of failing or falling back
+- Workaround: Ensure `models/price.py` always exports both `val_moved_hit` and `trained_utc` for model-mode payloads
+- Fix approach: Guard `val_moved_hit` with optional chaining and provide a fallback (e.g., `w.val_moved_hit != null ? (100 * w.val_moved_hit).toFixed(0) + "%" : "–"`); add a test fixture for model-mode with missing fields
+
+**Internal markdown link bypasses client-side routing:**
+- Symptom: `frontend/src/routes/Methodology.tsx:41` renders markdown links as plain `<a href="...">` instead of react-router's `<Link>`; internal links like `[scoreboard](/scoreboard)` trigger a full page reload
+- Files: `frontend/src/routes/Methodology.tsx::41`, `frontend/src/content/methodology.md::41`
+- Trigger: Click the scoreboard link in the methodology page; SPA exits, shared `meta.json` cache is cleared, full reload happens
+- Workaround: Type the URL directly into the address bar or use browser navigation
+- Fix approach: Modify the `a` component override in ReactMarkdown to detect root-relative `href` and render react-router's `<Link>` instead of a plain anchor
+
 ## Security Considerations
 
 **API key exposed in cron logs:**
@@ -86,17 +114,17 @@
 
 **Dependency versions not pinned (supply-chain risk):**
 - Risk: `requirements.txt` uses `>=` constraints; a future release of lightgbm, pulp, or pandas could introduce breaking changes or security issues
-- Files: `requirements.txt` (all lines)
+- Files: `requirements.txt` (all lines except responses)
 - Current mitigation: None; dev environment uses conda-managed python314 which pins transitive deps
-- Recommendations: Use `==` versions in production lockfile (e.g. `pip freeze > requirements.lock`); test major version upgrades before deploying
+- Recommendations: Use `==` versions in production lockfile (e.g. `pip freeze > requirements.lock`); test major version upgrades before deploying; add a periodic dependency audit (e.g., `pip audit`, `dependabot`)
 
 ## Performance Bottlenecks
 
-**Solve endpoint cache not invalidated on pool refresh:**
-- Problem: `_solve_cache` dict persists across `_refresh()` calls; if model or pool becomes stale, cached results are still returned
-- Files: `api/main.py::68,320,357` (cache cleared on refresh, but only if lock is held)
-- Cause: Thread-safety mechanism has a race condition; cache is cleared inside `_lock`, but reads happen outside
-- Improvement path: Attach cache TTL or pool version to cache key; invalidate if `time.time() - _state["loaded_at"] > POOL_TTL_S`
+**Solve endpoint cache may have race conditions:**
+- Problem: `_solve_cache` dict persists across `_refresh()` calls; if model or pool becomes stale, cached results may be returned
+- Files: `api/main.py::68,320,357` (cache cleared on refresh, but read-check is outside `_lock`)
+- Cause: Thread-safety mechanism may have a race condition; cache reads happen without holding lock
+- Improvement path: Attach cache TTL or pool version to cache key; invalidate if `time.time() - _state["loaded_at"] > POOL_TTL_S`; verify under high concurrency load
 
 **Large parquet files loaded into memory on every predict.live call:**
 - Problem: `data/processed/features.parquet` (16M) and `models/artifacts/xp_model.joblib` (7.1M) loaded via `joblib.load()` on every CLI run and API request
@@ -119,16 +147,34 @@
 - Test coverage: No tests validate live API payload parsing; a breaking change goes unnoticed until CLI crashes mid-run
 
 **FBref scrape abandoned but data seam still present:**
-- Files: `data/fbref.py` (198 lines), config.py::FBREF_COLS, features/engineer.py (merges fbref if present)
-- Why fragile: FBref returns empty cells since StatsBomb→Opta provider switch (2026-08); code still attempts merge; historical FBref cache is partial and inconsistent
-- Safe modification: Document that FBref data is blocked at source; remove the seam or make it fully optional with graceful NaN handling; add a warning log when FBREF_COLS are requested but file is missing
+- Files: `data/fbref.py` (198 lines), `config.py::FBREF_COLS`, `features/engineer.py` (merges fbref if present)
+- Why fragile: FBref returns empty cells since StatsBomb→Opta provider switch (2026-08); code still attempts merge; historical FBref cache is partial and inconsistent; no `data/fbref.parquet` file exists
+- Safe modification: Document that FBref data is blocked at source; remove the seam entirely or make it fully optional with graceful NaN handling; add a warning log when FBREF_COLS are requested but file is missing
 - Test coverage: No tests verify fbref merge correctness or handle missing data edge cases
 
-**Multi-period optimizer not integrated (sits unused):**
-- Files: `optimize/multi_period.py` (151 lines), `backtest/multi_period_season.py` (unused in main backtest)
-- Why fragile: Code is untested in live inference; small logic bugs (e.g., chip constraints, credit constraints) would only surface in production
-- Safe modification: If re-enabling, add regression tests to `tests/` and validate against known good outputs; integrate into live `/api/plan` endpoint with A/B testing
-- Test coverage: Exists in isolated backtest, but not in unit tests or API integration tests
+**Multi-period optimizer integration incomplete:**
+- Files: `optimize/multi_period.py` (151 lines), `api/main.py::plan()` (line 338+), `backtest/multi_period_season.py`
+- Why fragile: `/api/plan` uses multi-period but it's not well-integrated into the main weekly pipeline; small logic bugs (e.g., chip constraints, credit constraints) would surface only in production
+- Safe modification: If expanding, add regression tests to `tests/` and validate against known good outputs; integrate into live API with A/B testing if changing behavior
+- Test coverage: Integration tests exist for `/api/plan` endpoint (test_api.py), but end-to-end multi-week scenarios are untested
+
+**Frontend JSON contract validation missing at runtime:**
+- Files: `frontend/src/lib/api.ts::10-16`, `frontend/src/routes/Scoreboard.tsx::117-138`
+- Why fragile: `fetchJson`/`fetchApi` cast parsed JSON to TypeScript types with no runtime shape check; malformed backend response (e.g., missing required fields, type mismatches) causes uncaught TypeError inside render
+- Safe modification: Add pydantic-style runtime validators (e.g., `zod`, `io-ts`, or manual guards); catch fetch errors with RouteErrorBoundary (already in place for async rejection)
+- Test coverage: No tests verify what happens if backend emits `entries: []` with missing `summary` object; this path is exercised only if backend diverges from contract
+
+**PriceTable rows keyed on player name without uniqueness guarantee:**
+- Files: `frontend/src/routes/Prices.tsx::133` (uses `r.name` as React key)
+- Why fragile: `WatchlistRow` carries no stable id field, only `name`; two players sharing a display name would cause React key collision and silent mis-render
+- Safe modification: If/when watchlist export gains a stable id (e.g., `player_code`), switch to it; add a test case with duplicate names to expose reconciliation bugs
+- Test coverage: No test exercises watchlist risers/fallers with duplicate player names
+
+**Empty captains array renders table chrome without fallback:**
+- Files: `frontend/src/routes/XpTable.tsx::227-271`
+- Why fragile: Empty `captains.json` array renders the "Captain picks" `<h2>` and table chrome with zero rows, inconsistent with other tables' empty-state discipline
+- Safe modification: Add a `captainsData.length > 0` guard or explicitly document why an empty captains export should still show table structure; add a regression test
+- Test coverage: No test exercises `captainsData = []` scenario; default mock used by tests that don't care about captains is `[]`, but no assertion on table visibility
 
 ## Scaling Limits
 
@@ -144,7 +190,7 @@
 
 **API pool computation is single-threaded:**
 - Current capacity: `_pool()` builds the player pool synchronously; horizon > 1 computes multiple weeks sequentially
-- Limit: Busy hour during deadline (last few hours before GW deadline) can see request queue backs up
+- Limit: Busy hour during deadline (last few hours before GW deadline) can see request queue back up
 - Scaling path: Pre-compute pools on a schedule; parallelize horizon pools with ThreadPoolExecutor; use a background job queue (Celery, RQ)
 
 ## Dependencies at Risk
@@ -190,12 +236,6 @@
 - Risk: Changes to `_gw_pool()` or `build_pool()` break live inference silently; caught only when manual `python -m predict.live` fails
 - Priority: High — this is the user-facing entrypoint
 
-**API authentication not tested:**
-- What's not tested: `require_key()` stub, cache invalidation, concurrent solve requests, error responses
-- Files: `api/main.py` has no unit or integration tests
-- Risk: Auth bypass, cache coherency bugs, or race conditions go unnoticed until production
-- Priority: High — authentication and correctness are critical for product
-
 **FPL API schema validation missing:**
 - What's not tested: What happens if FPL API returns unexpected payload (missing fields, type changes, null values)
 - Files: No schema validation in bootstrap or fixtures parsing
@@ -208,6 +248,12 @@
 - Risk: Cron jobs fail silently; no alerting; price model training stops without notice
 - Priority: Medium — affects data quality but only discovered when model performance degrades
 
+**Frontend markdown rendering and routing:**
+- What's not tested: Markdown link rendering in `Methodology.tsx`; internal links don't use react-router's `<Link>`
+- Files: `frontend/src/routes/Methodology.test.tsx`, `frontend/src/content/methodology.md`
+- Risk: Link-click behavior is inconsistent with the rest of the SPA; no regression test if someone "fixes" it incorrectly
+- Priority: Low-Medium — cosmetic but inconsistent
+
 ---
 
-*Concerns audit: 2026-08-31*
+*Concerns audit: 2026-09-01*

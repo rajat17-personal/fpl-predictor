@@ -1,55 +1,59 @@
-<!-- refreshed: 2026-08-31 -->
+<!-- refreshed: 2026-09-01 -->
 # Architecture
 
-**Analysis Date:** 2026-08-31
+**Analysis Date:** 2026-09-01
 
 ## System Overview
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          Batch ML Pipeline + Product                         │
-├─────────────────────────┬────────────────────────┬──────────────────────────┤
-│   Data Ingestion        │   Features & Models    │  Optimization & Eval     │
-│ `data/ingest.py`        │ `features/engineer.py` │ `optimize/squad_ilp.py`  │
-│ `data/build_table.py`   │ `models/train.py`      │ `optimize/transfers.py`  │
-│ `data/snapshot.py`      │ `models/intervals.py`  │ `backtest/season.py`     │
-└────────────┬────────────┴──────────────┬─────────┴──────────────┬───────────┘
-             │                          │                        │
-             ▼                          ▼                        ▼
-      ┌─────────────────┐       ┌──────────────────┐    ┌──────────────────┐
-      │ data/raw/       │       │ data/processed/  │    │ predict/live.py  │
-      │ data/processed/ │       │ features.parquet │    │ predict/export.py│
-      │ data/snapshots/ │       │ xp_model.joblib  │    │                  │
-      └────────┬────────┘       └────────┬─────────┘    └────────┬─────────┘
-               │                        │                        │
-               └────────────────────────┴────────────────────────┘
-                           │
-                           ▼
-            ┌───────────────────────────────────┐
-            │   web/data/                       │
-            │   (JSON export contract)          │
-            │  • xp_table.json                  │
-            │  • captains.json                  │
-            │  • squad.json                     │
-            │  • meta.json, fixtures.json, etc. │
-            └───────────┬───────────────────────┘
-                        │
-        ┌───────────────┴──────────────────┐
-        │                                  │
-        ▼                                  ▼
-   ┌─────────────────┐          ┌──────────────────────┐
-   │   Static Site   │          │  FastAPI Solver API  │
-   │ web/ (HTML/JS)  │          │  api/main.py         │
-   │ Serves JSON     │          │  /api/solve          │
-   │                 │          │  /api/rate           │
-   └─────────────────┘          │  /api/team           │
-                                └──────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                          Batch ML Pipeline + Product                          │
+├──────────────────────┬──────────────────────┬─────────────────────────────────┤
+│   Data Ingestion     │   Features & Models  │   Optimization & Eval           │
+│ `data/ingest.py`     │ `features/engineer`  │ `optimize/squad_ilp.py`         │
+│ `data/build_table.py`│ `models/train.py`    │ `optimize/transfers.py`         │
+│ `data/snapshot.py`   │ `models/intervals.py`│ `backtest/season.py`            │
+└──────────────┬───────┴──────────────┬───────┴───────────────┬────────────────┘
+               │                      │                       │
+               ▼                      ▼                       ▼
+        ┌─────────────────┐   ┌──────────────────┐    ┌──────────────────┐
+        │ data/raw/       │   │ data/processed/  │    │ predict/live.py  │
+        │ data/processed/ │   │ features.parquet │    │ predict/export.py│
+        │ data/snapshots/ │   │ xp_model.joblib  │    │                  │
+        └────────┬────────┘   └────────┬─────────┘    └────────┬─────────┘
+                 │                    │                        │
+                 └────────────────────┴────────────────────────┘
+                                     │
+                           ┌─────────▼──────────┐
+                           │   web/data/        │
+                           │   (JSON contract)  │
+                           │ • xp_table.json    │
+                           │ • captains.json    │
+                           │ • squad.json, etc. │
+                           └─────────┬──────────┘
+                ┌──────────────────────┼──────────────────────┐
+                │                      │                      │
+                ▼                      ▼                      ▼
+         ┌─────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+         │  Static Site    │  │ FastAPI Solver   │  │ React/Vite       │
+         │ web/ (HTML/JS)  │  │ api/main.py      │  │ frontend/        │
+         │ (Legacy vanilla)│  │ /api/solve       │  │ (React Router +  │
+         │                 │  │ /api/rate        │  │  TypeScript)     │
+         └─────────────────┘  │ /api/team        │  └──────────────────┘
+                               │ GET / (web/)     │
+                               └──────────────────┘
+                                      ▲
+                        ┌─────────────┴─────────────┐
+                        │  (dev: Vite proxy)        │
+                        │  /api → localhost:8000    │
+                        │  /data → localhost:8000   │
+                        └───────────────────────────┘
 
-   ┌─────────────────────────────────────┐
-   │        Cron Jobs (scripts/)         │
-   │  • daily.sh  (snapshot + watchlist) │
-   │  • weekly.sh (export + digest)      │
-   └─────────────────────────────────────┘
+   ┌──────────────────────────────────────┐
+   │     Cron Jobs (scripts/)             │
+   │  • daily.sh  (snapshot + watchlist)  │
+   │  • weekly.sh (export + digest)       │
+   └──────────────────────────────────────┘
 ```
 
 ## Component Responsibilities
@@ -74,11 +78,12 @@
 | **Email Digest** | Render plain-text + HTML digest from exported JSON for mailing | `predict/digest.py` |
 | **Snapshots** | Idempotent daily bootstrap (player metadata, prices) for price-model training | `data/snapshot.py` |
 | **Solver API** | FastAPI: /api/solve (ILP with locks), /api/rate (rate-my-team), /api/team (squad fetch) | `api/main.py` |
-| **Static Site** | Framework-free HTML/JS consuming web/data/*.json; renders tables, charts, team editor | `web/` |
+| **Static Site (Legacy)** | Framework-free HTML/JS consuming web/data/*.json; renders tables, charts, team editor | `web/` |
+| **React Frontend** | React + TypeScript rebuild with 8 routes (XpTable, Team, Fixtures, etc.); consumes web/data/ via proxy | `frontend/src/` |
 
 ## Pattern Overview
 
-**Overall:** Batch ML pipeline with a daily/weekly product refresh cycle.
+**Overall:** Batch ML pipeline with a daily/weekly product refresh cycle. Product layer includes both a legacy vanilla static site and a new React/TypeScript frontend, both consuming the same JSON export contract.
 
 **Key Characteristics:**
 - **Leakage-safe**: All features for a fixture are computed from matches before it (strict temporal validation)
@@ -86,6 +91,8 @@
 - **Cacheable**: Predictions are exported to JSON; API caches pools + solves by (GW, params)
 - **Modular entry points**: Each phase (`python -m module`) can run independently; cron orchestrates sequences
 - **Two-objective model**: Core squad selection uses median xP (robust); captain picks use mean xP (doubles points, so maximize expectation)
+- **Contract-driven UI**: Both web/ and frontend/ consume identical JSON from web/data/; no custom API responses for UI
+- **Type-safe frontend**: React + TypeScript with interfaces in `frontend/src/lib/api.ts` mirroring export contract
 
 ## Layers
 
@@ -137,13 +144,31 @@
 - Used by: Product layer (API + site), email distribution
 - Artifacts: `web/data/*.json` (xp_table, captains, squad, etc.), digest HTML
 
-**Product Layer:**
-- Purpose: Serve predictions via API and static site
-- Location: `api/main.py`, `web/`
-- Contains: FastAPI app (cached pool builders, solve endpoint, auth stub), static HTML consuming JSON
+**API & Serving Layer:**
+- Purpose: Serve predictions via REST API and static site
+- Location: `api/main.py`
+- Contains: FastAPI app (cached pool builders, solve endpoint, auth stub), mounts StaticFiles from web/ at "/"
 - Depends on: `web/data/` JSON exports, trained model (for intervals)
-- Used by: End users (web browser, API clients)
-- Thread safety: `api/main.py` uses `threading.Lock()` for pool refresh + solve cache
+- Used by: Frontend, legacy site, API clients
+- Thread safety: Uses `threading.Lock()` for pool refresh + solve cache
+- Proxy behavior (development): Both `/api` and `/data` proxy to `localhost:8000` for shared data
+
+**Frontend Layer (React + Vite):**
+- Purpose: Modern React/TypeScript rebuild of the UI with type-safe data consumption
+- Location: `frontend/` (src/, dist/, build config)
+- Contains: 8 routes (XpTable, Team, Fixtures, Prices, League, Scoreboard, Differentials, Methodology), components, utilities
+- Build: Vite (development server with /api and /data proxies, production build to dist/)
+- Depends on: `web/data/` JSON exports (via /data/* paths)
+- Dev proxy: Vite proxies /api and /data to `localhost:8000` (same as web/)
+- Testing: Vitest + React Testing Library
+- Type-safe: Interfaces in `frontend/src/lib/api.ts` match export contract from `api/main.py`
+
+**Legacy Site Layer:**
+- Purpose: Framework-free vanilla HTML/JS site (kept live during transition)
+- Location: `web/`
+- Contains: Static HTML pages, inline JS, CSS; reads JSON from `/data/` paths
+- Depends on: `web/data/` JSON exports
+- Deployment: Deploy web/ directory as-is to static host
 
 **Cron/Job Layer:**
 - Purpose: Orchestrate daily + weekly pipeline runs
@@ -185,6 +210,22 @@
      - `meta.json`: gameweek, deadline, model timestamp
      - `fixtures.json`: team difficulty ticker (next 6 GWs)
      - `chips.json`: DGW/BGW structure + chip note
+
+### Frontend Data Consumption (React Routes)
+
+1. **User navigates to `/` (XpTable route)**
+   - `frontend/src/routes/XpTable.tsx` mounts
+   - useQuery hook calls `fetchJson<XpRow[]>("/data/xp_table.json")`
+   - Vite dev server (or FastAPI in prod) serves from `web/data/xp_table.json`
+
+2. **Data fetched and rendered**
+   - Component uses `useSortable<SortKey>()` hook for sort state
+   - Renders `<BandCell>` for p10/p90 bands (from XpRow.p10, p90)
+   - Status flags from `frontend/src/lib/statusFlag.tsx` for injuries/news
+
+3. **Secondary fetch (captain picks)**
+   - Query `fetchJson<CaptainRow[]>("/data/captains.json")` with separate error boundary
+   - If main table OK but captains fail, shows inline message (graceful degradation)
 
 ### Live Prediction Flow (Interactive CLI)
 
@@ -283,14 +324,15 @@
 - Multi-period (`optimize/multi_period.py`): Chain single-GW solves over a horizon (lookahead planning)
 
 **JSON Export Contract:**
-- Purpose: Decouple product layer (API + site) from CLI (prediction logic)
+- Purpose: Decouple product layer (API + site) from CLI (prediction logic); unified data format for all UI surfaces
 - Files in `web/data/`:
   - `meta.json`: gameweek, deadline, model timestamp
   - `xp_table.json`: all players + xP + intervals + ownership
   - `captains.json`: top captain picks
   - `squad.json`: optimal 15-man + XI
   - `history/gw{N}.json`: frozen predictions (for scoreboard)
-- Why: Allows API/site to work offline; enables versioning + replay
+- Consumed by: `api/main.py` (StaticFiles mount), `frontend/src/lib/api.ts` (typed fetch), `web/assets/app.js` (legacy)
+- Why: Allows API/site to work offline; enables versioning + replay; both old and new UI can coexist
 
 **Walk-Forward Backtest:**
 - Purpose: Reduce single-season noise via multiple retrains + jitter
@@ -298,6 +340,13 @@
 - Confidence bands: K jittered replicas (5% noise on xP) → within-season range
 - Isolated chips: Measure each chip on the same team with/without it
 - Files: `data/processed/test_predictions.parquet` (frozen predictions per test season)
+
+**Type-Safe Frontend Interfaces:**
+- Purpose: Mirror the JSON export contract in TypeScript for compile-time safety
+- Location: `frontend/src/lib/api.ts`
+- Examples: `XpRow`, `CaptainRow`, `FixtureTickerTeam`, `WatchlistRow`, `ScoreboardEntry`
+- Auto-sync: Contract changes in `api/main.py` or `predict/export.py` require updating interfaces
+- Fetch pattern: `fetchJson<XpRow[]>("/data/xp_table.json")` ensures type coercion
 
 ## Entry Points
 
@@ -325,6 +374,15 @@
   - `GET /api/team/{entry}` — fetch manager's current squad
   - `GET /` (static files) — serves `web/` directory
 
+**Frontend (React + Vite):**
+- Location: `frontend/`
+- Development: `npm run dev` (starts Vite dev server on port 5173 with proxies to localhost:8000)
+- Build: `npm run build` (compiles TypeScript + bundles to frontend/dist/)
+- Preview: `npm run preview` (serves dist/ locally for testing production build)
+- Test: `npm run test` (runs Vitest suite)
+- Entry point: `frontend/src/main.tsx` (mounts React app to #root in index.html)
+- Router: `frontend/src/router.tsx` (defines 8 routes + error boundaries)
+
 **Cron/Scheduled Jobs:**
 - `scripts/daily.sh` (cron 02:30 UTC):
   - `python -m data.snapshot` — idempotent bootstrap
@@ -348,6 +406,8 @@
 - **Idempotency:** `data/snapshot.py` is idempotent per UTC day (no duplicates from re-runs). `models.price --train` only trains once (checks artifact exists).
 - **Cache TTL:** Pool cache expires after 1 hour (`POOL_TTL_S = 3600`). Solve cache clears on refresh.
 - **Constraint satisfaction:** All ILP solves enforce FPL rules (budget, quotas, formations, max-per-club). Results validated post-solve (`tests/test_legality.py`).
+- **Frontend-backend contract:** Both React frontend and legacy site consume identical JSON from `web/data/` via relative paths (`/data/xp_table.json`). No custom API responses for UI — all UI surfaces are stateless and read-only.
+- **Development isolation:** Vite dev server proxies `/api` and `/data` to `localhost:8000`; production FastAPI serves both from same process (no proxy needed).
 
 ## Anti-Patterns
 
@@ -385,8 +445,11 @@
 - **Validation errors:** ILP solves that violate constraints raise `ValueError` with the constraint name.
 - **Leakage detection:** `tests/test_leakage.py` asserts no match outcome appears in pre-match features. Run before shipping.
 - **Grid search:** `models/tune.py` logs hyperparameter results; failed evals raise exception (no silent NaN weights).
+- **Frontend data errors:** React components use error boundaries + suspense. Network failures show `<ErrorState>` with retry button (see `frontend/src/components/ErrorState.tsx`). Missing optional fields (e.g., captains.json) fail gracefully in-place (see `XpTable.tsx:63-67`).
 
-**Logging:** Minimal; mostly `print()` statements in entry points. Cron jobs redirect stdout/stderr to `data/cron.log` for later inspection.
+**Logging:** 
+- Python: Minimal; mostly `print()` statements in entry points. Cron jobs redirect stdout/stderr to `data/cron.log` for later inspection.
+- Frontend: `console.error(error)` on fetch failures; tests log to stdout.
 
 ## Cross-Cutting Concerns
 
@@ -399,11 +462,13 @@
 - Feature legality: `tests/test_leakage.py` ensures no match outcome in pre-match features.
 - Squad legality: `tests/test_legality.py` checks all ILP solutions obey FPL rules.
 - Autosub correctness: `tests/test_autosub.py` simulates matches and validates bench→XI substitutions.
+- Frontend routing: `frontend/src/routes/routeIsolation.test.tsx` ensures each route can fail independently (error boundary per route, not shared).
 
 **Authentication:**
 - **Stub mode:** If `FPL_API_KEYS` env var is not set, API endpoints are open.
 - **Stub mode:** If set, requires `X-API-Key` header (comma-separated keys in env var).
 - **Migration path:** Replace `require_key()` in `api/main.py` with real Supabase JWT + subscriptions table when payments are live.
+- **Frontend auth:** Not yet implemented; placeholder for future paid tiers.
 
 **Rate limiting:**
 - **Not implemented.** Pool cache + solve cache reduce server load; scale up CPU/memory if needed.
@@ -411,4 +476,4 @@
 
 ---
 
-*Architecture analysis: 2026-08-31*
+*Architecture analysis: 2026-09-01*

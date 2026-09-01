@@ -1,6 +1,6 @@
 # Codebase Structure
 
-**Analysis Date:** 2026-08-31
+**Analysis Date:** 2026-09-01
 
 ## Directory Layout
 
@@ -8,7 +8,7 @@
 fpl/
 ├── config.py                        # Constants, paths, seasons, FPL rules, feature lists
 ├── requirements.txt                 # Python dependencies (pandas, lightgbm, pulp, etc.)
-├── pytest.ini                       # Test runner config
+├── pytest.ini                       # Test runner config (Python)
 ├── README.md                        # Quick start + product layer overview
 ├── PLAN.md                          # Build log, experiments, findings
 ├── ROADMAP.md                       # Productization status & roadmap
@@ -77,7 +77,7 @@ fpl/
 │   ├── main.py                      # Endpoints: /api/solve, /api/rate, /api/team; serves web/
 │   └── __init__.py
 │
-├── web/                             # Static site (Cloudflare Pages-ready)
+├── web/                             # Static site (vanilla HTML/JS, legacy)
 │   ├── index.html                   # Main page (xp table, squad, captains)
 │   ├── team.html                    # Team editor (rate-my-team)
 │   ├── scoreboard.html              # Post-GW accuracy feed
@@ -103,15 +103,82 @@ fpl/
 │       └── history/                 # Frozen predictions (for scoreboard replay)
 │           └── gw{N}.json           # Per-GW: frozen xP + FPL's ep_next + actual (after GW ends)
 │
+├── frontend/                        # React + TypeScript rebuild (new)
+│   ├── package.json                 # Node.js dependencies (React, Vite, TailwindCSS, TypeScript)
+│   ├── package-lock.json            # Lockfile
+│   ├── vite.config.ts               # Vite build config + dev proxy (/api, /data → localhost:8000)
+│   ├── vitest.config.ts             # Vitest config (unit/component tests)
+│   ├── tsconfig.json                # TypeScript config
+│   ├── index.html                   # Entry HTML (mounts React at #root)
+│   ├── src/
+│   │   ├── main.tsx                 # React app entry point (creates root, renders router)
+│   │   ├── router.tsx               # React Router config (8 routes + error boundaries)
+│   │   ├── index.css                # Global Tailwind CSS
+│   │   ├── components/              # Reusable React components
+│   │   │   ├── PageShell.tsx        # Layout wrapper (header, nav, footer)
+│   │   │   ├── GwBanner.tsx         # Gameweek + deadline display
+│   │   │   ├── ErrorState.tsx       # Error boundary for graceful failures
+│   │   │   ├── Spinner.tsx          # Loading indicator
+│   │   │   ├── ThemeToggle.tsx      # Light/dark mode switch
+│   │   │   ├── BandCell.tsx         # p10/p90 interval cell renderer
+│   │   │   ├── FdrCell.tsx          # Fixture difficulty cell
+│   │   │   ├── EmptyState.tsx       # Empty state placeholder
+│   │   │   ├── NotFoundPage.tsx     # 404 page
+│   │   │   └── *.test.tsx           # Component unit tests (Vitest)
+│   │   ├── routes/                  # Page-level route components (React Router)
+│   │   │   ├── XpTable.tsx          # Main xP table (D-06, sortable, filterable)
+│   │   │   ├── Team.tsx             # Rate-my-team (current squad + improvements)
+│   │   │   ├── Fixtures.tsx         # Team fixture ticker
+│   │   │   ├── Prices.tsx           # Price movers (watchlist)
+│   │   │   ├── League.tsx           # League standings + projections
+│   │   │   ├── Scoreboard.tsx       # Post-GW accuracy + historical
+│   │   │   ├── Differentials.tsx    # Differential picks vs average ownership
+│   │   │   ├── Methodology.tsx      # Documentation page (markdown)
+│   │   │   └── *.test.tsx           # Route integration tests
+│   │   ├── lib/                     # Utility functions & hooks (no JSX)
+│   │   │   ├── api.ts               # Typed interfaces for JSON contract (MetaResponse, XpRow, etc.)
+│   │   │   ├── format.ts            # Number formatting (fixed1, fixed2, orDash)
+│   │   │   ├── sortable.ts          # Sortable table logic (useSortable hook, sortRows)
+│   │   │   ├── theme.ts             # Light/dark theme logic (useTheme hook)
+│   │   │   ├── deadline.ts          # Gameweek deadline calculation
+│   │   │   ├── bandCell.ts          # p10/p90 band rendering helper
+│   │   │   ├── statusFlag.tsx       # Injury/news status renderer
+│   │   │   ├── usePageMeta.ts       # <title> + <meta> tag updater (per route)
+│   │   │   └── *.test.ts            # Utility function tests
+│   │   ├── test/                    # Test fixtures + setup
+│   │   │   ├── setup.ts             # Vitest + React Testing Library config
+│   │   │   ├── harness.test.tsx     # Integration test harness (memoryRouter, full flow)
+│   │   │   ├── routeIsolation.test.tsx # Each route can fail independently (error boundaries)
+│   │   │   └── fixtures/            # Mock JSON data for tests
+│   │   │       ├── xp_table.json
+│   │   │       ├── captains.json
+│   │   │       ├── meta.json
+│   │   │       ├── fixtures.json
+│   │   │       ├── watchlist_*.json
+│   │   │       ├── standings.json
+│   │   │       ├── leaders.json
+│   │   │       └── scoreboard.json
+│   │   ├── content/                 # Markdown files (Methodology page)
+│   │   │   └── methodology.md
+│   │   └── vite-env.d.ts            # Vite type definitions
+│   ├── dist/                        # Production build output (generated by `npm run build`)
+│   │   ├── index.html               # Built entry HTML
+│   │   ├── assets/                  # Bundled JS + CSS + fonts
+│   │   └── favicon.svg
+│   └── public/                      # Static assets (copied to dist/ as-is)
+│       └── favicon.svg
+│
 ├── scripts/                         # Cron entry points
 │   ├── daily.sh                     # 02:30 UTC: snapshot + price model + watchlist + scoreboard
 │   └── weekly.sh                    # 08:00 UTC Fridays: live_history + export + digest
 │
-├── tests/                           # Pytest suite
+├── tests/                           # Pytest suite (Python)
+│   ├── conftest.py                  # Pytest fixtures
+│   ├── test_api.py                  # API endpoint tests (solve, rate, team, health)
+│   ├── test_product.py              # Integration tests (intervals, snapshot, export, price, solver, API, digest)
 │   ├── test_legality.py             # ILP results obey FPL rules
 │   ├── test_leakage.py              # No match outcome in pre-match features
-│   ├── test_autosub.py              # Autosub + vice-captain logic
-│   └── test_product.py              # Intervals, snapshot, export, price, solver, API, digest
+│   └── test_autosub.py              # Autosub + vice-captain logic
 │
 ├── .github/                         # GitHub Actions (mirrors cron scripts)
 │   └── workflows/
@@ -131,7 +198,7 @@ fpl/
 **config.py:**
 - Purpose: Single source of truth for constants, paths, seasons, FPL rules, feature lists
 - Key exports: `ROOT`, `SEASONS`, `TRAIN/VAL/TEST`, `BUDGET`, `POSITION_QUOTA`, `WINDOWS`, `SET_PIECE_COLS`, `ODDS_COLS`, `FBREF_COLS`
-- Imported by: All modules
+- Imported by: All Python modules
 - Do not edit during runs: Changing `SEASONS` or `TRAIN_SEASONS` requires re-running the entire pipeline
 
 **data/:**
@@ -188,13 +255,32 @@ fpl/
 - Endpoints: `/api/solve`, `/api/rate/{entry}`, `/api/team/{entry}`, `GET /` (static files)
 - State: Thread-safe `_state` dict (FPL snapshot, cached pools, artifact) + `_solve_cache`
 - Auth stub: `require_key()` (replace when payments land)
+- StaticFiles mount: Serves `web/` directory at "/" (enables both API + static HTML)
 
 **web/:**
-- Purpose: Framework-free static site + JSON contract
+- Purpose: Framework-free static site + JSON contract (legacy, kept live during transition)
 - HTML pages: `index.html` (xp table), `team.html` (rate-my-team), `scoreboard.html`, `fixtures.html`, etc.
 - Client app: `assets/app.js` (table rendering, API calls, filters)
 - Data: `web/data/` JSON files (xp_table, captains, squad, etc.); refreshed weekly by export.py
 - Deployment: Deploy `web/` directory to Cloudflare Pages (or any static host)
+- Lifetime: Coexists with React frontend; can be removed once migration is complete
+
+**frontend/:**
+- Purpose: Modern React + TypeScript rebuild of the UI (new layer)
+- Structure:
+  - `src/main.tsx`: React app entry point (mounts to #root)
+  - `src/router.tsx`: Route definitions (8 routes + error boundaries per route)
+  - `src/components/`: Reusable UI components (PageShell, Spinner, ErrorState, etc.)
+  - `src/routes/`: Page-level components (XpTable, Team, Fixtures, etc.) matching 8 UI-SPEC routes
+  - `src/lib/`: Utilities (api.ts with typed interfaces, format.ts, sortable.ts, theme.ts, usePageMeta.ts)
+  - `src/test/`: Test setup + fixtures (mock JSON data mirroring web/data/ schema)
+- Build:
+  - Dev: `npm run dev` (Vite dev server on port 5173, proxies /api and /data to localhost:8000)
+  - Prod: `npm run build` (TypeScript compilation + Vite bundling → dist/)
+  - Preview: `npm run preview` (serves dist/ locally)
+- Testing: Vitest + React Testing Library (unit tests in components/ and lib/, integration in routes/)
+- Data contract: Consumes identical JSON from `/data/*` as legacy site; type-safe via api.ts interfaces
+- Dependency: @tanstack/react-query (data fetching + caching), react-router (routing), tailwindcss (styling)
 
 **scripts/:**
 - Purpose: Cron entry points for daily + weekly jobs
@@ -203,12 +289,13 @@ fpl/
 - Both use the Python env: `/home/sraja/miniconda3/envs/python314/bin/python`
 
 **tests/:**
-- Purpose: Validate legality, leakage, autosubs, product components
+- Purpose: Validate legality, leakage, autosubs, product components (Python only)
 - Key files:
+  - `test_api.py`: API endpoint tests (solve, rate, team, health)
+  - `test_product.py`: Integration tests (intervals, snapshot, export, price, solver, API, digest)
   - `test_legality.py`: ILP results obey FPL constraints
   - `test_leakage.py`: Features don't contain match outcomes
   - `test_autosub.py`: Bench→XI substitution logic
-  - `test_product.py`: Intervals, snapshot, export, price, solver, API, digest
 - Run: `python -m pytest` (or `pytest tests/test_product.py -v` for specific test)
 
 **.github/workflows/:**
@@ -232,12 +319,17 @@ fpl/
 - `predict/live.py`: `main()` (interactive recommendation)
 - `predict/export.py`: `export()` (weekly JSON export)
 - `api/main.py`: FastAPI `app` (solver API + static site)
+- `frontend/src/main.tsx`: React app entry (mounts to #root)
+- `frontend/src/router.tsx`: Route definitions
 
 **Configuration:**
-- `config.py`: Paths, seasons, FPL rules, feature lists
+- `config.py`: Paths, seasons, FPL rules, feature lists (Python)
 - `requirements.txt`: Python dependencies
-- `pytest.ini`: Test runner config (minimal markers)
-- `web/config.js`: Client-side API base URL
+- `pytest.ini`: Test runner config (Python)
+- `frontend/package.json`: Node.js dependencies (React, Vite, TailwindCSS)
+- `frontend/vite.config.ts`: Vite build config + dev proxy
+- `frontend/vitest.config.ts`: Vitest test config
+- `web/config.js`: Client-side API base URL (legacy site)
 
 **Core Logic:**
 - `data/build_table.py`: Canonical player_gw table builder
@@ -246,31 +338,44 @@ fpl/
 - `optimize/squad_ilp.py`: Squad selection ILP
 - `optimize/transfers.py`: Weekly transfer ILP
 - `backtest/season.py`: Season state machine
+- `frontend/src/routes/XpTable.tsx`: Main xP table (React)
+- `frontend/src/routes/Team.tsx`: Rate-my-team (React)
 
 **Testing:**
+- `tests/test_api.py`: API endpoint tests
+- `tests/test_product.py`: Integration tests
 - `tests/test_legality.py`: Constraint validation
 - `tests/test_leakage.py`: Feature leakage detection
 - `tests/test_autosub.py`: Autosub simulation
-- `tests/test_product.py`: Integration tests (intervals, export, API, digest)
+- `frontend/src/components/*.test.tsx`: Component unit tests
+- `frontend/src/routes/*.test.tsx`: Route integration tests
+- `frontend/src/lib/*.test.ts`: Utility function tests
+- `frontend/src/test/harness.test.tsx`: Full app integration harness
 
 ## Naming Conventions
 
 **Files:**
 - `*.py`: Python modules (snake_case with `_` prefixes for private functions, no suffix for public ones)
 - `config.py`: Master constants file (not config/ directory, single file only)
-- `main.py`: Entry point for a package (e.g., `api/main.py` for FastAPI app)
+- `main.py`: Entry point for a package (e.g., `api/main.py` for FastAPI app, `frontend/src/main.tsx` for React)
 - `train.py`, `ingest.py`, `engineer.py`: Verb names (what the module does)
 - `.html`: Static site pages; hyphenated names (index.html, team.html, scoreboard.html)
 - `.json`: Data exports (lowercase, underscored: xp_table.json, captains.json, meta.json)
+- `.tsx`: React components (PascalCase: XpTable.tsx, PageShell.tsx)
+- `.ts`: TypeScript utilities (camelCase: api.ts, format.ts)
 
 **Directories:**
-- `data/`, `features/`, `models/`, `optimize/`, `backtest/`, `predict/`, `api/`, `web/`, `tests/`, `scripts/`: Phase/component names
+- `data/`, `features/`, `models/`, `optimize/`, `backtest/`, `predict/`, `api/`, `web/`, `frontend/`, `tests/`, `scripts/`: Phase/component names
 - `data/raw/`: Cached downloads (do not edit)
 - `data/processed/`: Canonical tables (outputs of pipeline)
 - `data/snapshots/`: Daily snapshots (critical, not backfillable)
 - `models/artifacts/`: Saved model weights + intervals
 - `web/data/`: JSON export contract (weekly)
 - `web/data/history/`: Frozen predictions per GW (for scoreboard)
+- `frontend/src/components/`: Reusable React components
+- `frontend/src/routes/`: Page-level route components (one per route)
+- `frontend/src/lib/`: Utility functions + hooks (no JSX)
+- `frontend/src/test/`: Test setup + fixtures
 
 **Columns (Dataframes):**
 - `player_code`: Stable player ID across seasons (int, primary key in production)
@@ -284,7 +389,7 @@ fpl/
 - `fdr_self`, `fdr_opp`: Fixture difficulty rating (int, 1-5)
 - `is_dgw`: Double gameweek flag (bool)
 
-**Functions:**
+**Functions (Python):**
 - `build_*()`: Construct a data structure (e.g., `build_pool()`, `build_table()`)
 - `load_*()`: Read from disk (e.g., `load_features()`, `load_artifact()`)
 - `fetch_*()`: Retrieve from external API (e.g., `fetch_fpl_live()`)
@@ -293,39 +398,62 @@ fpl/
 - `_*()`: Private/internal function (leading underscore)
 - `*_gw()`: Functions operating on a single gameweek (e.g., `optimize_gw()`)
 
+**Functions (TypeScript/React):**
+- `use*()`: React hooks (e.g., `useSortable`, `usePageMeta`, `useTheme`)
+- `*Cell()`: Component that renders a table cell (e.g., `BandCell`, `FdrCell`)
+- `*State()`: Component for state display (e.g., `ErrorState`, `EmptyState`)
+- `*Flag()`: Component for status indicators (e.g., `StatusFlag`)
+- `fetch*()`: Data fetching functions (e.g., `fetchJson`, `fetchApi`)
+- `*Row`: TypeScript interface for a JSON row (e.g., `XpRow`, `CaptainRow`)
+
 ## Where to Add New Code
 
-**New Feature (e.g., additional rolling window):**
+**New Feature (Python, e.g., additional rolling window):**
 - Edit: `features/engineer.py:add_features()` to add new `feat[col] = ...` line
 - Rerun: `python -m features.engineer` to regenerate `data/processed/features.parquet`
 - Retrain: `python -m models.train` to pick it up in the next model
 - Test: `python -m backtest.walk_forward` to measure impact
 
-**New Data Source (e.g., additional external API):**
+**New Data Source (Python, e.g., additional external API):**
 - Add fetch function: `data/<source>.py` (e.g., `data/fancy_stats.py:fetch_fancy_stats()`)
 - Join to player_gw: Edit `data/build_table.py:build()` to merge new data
 - Add config: Export columns to `config.FANCY_STATS_COLS` if optional
 - Rerun: `python -m data.build_table` → `python -m features.engineer` → retrain
 
-**New API Endpoint (e.g., /api/transfers-advice):**
+**New API Endpoint (Python, e.g., /api/transfers-advice):**
 - Edit: `api/main.py` to add new `@app.get()` or `@app.post()` decorated function
 - Logic: Call `optimize/transfers.py:optimize_gw()` or similar
 - Cache: Consider `_solve_cache` if expensive; else compute on-demand
 - Test: `curl http://localhost:8000/api/transfers-advice?gw=1`
 
-**New Web Page (e.g., player comparison tool):**
-- Create: `web/<page>.html` (vanilla HTML/JS, read from `/` config)
-- Client: Add fetch calls to `web/assets/app.js` or inline script tags
-- API: May need new endpoint in `api/main.py` to expose data
-- Deploy: Include in `web/` directory when pushing to Cloudflare Pages
+**New React Route (e.g., player comparison tool):**
+- Create: `frontend/src/routes/<PageName>.tsx` (React component with useQuery to fetch data)
+- Router: Add entry to `frontend/src/router.tsx` routes array
+- Component: Implement error boundary via `<RouteErrorBoundary resource="..."/>`
+- Type-safe: Add interfaces to `frontend/src/lib/api.ts` if new JSON is needed
+- Test: Add `frontend/src/routes/<PageName>.test.tsx`
+- API/export: If new data source, export from `predict/export.py` to `web/data/`
+
+**New Component (React, e.g., player comparison cell):**
+- File: `frontend/src/components/<ComponentName>.tsx` (PascalCase)
+- Type-safe: Add TypeScript props interface
+- Test: Add `frontend/src/components/<ComponentName>.test.tsx`
+- Reuse: Import and use in routes or other components
+
+**New Utility (React/TypeScript, e.g., price formatter):**
+- File: `frontend/src/lib/<utilName>.ts` (camelCase, no JSX)
+- Test: Add `frontend/src/lib/<utilName>.test.ts`
+- Import: Use in components/routes via `import { funcName } from "../lib/<utilName>"`
 
 **New Test:**
-- File: `tests/test_<component>.py` (e.g., `tests/test_price.py` for price model)
-- Framework: pytest (assert statements)
-- Run: `python -m pytest tests/test_<component>.py -v`
-- Coverage: Existing tests in `tests/test_product.py` cover export, intervals, solver, API
+- Python: `tests/test_<component>.py` (e.g., `tests/test_price.py` for price model)
+  - Framework: pytest (assert statements)
+  - Run: `python -m pytest tests/test_<component>.py -v`
+- React: Component test in `frontend/src/components/<ComponentName>.test.tsx` or route test in `frontend/src/routes/<PageName>.test.tsx`
+  - Framework: Vitest + React Testing Library
+  - Run: `cd frontend && npm run test`
 
-**New CLI Command (e.g., python -m data.live_stats):**
+**New CLI Command (Python, e.g., python -m data.live_stats):**
 - File: Create new module in appropriate package (e.g., `data/live_stats.py`)
 - Entry point: Define `main()` function + `if __name__ == "__main__"` block
 - Run: `python -m data.live_stats [args]` (Python finds it via import path)
@@ -352,10 +480,11 @@ fpl/
 - Reproducibility: Deterministic (time-based splits, fixed seed)
 
 **web/data/:**
-- Purpose: JSON export contract (site reads from here)
+- Purpose: JSON export contract (site reads from here); shared by legacy site and React frontend
 - Generated: `python -m predict.export` (weekly, before gameweek deadline)
 - Committed: YES (version control the contract for replay/audit)
 - Content: xp_table.json, captains.json, squad.json, meta.json, fixtures.json, chips.json, history/
+- Consumed by: `api/main.py` (StaticFiles mount), `frontend/src/lib/api.ts` (React fetch), `web/assets/app.js` (legacy)
 
 **web/data/history/:**
 - Purpose: Frozen predictions per GW (for post-GW scoreboard comparison)
@@ -363,6 +492,17 @@ fpl/
 - Committed: YES (audit trail of predictions vs actuals)
 - Format: One JSON file per finished gameweek; immutable once written
 
+**frontend/dist/:**
+- Purpose: Production-ready build output (generated by `npm run build`)
+- Generated: `cd frontend && npm run build`
+- Committed: NO (regenerated from src/ on every build)
+- Deployment: Upload dist/ contents to CDN or static host (or let FastAPI serve frontend/src via Vite dev proxy)
+
+**frontend/src/test/fixtures/:**
+- Purpose: Mock JSON data for component/route tests (mirrors web/data/ schema)
+- Committed: YES (test dependencies, not generated)
+- Usage: Imported by test files to avoid real API calls during testing
+
 ---
 
-*Structure analysis: 2026-08-31*
+*Structure analysis: 2026-09-01*
