@@ -43,8 +43,13 @@ describe("route isolation (UI-SPEC E2 partial backstop)", () => {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
     }
 
+    // Fixtures is now the real, fully-ported route (plan 02-04) rather than
+    // the Phase 1 placeholder heading, and the mocked fetch above rejects
+    // every URL — so navigating here still surfaces the route's OWN
+    // ErrorState, naming its own resource, proving the route genuinely
+    // switched (not a stale render of the "/" route's error).
     fireEvent.click(screen.getByRole("link", { name: "Fixtures" }));
-    expect(await screen.findByRole("heading", { name: "Fixtures" })).toBeInTheDocument();
+    expect(await screen.findByText(/the fixture data/)).toBeInTheDocument();
 
     globalThis.fetch = originalFetch;
   });

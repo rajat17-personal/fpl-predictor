@@ -93,7 +93,14 @@ export interface FixtureTickerTeam {
   xgc_next: number | null;
 }
 
-/** One row of a watchlist's `risers`/`fallers` array (web/data/watchlist.json). */
+/** One row of a watchlist's `risers`/`fallers` array (web/data/watchlist.json).
+ *
+ * `prob` and `proj_tonight` are genuinely absent keys (not just null) on some
+ * modes, not merely nullable — confirmed by reading models/price.py directly
+ * (2026-09-01, plan 02-04): `_emit_official`'s official-mode rows never carry
+ * a `prob` key at all, and `_entry`'s heuristic/model-mode rows only add a
+ * `prob` key when a real probability exists (never for heuristic) and never
+ * add `proj_tonight` at all (that key is official-mode only). */
 export interface WatchlistRow {
   name: string;
   team: string;
@@ -102,8 +109,8 @@ export interface WatchlistRow {
   ownership: number;
   net_transfers: number | null;
   progress: number | null;
-  prob: number | null;
-  proj_tonight: number | null;
+  prob?: number | null;
+  proj_tonight?: number | null;
   status: string | null;
 }
 
