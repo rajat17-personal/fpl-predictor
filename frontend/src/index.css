@@ -1,14 +1,21 @@
 @import "tailwindcss";
+@import "@fontsource/archivo/700.css";
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-mono/400.css";
 
 /* Design tokens ported from web/assets/style.css, the vanilla site's single source of
- * visual truth. Light values declared on the token; dark values applied through
- * prefers-color-scheme below. Swappable for a `data-theme` attribute strategy when the
- * Phase 2 dark-mode toggle (UIX-02) needs explicit user override rather than only OS
- * preference — see the dark block's own comment.
+ * visual truth. Light values declared on the token; dark values applied through the
+ * `.dark` class block below. Dark mode is resolved via Tailwind v4's class-based
+ * `@custom-variant dark` strategy (UIX-02, D-16/D-17) — an inline script in
+ * frontend/index.html applies the `dark` class to <html> before React mounts, and
+ * useTheme() keeps it in sync afterward. This is the single dark-mode mechanism; no
+ * `@media (prefers-color-scheme: dark)` block competes with it.
  *
  * Every colour the UI-SPEC names is declared here now, even ones unused by this
  * phase's shell (--color-warn, --color-band*, --color-fdr*) — later phases add usage,
  * never new tokens. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* Backgrounds / surfaces */
   --color-bg: #fafbf7;
@@ -72,37 +79,35 @@
   --text-display--line-height: 1.15;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #111815;
-    --color-surface: #18211c;
-    --color-surface-2: #1f2a24;
+.dark {
+  --color-bg: #111815;
+  --color-surface: #18211c;
+  --color-surface-2: #1f2a24;
 
-    --color-ink: #e6ece6;
-    --color-ink-2: #9caba0;
-    --color-line: #2c3831;
+  --color-ink: #e6ece6;
+  --color-ink-2: #9caba0;
+  --color-line: #2c3831;
 
-    --color-accent: #4cb878;
-    --color-accent-ink: #6bcb90;
-    --color-accent-bg: #1a2e22;
+  --color-accent: #4cb878;
+  --color-accent-ink: #6bcb90;
+  --color-accent-bg: #1a2e22;
 
-    --color-bad: #e08578;
+  --color-bad: #e08578;
 
-    --color-warn: #d9a94a;
-    --color-warn-bg: #2a2415;
+  --color-warn: #d9a94a;
+  --color-warn-bg: #2a2415;
 
-    --color-band: #184f95;
-    --color-band-pt: #3987e5;
+  --color-band: #184f95;
+  --color-band-pt: #3987e5;
 
-    --color-fdr1-bg: #3987e5;
-    --color-fdr1-ink: #111815;
-    --color-fdr2-bg: #184f95;
-    --color-fdr2-ink: #e6ece6;
-    --color-fdr3-bg: #383835;
-    --color-fdr3-ink: #e6ece6;
-    --color-fdr4-bg: #a04644;
-    --color-fdr4-ink: #e6ece6;
-    --color-fdr5-bg: #e66767;
-    --color-fdr5-ink: #111815;
-  }
+  --color-fdr1-bg: #3987e5;
+  --color-fdr1-ink: #111815;
+  --color-fdr2-bg: #184f95;
+  --color-fdr2-ink: #e6ece6;
+  --color-fdr3-bg: #383835;
+  --color-fdr3-ink: #e6ece6;
+  --color-fdr4-bg: #a04644;
+  --color-fdr4-ink: #e6ece6;
+  --color-fdr5-bg: #e66767;
+  --color-fdr5-ink: #111815;
 }

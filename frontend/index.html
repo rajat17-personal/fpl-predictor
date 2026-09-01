@@ -4,12 +4,26 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Archivo:wght@700&family=IBM+Plex+Sans:wght@400&family=IBM+Plex+Mono:wght@400&display=swap"
-    />
     <title>FPL ML — expected points, honestly measured</title>
+    <script>
+      (function () {
+        // Pre-mount theme resolution (UIX-02, D-16): applies the `dark` class to
+        // <html> before React mounts so a reload in dark mode never flashes
+        // light. Must agree exactly with useTheme()'s resolution logic in
+        // src/lib/theme.ts — same storage key, same treatment of unknown values.
+        try {
+          var stored = localStorage.getItem("fpl-theme");
+          var isDark =
+            stored === "dark" ||
+            (stored !== "light" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", isDark);
+        } catch (e) {
+          /* storage access can throw in some privacy modes — fall through, page
+             loads in the default light state rather than breaking. */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
