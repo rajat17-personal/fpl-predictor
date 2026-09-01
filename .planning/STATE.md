@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 current_phase: 01
 current_phase_name: Test Base Layer & App Skeleton
-status: verifying
-stopped_at: Completed 01-05-PLAN.md
-last_updated: "2026-08-31T17:42:51.311Z"
-last_activity: 2026-08-31
+status: executing
+stopped_at: Completed 01-06-PLAN.md
+last_updated: "2026-09-01T11:18:12.638Z"
+last_activity: 2026-09-01
 last_activity_desc: Phase 01 execution started
-state_head: 57cc7081a3c1cb9ddaf8336eaffe20af852637cb
+state_head: 00f91eef43c405ba2940a442dbbe52f645a4a232
 progress:
   total_phases: 7
   completed_phases: 0
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 6
+  completed_plans: 6
   percent: 0
 ---
 
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-08-31)
 ## Current Position
 
 Phase: 01 (Test Base Layer & App Skeleton) — EXECUTING
-Plan: 5 of 5
-Status: Phase complete — ready for verification
-Last activity: 2026-08-31 — Phase 01 execution started
+Plan: 2 of 6
+Status: Ready to execute
+Last activity: 2026-09-01 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -63,6 +63,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P04 | 21min | 3 tasks | 20 files |
 | Phase 01 P03 | 12min | 3 tasks | 2 files |
 | Phase 01-test-base-layer-app-skeleton P05 | 17min | 3 tasks | 19 files |
+| Phase 01 P06 | 13min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,7 @@ Recent decisions affecting current work:
 - [Phase 01]: [Phase 01 Plan 03]: Task 1's plan-authored <verify> command called responses.__version__, which does not exist on installed responses==0.26.3 (within the approved >=0.25,<0.27 pin). Verified the same fact -- pin installed and recorded -- via importlib.metadata.version('responses') instead; documented as a Rule 3 deviation in the plan's verify command, not the implementation.
 - [Phase 01-test-base-layer-app-skeleton]: Split router.tsx's errorElement wiring into a plain ErrorState (no router hooks) plus a separate RouteErrorBoundary that calls useRouteError, so ErrorState stays safe to unit-test outside a data-router context. — useRouteError() throws outside a data-router context, so folding it into the presentational component would have broken direct unit tests of ErrorState.
 - [Phase 01-test-base-layer-app-skeleton]: NAV_LINKS order follows the UI-SPEC Routes table (not vanilla web/index.html's nav order); label text still reuses the vanilla nav's copy for parity. — The plan's Task 1 action and acceptance criteria explicitly specify UI-SPEC Routes-table order for both router registration and NAV_LINKS.
+- [Phase 01]: [Phase 01-test-base-layer-app-skeleton]: [Plan 01-06]: Moved the 16px horizontal gutter (px-4), not just the 68rem width cap, onto the contained inner wrapper for both header and footer -- keeping it on the outer element (a literal reading of gap G-01-3's missing-item text) would have left chrome content 16px wider per side than main's content, replacing the stranded-nav bug with a new misalignment. — Vanilla's .wrap owns both the 68rem cap and the 16px gutter, and header.site/footer.site nest inside it -- so this restores true vanilla parity rather than a literal-but-broken reading of the gap's missing-item wording. Documented in the plan's gap_coverage_audit as a deliberate, in-scope extension of the same single concern (chrome containment geometry), not scope creep.
 
 ### Pending Todos
 
@@ -109,6 +111,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-08-31T17:42:51.294Z
-Stopped at: Completed 01-05-PLAN.md
+Last session: 2026-09-01T11:17:59.882Z
+Stopped at: Completed 01-06-PLAN.md
 Resume file: None
