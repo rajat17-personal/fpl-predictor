@@ -1,44 +1,44 @@
 ---
 gsd_state_version: 1.0
-current_phase: 01
-current_phase_name: Test Base Layer & App Skeleton
-status: executing
-stopped_at: Completed 01-06-PLAN.md
-last_updated: "2026-09-01T11:18:12.638Z"
+current_phase: 2
+current_phase_name: Data Layer & Non-Pitch Pages
+status: planning
+stopped_at: Phase 01 complete, ready to plan Phase 2
+last_updated: "2026-09-01T11:39:58.158Z"
 last_activity: 2026-09-01
-last_activity_desc: Phase 01 execution started
-state_head: 00f91eef43c405ba2940a442dbbe52f645a4a232
+last_activity_desc: Phase 01 complete, transitioned to Phase 2
+state_head: f763c832fc9c6b561aa478e1ceef1e0c537f320b
 progress:
   total_phases: 7
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 6
   completed_plans: 6
-  percent: 0
+  percent: 14
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-08-31)
+See: .planning/PROJECT.md (updated 2026-09-01)
 
 **Core value:** The weekly recommendations (xP table, squad, captains, transfers) must keep flowing reliably — every change must leave the pipeline, API, and site at least as correct and more trustworthy than before.
-**Current focus:** Phase 01 — Test Base Layer & App Skeleton
+**Current focus:** Phase 2 — Data Layer & Non-Pitch Pages
 
 ## Current Position
 
-Phase: 01 (Test Base Layer & App Skeleton) — EXECUTING
-Plan: 2 of 6
-Status: Ready to execute
-Last activity: 2026-09-01 — Phase 01 execution started
+Phase: 2 — Data Layer & Non-Pitch Pages
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-09-01 — Phase 01 complete, transitioned to Phase 2
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 14% (1/7 phases, 6 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
+- Total plans completed: 6
 - Average duration: —
 - Total execution time: 0.0 hours
 
@@ -46,7 +46,7 @@ Progress: [░░░░░░░░░░] 0%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01 | 6 | - | - |
 
 **Recent Trend:**
 
@@ -100,6 +100,7 @@ None yet.
 - **Phase 5 unknown:** Python 3.14 (`cp314`) wheel availability for LightGBM, scikit-learn, PyArrow, PuLP is in flux. Verify on PyPI before finalizing the lockfile.
 - **Milestone invariant:** the vanilla site stays live and authoritative until CUT-01 completes.
 - Payment gateway / merchant-of-record choice still pending with the user — out of scope here, but PITCH-01's trademark disclaimer feeds the eventual gateway review.
+- **[Phase 01 → Phase 4]:** G-01-3 pixel-geometry assertion deferred to E2E-01 — at a 1720px viewport, assert the header's inner wrapper is ≤1088px, centered, and shares `<main>`'s content x-range (see `.planning/phases/01-test-base-layer-app-skeleton/deferred-items.md`). Human-verified visually in Phase 01 UAT (2026-09-01).
 
 ## Deferred Items
 
@@ -111,6 +112,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-01T11:17:59.882Z
-Stopped at: Completed 01-06-PLAN.md
+Last session: 2026-09-01T11:41:00Z
+Stopped at: Phase 01 complete, ready to plan Phase 2
 Resume file: None

@@ -25,12 +25,13 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 - ✓ Backtest: multi-season walk-forward with jitter CIs and isolated chip evaluation — existing
 - ✓ Product surface: weekly JSON export contract (`web/data/*.json`), FastAPI solver API (/solve, /rate, /team), 8-page static site, email digest — existing
 - ✓ Ops: daily snapshot + weekly export cron scripts; pytest suite for optimizer legality, leakage, autosubs, export builders (~18 tests) — existing
+- ✓ FastAPI integration test suite (TestClient): /solve, /rate, /team, /health, /meta against a `responses`-mocked FPL API; three-mode auth stub coverage; concurrent solve + pool-refresh race test — Phase 1
+- ✓ React/Vite app skeleton with proven dev-proxy runtime seam: all 8 routes resolve, per-route error boundaries, loading/error/empty/404 states, Vitest harness, no pipeline data bundled — Phase 1
 
 ### Active
 
-- [ ] React (Vite) rebuild of the web UI — full parity with all 8 existing pages (xP table/index, team, fixtures, prices, league, scoreboard, differentials, methodology)
+- [ ] React (Vite) rebuild of the web UI — full parity with all 8 existing pages (xP table/index, team, fixtures, prices, league, scoreboard, differentials, methodology); skeleton + routing shipped in Phase 1, page parity lands in Phases 2–3
 - [ ] FPL-style pitch renderer: squad/XI laid out on a pitch with shirts/team visuals, used by team + solver views
-- [ ] FastAPI integration test suite (TestClient): /solve, /rate, /team, auth stub, cache behavior, error responses
 - [ ] Playwright E2E regression suite covering: team/pitch + solver flow, xP table + captains, rate-my-team, fixtures & prices pages
 - [ ] Hardened CI/CD on GitHub Actions: lint, pytest, API tests, Playwright, Docker image build + publish for the API (deploy step stubbed — no live hosting yet)
 - [ ] Security & config hardening: CORS restriction, pinned/locked dependencies, secrets via .env pattern, repo hygiene (remove 134MB Chrome .deb, proper .gitignore)
@@ -74,7 +75,9 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 | React chosen directly (no framework research phase) | User preference; largest ecosystem for component/pitch libraries | — Pending |
 | Full parity: all 8 pages rebuilt this milestone | Avoid maintaining two frontends into launch | — Pending |
 | CI ends at build + test + published Docker image (no live deploy) | Hosting not purchased; keeps milestone unblocked by infra decisions | — Pending |
-| API test suite added before/alongside Playwright | E2E on an untested API inverts the pyramid; API tests are the missing base layer | — Pending |
+| API test suite added before/alongside Playwright | E2E on an untested API inverts the pyramid; API tests are the missing base layer | ✓ Good — Phase 1 shipped the suite (contract, auth, concurrency) green |
+| Package-legitimacy gate: exact-pin installs against a human-approved list | Supply-chain hygiene for a pre-revenue solo project | ✓ Good — Phase 1: zero registry drift at install time |
+| TypeScript 6.x (not 7.x) + Vite 7.3.6/plugin-react 5.2.0 pins | ESLint support for TS 7.0 unstable; deliberate downgrade pins | ✓ Good — Phase 1 scaffold stable |
 | All three hardening areas in scope (security, reliability, observability) | These are the "production ready" bar the user asked for pre-monetization | — Pending |
 
 ## Evolution
@@ -95,4 +98,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-31 after initialization*
+*Last updated: 2026-09-01 after Phase 1*

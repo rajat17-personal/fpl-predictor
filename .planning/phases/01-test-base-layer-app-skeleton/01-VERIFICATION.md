@@ -1,7 +1,7 @@
 ---
 phase: 01-test-base-layer-app-skeleton
 verified: 2026-09-01T12:00:00Z
-status: human_needed
+status: passed
 score: 9/10 must-haves verified
 behavior_unverified: 1
 overrides_applied: 0
@@ -13,11 +13,13 @@ re_verification:
   gaps_remaining: []
   regressions: []
 behavior_unverified_items:
+
   - truth: "At viewports wider than 1088px the header brand+nav render inside a centered 68rem column instead of full-bleed (G-01-3 closed)"
     test: "Open the app at a maximized wide display (~1720px) and confirm the brand+nav sit in a centered column whose left/right edges line up with the page heading and footer disclaimer beneath/above them, with no large empty gutter beside the nav; then narrow to ~375px and confirm the nav still wraps without a hamburger."
     expected: "Header content visually aligns with <main> and footer content at every width; no full-bleed/stranded-nav regression."
     why_human: "jsdom (the test environment used by PageShell.test.tsx) has no layout engine — it can assert the correct Tailwind class tokens are present on the correct elements, which this re-verification independently confirmed, but it cannot measure actual rendered pixel geometry. That measurement requires a real browser and is formally handed to Phase 4's Playwright suite (E2E-01) per deferred-items.md and the ROADMAP Phase 4 research flags, both independently confirmed present in this re-verification."
 human_verification:
+
   - test: "Final visual re-confirmation of G-01-3 at a wide viewport (~1720px), per plan 01-06 Task 1's own <human-check>"
     expected: "Brand+nav sit in a centered 68rem column aligned with the page heading and footer disclaimer; nav still wraps cleanly at ~375px."
     why_human: "Visual/geometric confirmation; jsdom cannot measure it. Automated evidence (class-token test, containment-count gate, code review) is strong and consistent, but no tool in this phase's toolchain can render pixels. Recorded as end-of-phase UAT per workflow.human_verify_mode=end-of-phase; not currently blocking further phase progress given the strength of the automated evidence, but the phase cannot claim the visual claim itself as mechanically VERIFIED."
