@@ -1,0 +1,57 @@
+{
+  "entries": [
+    {
+      "gw": 1,
+      "n_players": 412,
+      "generated_utc": "2026-08-15T10:00:00Z",
+      "mae_model": 0.81,
+      "spearman_model": 0.69,
+      "mae_fpl": null,
+      "spearman_fpl": 0.3,
+      "captain": { "name": "Haaland", "team": "MCI", "points": 12 },
+      "top5": [
+        { "name": "Haaland", "xp": 8.2, "points": 12 },
+        { "name": "Palmer", "xp": 6.1, "points": 5 }
+      ],
+      "best_player": { "name": "Haaland", "points": 12 }
+    },
+    {
+      "gw": 2,
+      "n_players": 415,
+      "generated_utc": "2026-08-22T10:00:00Z",
+      "mae_model": 0.77,
+      "spearman_model": 0.73,
+      "mae_fpl": 1.05,
+      "spearman_fpl": null,
+      "captain": { "name": "Salah", "team": "LIV", "points": 9 },
+      "top5": [
+        { "name": "Salah", "xp": 7.4, "points": 9 },
+        { "name": "Cherki", "xp": 5.9, "points": 6 }
+      ],
+      "best_player": { "name": "Cunha", "points": 14 }
+    },
+    {
+      "gw": 3,
+      "n_players": 418,
+      "generated_utc": "2026-08-29T10:00:00Z",
+      "mae_model": 0.79,
+      "spearman_model": 0.71,
+      "mae_fpl": 0.98,
+      "spearman_fpl": 0.32,
+      "captain": { "name": "B.Fernandes", "team": "MUN", "points": 15 },
+      "top5": [
+        { "name": "B.Fernandes", "xp": 7.0, "points": 15 },
+        { "name": "Haaland", "xp": 8.0, "points": 6 }
+      ],
+      "best_player": { "name": "B.Fernandes", "points": 15 }
+    }
+  ],
+  "summary": {
+    "gameweeks": 3,
+    "mae_model": 0.79,
+    "spearman_model": 0.71,
+    "captain_avg_points": 12.0,
+    "mae_fpl": null,
+    "spearman_fpl": 0.31
+  }
+}
