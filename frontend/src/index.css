@@ -64,11 +64,15 @@
   --spacing-2xl: 48px;
   --spacing-3xl: 64px;
 
-  /* Typography roles: two weights (400 regular, 700 bold) across two families */
+  /* Typography roles: two weights (400 regular, 700 bold) across two families.
+   * --font-mono is the "Numeric" modifier (UI-SPEC Typography table) — same
+   * Label/Body size and weight as its assigned role, IBM Plex Mono family
+   * only, used for tabular/numeric text (deadline chip, GW banner). */
   --font-label: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --font-heading: "Archivo", "Arial Black", sans-serif;
   --font-display: "Archivo", "Arial Black", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
   --text-label: 14px;
   --text-label--line-height: 1.4;
   --text-body: 16px;

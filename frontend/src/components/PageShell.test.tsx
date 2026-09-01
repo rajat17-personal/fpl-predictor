@@ -1,24 +1,46 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import PageShell from "./PageShell";
+import metaFixture from "../test/fixtures/meta.json";
 
 /* Regression test for UAT gap G-01-3: header content full-bleed on wide
  * viewports while main/footer content is capped at 68rem. jsdom has no
  * layout engine, so this asserts the *class tokens* that drive containment,
  * not measured pixel geometry — the real pixel-width assertion is handed
- * forward to Phase 4's Playwright suite (see deferred-items.md). */
+ * forward to Phase 4's Playwright suite (see deferred-items.md).
+ *
+ * PageShell now owns the shared `meta.json` query (Task 3) that feeds
+ * GwBanner, so every render needs a QueryClientProvider — a fresh
+ * QueryClient per test with retries disabled, and fetch mocked so the query
+ * resolves deterministically without a real network call. */
 
 const CONTAINMENT = ["mx-auto", "w-full", "max-w-[68rem]", "px-4"];
 
+function mockFetchOnce() {
+  globalThis.fetch = vi.fn(() =>
+    Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(metaFixture),
+    }),
+  ) as unknown as typeof fetch;
+}
+
 function renderShell() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(
     <MemoryRouter initialEntries={["/"]}>
-      <Routes>
-        <Route element={<PageShell />}>
-          <Route index element={<div>content</div>} />
-        </Route>
-      </Routes>
+      <QueryClientProvider client={queryClient}>
+        <Routes>
+          <Route element={<PageShell />}>
+            <Route index element={<div>content</div>} />
+          </Route>
+        </Routes>
+      </QueryClientProvider>
     </MemoryRouter>,
   );
 }
@@ -29,6 +51,14 @@ function classSet(el: Element | null | undefined): Set<string> {
 }
 
 describe("PageShell chrome containment (G-01-3)", () => {
+  beforeEach(() => {
+    mockFetchOnce();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("header, main and footer content share one containment geometry", () => {
     const { container } = renderShell();
 
@@ -69,5 +99,24 @@ describe("PageShell chrome containment (G-01-3)", () => {
     const nav = screen.getByRole("navigation", { name: "Site" });
     expect(headerContentWrapper?.contains(nav)).toBe(true);
     expect(headerContentWrapper?.textContent).toContain("FPL");
+  });
+});
+
+describe("PageShell — GW banner and theme toggle wiring (Task 3)", () => {
+  beforeEach(() => {
+    mockFetchOnce();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("renders both the GW banner and the theme toggle in the header's trailing slot", async () => {
+    renderShell();
+
+    expect(await screen.findByText(/^GW3 deadline/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Light theme" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Dark theme" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "System theme" })).toBeInTheDocument();
   });
 });
