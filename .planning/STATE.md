@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 02
 current_phase_name: Data Layer & Non-Pitch Pages
 status: executing
-stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-09-01T14:32:21.990Z"
+stopped_at: Completed 02-04-PLAN.md
+last_updated: "2026-09-01T14:47:21.780Z"
 last_activity: 2026-09-01
 last_activity_desc: Phase 02 execution started
-state_head: aecd52a5cb6d074c8d1641ddadeb90497a6aaea2
+state_head: 2eb899d4c3c57d8e455c63a6aea540a79f1a54e8
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 12
-  completed_plans: 9
+  completed_plans: 10
   percent: 14
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-01)
 ## Current Position
 
 Phase: 02 (Data Layer & Non-Pitch Pages) — EXECUTING
-Plan: 4 of 6
+Plan: 5 of 6
 Status: Ready to execute
 Last activity: 2026-09-01 — Phase 02 execution started
 
@@ -67,6 +67,7 @@ Progress: [█░░░░░░░░░] 14% (1/7 phases, 6 plans complete)
 | Phase 02 P01 | 35min | 3 tasks | 19 files |
 | Phase 02 P02 | 25min | 3 tasks | 3 files |
 | Phase 02 P03 | 40min | 3 tasks | 15 files |
+| Phase 02 P04 | 20min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,8 @@ Recent decisions affecting current work:
 - [Phase 02]: [Phase 02]: [Plan 02-03]: Added a --font-mono token to index.css's @theme block (IBM Plex Mono) since the UI-SPEC's Numeric modifier requires it for the GW banner and it didn't exist yet, even though the three @fontsource packages were already installed in 02-02.
 - [Phase 02]: [Phase 02]: [Plan 02-03]: GwBanner takes a minimal { status, data } prop shape (TanStack Query's own status union) instead of the full UseQueryResult<MetaResponse> generic, keeping it trivially unit-testable with plain object literals per state.
 - [Phase 02]: [Phase 02]: [Plan 02-03]: Implemented the sub-hour per-second countdown granularity (D-19's discretion item) since the interval-switching logic already needed the conditional to support it.
+- [Phase 02]: FdrCell's accessible description is a plain aria-label on a non-interactive span, not StatusFlag's click-toggle button pattern — a literal per-chip button would have populated the fixtures table with interactive elements, contradicting its own not-sortable/no-buttons requirement. — Fixtures/Prices tables must have zero interactive cells to stay parity-correct with vanilla's non-sortable tables; verified by queryAllByRole('button') being empty.
+- [Phase 02]: WatchlistRow.prob/proj_tonight marked optional in lib/api.ts after cross-checking models/price.py directly — official-mode rows never carry a prob key, heuristic/model-mode rows never carry proj_tonight. — The stricter tsc -b build-mode typecheck failed against the previous non-optional typing once the heuristic/model watchlist fixtures accurately omitted those keys per real pipeline output.
 
 ### Pending Todos
 
@@ -122,6 +125,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-01T14:32:21.955Z
-Stopped at: Completed 02-03-PLAN.md
+Last session: 2026-09-01T14:47:21.741Z
+Stopped at: Completed 02-04-PLAN.md
 Resume file: None

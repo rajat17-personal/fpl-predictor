@@ -11,8 +11,8 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 - [x] **UI-01**: React (Vite, TypeScript 6.x) app with routes for all 8 pages, dev-server proxy to the API, and runtime-fetched `web/data/*.json` (never bundled at build time)
 - [x] **UI-02**: xP table page at parity — sortable/filterable by position, team, price, xP, ownership, form, with exact sort/format semantics matching the vanilla site
-- [ ] **UI-03**: Fixtures page with FDR ticker in the standard 1–5 green→red convention
-- [ ] **UI-04**: Prices page with watchlist rise/fall indicators
+- [x] **UI-03**: Fixtures page with FDR ticker in the standard 1–5 green→red convention
+- [x] **UI-04**: Prices page with watchlist rise/fall indicators
 - [ ] **UI-05**: League, scoreboard, differentials, and methodology pages at parity
 - [x] **UI-06**: Persistent gameweek meta banner with deadline countdown
 - [ ] **UI-07**: Mobile-responsive pitch and tables
@@ -119,8 +119,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | APIT-02 | Phase 1 | Complete |
 | APIT-03 | Phase 1 | Complete |
 | UI-02 | Phase 2 | Complete |
-| UI-03 | Phase 2 | Pending |
-| UI-04 | Phase 2 | Pending |
+| UI-03 | Phase 2 | Complete |
+| UI-04 | Phase 2 | Complete |
 | UI-05 | Phase 2 | Pending |
 | UI-06 | Phase 2 | Complete |
 | UIX-02 | Phase 2 | Complete |
