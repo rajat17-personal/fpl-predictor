@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 02
 current_phase_name: Data Layer & Non-Pitch Pages
 status: executing
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-09-01T14:15:24.687Z"
+stopped_at: Completed 02-03-PLAN.md
+last_updated: "2026-09-01T14:32:21.990Z"
 last_activity: 2026-09-01
 last_activity_desc: Phase 02 execution started
-state_head: 65d0db8633da1ed08b95aadce1b8963fafe5ae02
+state_head: aecd52a5cb6d074c8d1641ddadeb90497a6aaea2
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 12
-  completed_plans: 8
+  completed_plans: 9
   percent: 14
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-01)
 ## Current Position
 
 Phase: 02 (Data Layer & Non-Pitch Pages) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 Status: Ready to execute
 Last activity: 2026-09-01 — Phase 02 execution started
 
@@ -66,6 +66,7 @@ Progress: [█░░░░░░░░░] 14% (1/7 phases, 6 plans complete)
 | Phase 01 P06 | 13min | 2 tasks | 4 files |
 | Phase 02 P01 | 35min | 3 tasks | 19 files |
 | Phase 02 P02 | 25min | 3 tasks | 3 files |
+| Phase 02 P03 | 40min | 3 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,9 @@ Recent decisions affecting current work:
 - [Phase 02]: Added aria-label 'xP table' / 'Captain picks' to the two tables — Disambiguates rows in tests and assistive tech once both tables can render overlapping player names
 - [Phase 02]: [Phase 02]: [Plan 02-02]: Human approved this phase's four new npm dependencies (react-markdown@10.1.0, @fontsource/archivo@5.3.0, @fontsource/ibm-plex-sans@5.3.0, @fontsource/ibm-plex-mono@5.3.0) via the blocking-human package-legitimacy gate — verbatim answer: "Approve all four (Recommended)". Installed at exact pins, zero registry drift, Phase 1 toolchain (58/58 tests, typecheck, build purity) confirmed unaffected. — Follows the same package-legitimacy discipline STATE.md records for Phase 01's approved 13-package install set — new dependencies discovered by research still route through a blocking human gate before any install.
 - [Phase 02]: [Phase 02]: [Plan 02-02]: Created PARITY-DEVIATIONS.md (D-04) seeded with all eight UI-SPEC-identified deviations, attributed per-entry to the plan that introduces it; ledger entry 7 (table header eyebrow chrome) attributed to 02-01 after confirming XpTable.tsx already renders it, not left as a placeholder. — Phase 7 (CUT-01) treats this ledger as the complete list of explained deltas between vanilla and the React rebuild; entries skipped mid-phase cannot be reconstructed later.
+- [Phase 02]: [Phase 02]: [Plan 02-03]: Added a --font-mono token to index.css's @theme block (IBM Plex Mono) since the UI-SPEC's Numeric modifier requires it for the GW banner and it didn't exist yet, even though the three @fontsource packages were already installed in 02-02.
+- [Phase 02]: [Phase 02]: [Plan 02-03]: GwBanner takes a minimal { status, data } prop shape (TanStack Query's own status union) instead of the full UseQueryResult<MetaResponse> generic, keeping it trivially unit-testable with plain object literals per state.
+- [Phase 02]: [Phase 02]: [Plan 02-03]: Implemented the sub-hour per-second countdown granularity (D-19's discretion item) since the interval-switching logic already needed the conditional to support it.
 
 ### Pending Todos
 
@@ -118,6 +122,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-01T14:15:24.651Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-09-01T14:32:21.955Z
+Stopped at: Completed 02-03-PLAN.md
 Resume file: None

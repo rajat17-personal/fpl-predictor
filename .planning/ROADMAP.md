@@ -71,7 +71,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. League, scoreboard, differentials, and methodology pages present the same information as their vanilla counterparts from the same JSON files
   5. A gameweek meta banner with a live deadline countdown is visible on every page, and a dark mode toggle persists across navigation and reload
 
-**Plans**: 2/6 plans executed (2 waves)
+**Plans**: 3/6 plans executed (2 waves)
 
 **Wave 1**
 
@@ -80,7 +80,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-03-PLAN.md — Chrome: class-based dark palette, three-state theme toggle, live gameweek banner, self-hosted fonts
+- [x] 02-03-PLAN.md — Chrome: class-based dark palette, three-state theme toggle, live gameweek banner, self-hosted fonts
 - [ ] 02-04-PLAN.md — Fixtures ticker with the FDR cell, and the price watch page with its three mode notes and rise/fall indicators
 - [ ] 02-05-PLAN.md — League table and leader boards, plus the accuracy scoreboard's missing-file versus server-failure distinction
 - [ ] 02-06-PLAN.md — Differentials with its own band scale, and the methodology page from bundled markdown
@@ -181,7 +181,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Test Base Layer & App Skeleton | 6/6 | Complete    | 2026-09-01 |
-| 2. Data Layer & Non-Pitch Pages | 2/6 | In Progress|  |
+| 2. Data Layer & Non-Pitch Pages | 3/6 | In Progress|  |
 | 3. Pitch Renderer & Squad Views | 0/TBD | Not started | - |
 | 4. E2E Regression Suite | 0/TBD | Not started | - |
 | 5. Container Build & CI Pipeline | 0/TBD | Not started | - |
