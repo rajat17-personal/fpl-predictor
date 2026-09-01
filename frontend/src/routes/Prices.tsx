@@ -89,7 +89,7 @@ function ModeNote({ w }: { w: Watchlist }) {
 
   return (
     <p className="mt-2 rounded border border-line bg-surface p-3 font-body text-body text-ink-2">
-      {`Model predictions (trained ${w.trained_utc?.slice(0, 10)}; hit-rate on actual movers ${(100 * w.val_moved_hit!).toFixed(0)}% in validation). Status reflects the model's probability.`}
+      {`Model predictions (trained ${w.trained_utc?.slice(0, 10) ?? "unknown date"}; hit-rate on actual movers ${w.val_moved_hit != null ? (100 * w.val_moved_hit).toFixed(0) + "%" : "–"} in validation). Status reflects the model's probability.`}
     </p>
   );
 }

@@ -103,6 +103,20 @@ describe("Prices (ported from web/prices.html, verified 2026-09-01)", () => {
     expect(screen.queryByText(/Heuristic mode/)).not.toBeInTheDocument();
   });
 
+  it("falls back gracefully in the trained-model note when trained_utc/val_moved_hit are absent (WR-01)", async () => {
+    const modified = { ...trained, trained_utc: undefined, val_moved_hit: undefined };
+    mockFetchOnce(modified);
+    renderPrices();
+    await screen.findByText("Palmer");
+
+    expect(
+      screen.getByText(/Model predictions \(trained unknown date/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/hit-rate on actual movers – in validation/),
+    ).toBeInTheDocument();
+  });
+
   it("omits the price-locked-players sentence when locked_players is 0, keeping the rest of the note (R31)", async () => {
     mockFetchOnce({ ...official, locked_players: 0 });
     renderPrices();
