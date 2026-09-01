@@ -1,8 +1,8 @@
 ---
 phase: 01-test-base-layer-app-skeleton
-reviewed: 2026-09-01T00:00:00Z
+reviewed: 2026-09-01T11:40:00Z
 depth: standard
-files_reviewed: 34
+files_reviewed: 35
 files_reviewed_list:
   - .gitignore
   - api/main.py
@@ -25,6 +25,7 @@ files_reviewed_list:
   - frontend/src/test/setup.ts
   - frontend/src/test/harness.test.tsx
   - frontend/src/components/PageShell.tsx
+  - frontend/src/components/PageShell.test.tsx
   - frontend/src/components/Spinner.tsx
   - frontend/src/components/ErrorState.tsx
   - frontend/src/components/EmptyState.tsx
@@ -44,16 +45,16 @@ files_reviewed_list:
 findings:
   critical: 0
   warning: 3
-  info: 6
-  total: 9
+  info: 7
+  total: 10
 status: issues_found
 ---
 
 # Phase 01: Code Review Report
 
-**Reviewed:** 2026-09-01T00:00:00Z
+**Reviewed:** 2026-09-01T11:40:00Z
 **Depth:** standard
-**Files Reviewed:** 36 (34 listed paths; `frontend/tsconfig.json` + `frontend/tsconfig.app.json`/`tsconfig.node.json` counted individually)
+**Files Reviewed:** 37 (35 listed paths; `frontend/tsconfig.json` + `frontend/tsconfig.app.json`/`tsconfig.node.json` counted individually)
 **Status:** issues_found
 
 ## Summary
@@ -129,5 +130,30 @@ None of these rise to Blocker/Critical: nothing crashes, no security boundary is
 ---
 
 _Reviewed: 2026-09-01T00:00:00Z_
+_Reviewer: Claude (gsd-code-reviewer)_
+_Depth: standard_
+
+## Incremental Review — Plan 01-06 (gap closure)
+
+**Reviewed:** 2026-09-01T11:40:00Z
+**Scope:** `frontend/src/components/PageShell.tsx` (diff only — the containment-wrapper rework), `frontend/src/components/PageShell.test.tsx` (new file, containment-parity regression test)
+
+Confirmed via `git log -p` that the `PageShell.tsx` diff for commit `06b70d8` (plan 01-06) is exactly: (1) stripping layout/gutter classes off the outer `<header>`, leaving `border-b border-line py-4` only; (2) adding an inner `<div className="mx-auto flex w-full max-w-[68rem] flex-wrap items-center gap-[18px] px-4">` wrapping brand + nav + meta-banner slot; (3) applying the identical correction to the footer paragraph (`w-full` and `px-4` added alongside the pre-existing `mx-auto max-w-[68rem]`, with `px-4` dropped from the outer `<footer>`). `main`'s classes are unchanged (`mx-auto w-full max-w-[68rem] flex-1 px-4` was already correct before this plan).
+
+Verified by running the actual test suite and build, not just reading: `npx vitest run src/components/PageShell.test.tsx` (2 passed), `npx vitest run` (full suite, 9 passed across 5 files), `npm run build` (`tsc -b && vite build`, succeeds). No regressions in the rest of the suite from the structural change.
+
+Traced the resulting DOM against both new tests: header's `firstElementChild` (the containment div), `main`, and the footer `<p>` all carry the exact token set `mx-auto w-full max-w-[68rem] px-4`; the outer `<header>`/`<footer>` carry only `border-b`/`border-t` + `py-4`, no `max-w-*`/`px-*`. This is a correct, structurally-sound fix for UAT gap G-01-3 — header, main, and footer content now share one containment geometry while the borders stay full-bleed. No accessibility regression: `nav aria-label="Site"` and touch-target sizing are untouched by this diff.
+
+No Critical or Warning-level defects found in the two files. One new Info-level maintainability observation:
+
+### IN-07: Containment class string is now triplicated with no single source of truth
+
+**File:** `frontend/src/components/PageShell.tsx:32,59,64`, `frontend/src/components/PageShell.test.tsx:12`
+**Issue:** The literal string `"mx-auto w-full max-w-[68rem] px-4"` (as a substring of a larger class list) now appears independently at three call sites in `PageShell.tsx` — the header's inner div (line 32), `<main>` (line 59), and the footer `<p>` (line 64) — plus a fourth independent copy of the same four tokens as `CONTAINMENT` in the new test (line 12). This is precisely the defect class that produced UAT gap G-01-3 in the first place: the header wrapper was originally added without the same containment classes as `main`, and drifted. The new `PageShell.test.tsx` mitigates the immediate risk (it will catch a future edit that updates only 1 or 2 of the 3 sites, since it independently checks all three elements against the same `CONTAINMENT` array), so this is not elevated to Warning — but there is still no single exported constant (e.g. `const CONTENT_WIDTH = "mx-auto w-full max-w-[68rem] px-4"`) that the three JSX sites and the test both derive from, so a deliberate width change (e.g. `68rem` → `72rem`) still requires four manual, uncoordinated edits to stay in sync.
+**Fix:** Extract a shared `const CONTENT_WIDTH = "mx-auto w-full max-w-[68rem] px-4";` in `PageShell.tsx`, apply it at all three call sites via template literals, and import/derive the test's `CONTAINMENT` array from the same constant (e.g. `CONTENT_WIDTH.split(" ")`) so there is exactly one place to change the column width.
+
+---
+
+_Reviewed: 2026-09-01T11:40:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
