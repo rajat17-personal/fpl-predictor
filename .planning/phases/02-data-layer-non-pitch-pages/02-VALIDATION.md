@@ -3,7 +3,7 @@ phase: "02"
 slug: "data-layer-non-pitch-pages"
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 # audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
-status: draft
+status: validated
 nyquist_compliant: true
 wave_0_complete: true
 created: "2026-09-01"
@@ -40,21 +40,21 @@ created: "2026-09-01"
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| T1 (tracer) | 02-01 | 1 | UI-02 | T-02-01, T-02-02, T-02-03 | Ported vanilla template strings render as auto-escaped JSX text; fetch-error detail reaches console only; the 50-row slice bounds render cost | unit + component | `npm --prefix frontend run test -- src/routes/XpTable.test.tsx src/lib/sortable.test.ts src/lib/bandCell.test.ts src/lib/format.test.ts` | created by this task | ⬜ pending |
-| T2 | 02-01 | 1 | UI-02 | T-02-01 | Search input is a comparison predicate only, never echoed as markup | unit + component | `npm --prefix frontend run test -- src/routes/XpTable.test.tsx src/lib/usePageMeta.test.tsx` | created by this task | ⬜ pending |
-| T3 | 02-01 | 1 | UI-02 | T-02-01 | Injury `news` text renders as escaped children in the tooltip, not as an attribute-injected string | unit + component | `npm --prefix frontend run test -- src/lib/statusFlag.test.tsx src/routes/XpTable.test.tsx` | created by this task | ⬜ pending |
-| T1 (checkpoint) | 02-02 | 1 | UI-05 | T-02-SC | Blocking human approval before any dependency enters the tree | manual | MISSING — blocking human gate, no runnable check exists | n/a | ⬜ pending |
-| T2 | 02-02 | 1 | UI-05 | T-02-SC | Exact version pins, so the lockfile records precisely what was reviewed | script + suite | `node --input-type=module -e "…exact-pin check…"` then `npm --prefix frontend run test && npm --prefix frontend run typecheck` | n/a (inline script) | ⬜ pending |
-| T3 | 02-02 | 1 | UI-02 | T-02-04 | Every intentional deviation is recorded with its reason and originating plan | script | `test -f …/PARITY-DEVIATIONS.md && grep -v '^ *#' … \| grep -cE '^\| *[1-8] *\|' \| grep -qx 8` | created by this task | ⬜ pending |
-| T1 | 02-03 | 2 | UIX-02 | T-02-06 | No third-party font request; single dark-mode mechanism | script | `grep -q '@custom-variant dark' … && ! grep -q '@media (prefers' … && ! grep -q 'fonts.googleapis.com' frontend/index.html` plus `bash scripts/verify_frontend_build.sh` | n/a (source gates) | ⬜ pending |
-| T2 | 02-03 | 2 | UIX-02 | T-02-05 | A tampered storage value degrades to the operating-system default rather than reaching any evaluation path | unit + component | `npm --prefix frontend run test -- src/lib/theme.test.ts src/components/ThemeToggle.test.tsx` | created by this task | ⬜ pending |
-| T3 | 02-03 | 2 | UI-06 | T-02-07 | `meta.json` fields render as escaped children; a failed fetch shows a fixed literal, never the response | unit + component | `npm --prefix frontend run test -- src/lib/deadline.test.ts src/components/GwBanner.test.tsx src/components/PageShell.test.tsx` | created by this task | ⬜ pending |
-| T1 | 02-04 | 2 | UI-03 | T-02-08 | Difficulty selects a class from a literal 1–5 map; out-of-range clamps to neutral | component | `npm --prefix frontend run test -- src/components/FdrCell.test.tsx src/routes/Fixtures.test.tsx` | created by this task | ⬜ pending |
-| T2 | 02-04 | 2 | UI-04 | T-02-09 | The qualifying mode note renders in the same pass as the numbers it qualifies | component | `npm --prefix frontend run test -- src/routes/Prices.test.tsx` | created by this task | ⬜ pending |
-| T1 | 02-05 | 2 | UI-05 | T-02-11 | Fetch-error detail reaches console only | component | `npm --prefix frontend run test -- src/routes/League.test.tsx` | created by this task | ⬜ pending |
-| T2 | 02-05 | 2 | UI-05 | T-02-10 | A server failure cannot be presented as "no gameweeks scored yet" | component | `npm --prefix frontend run test -- src/routes/Scoreboard.test.tsx` | created by this task | ⬜ pending |
-| T1 | 02-06 | 2 | UI-05 | T-02-13 | Fetch-error detail reaches console only | component | `npm --prefix frontend run test -- src/routes/Differentials.test.tsx` | created by this task | ⬜ pending |
-| T2 | 02-06 | 2 | UI-05 | T-02-12 | Markdown renders to real React elements; no raw-markup sink anywhere in the source tree | component + repo gate | `npm --prefix frontend run test -- src/routes/Methodology.test.tsx` and `! grep -rq 'SetInnerHTML' frontend/src` | created by this task | ⬜ pending |
+| T1 (tracer) | 02-01 | 1 | UI-02 | T-02-01, T-02-02, T-02-03 | Ported vanilla template strings render as auto-escaped JSX text; fetch-error detail reaches console only; the 50-row slice bounds render cost | unit + component | `npm --prefix frontend run test -- src/routes/XpTable.test.tsx src/lib/sortable.test.ts src/lib/bandCell.test.ts src/lib/format.test.ts` | created by this task | ✅ green |
+| T2 | 02-01 | 1 | UI-02 | T-02-01 | Search input is a comparison predicate only, never echoed as markup | unit + component | `npm --prefix frontend run test -- src/routes/XpTable.test.tsx src/lib/usePageMeta.test.tsx` | created by this task | ✅ green |
+| T3 | 02-01 | 1 | UI-02 | T-02-01 | Injury `news` text renders as escaped children in the tooltip, not as an attribute-injected string | unit + component | `npm --prefix frontend run test -- src/lib/statusFlag.test.tsx src/routes/XpTable.test.tsx` | created by this task | ✅ green |
+| T1 (checkpoint) | 02-02 | 1 | UI-05 | T-02-SC | Blocking human approval before any dependency enters the tree | manual | MISSING — blocking human gate, no runnable check exists | n/a | ✅ green |
+| T2 | 02-02 | 1 | UI-05 | T-02-SC | Exact version pins, so the lockfile records precisely what was reviewed | script + suite | `node --input-type=module -e "…exact-pin check…"` then `npm --prefix frontend run test && npm --prefix frontend run typecheck` | n/a (inline script) | ✅ green |
+| T3 | 02-02 | 1 | UI-02 | T-02-04 | Every intentional deviation is recorded with its reason and originating plan | script | `test -f …/PARITY-DEVIATIONS.md && grep -v '^ *#' … \| grep -cE '^\| *[1-8] *\|' \| grep -qx 8` | created by this task | ✅ green |
+| T1 | 02-03 | 2 | UIX-02 | T-02-06 | No third-party font request; single dark-mode mechanism | script | `grep -q '@custom-variant dark' … && ! grep -q '@media (prefers' … && ! grep -q 'fonts.googleapis.com' frontend/index.html` plus `bash scripts/verify_frontend_build.sh` | n/a (source gates) | ✅ green |
+| T2 | 02-03 | 2 | UIX-02 | T-02-05 | A tampered storage value degrades to the operating-system default rather than reaching any evaluation path | unit + component | `npm --prefix frontend run test -- src/lib/theme.test.ts src/components/ThemeToggle.test.tsx` | created by this task | ✅ green |
+| T3 | 02-03 | 2 | UI-06 | T-02-07 | `meta.json` fields render as escaped children; a failed fetch shows a fixed literal, never the response | unit + component | `npm --prefix frontend run test -- src/lib/deadline.test.ts src/components/GwBanner.test.tsx src/components/PageShell.test.tsx` | created by this task | ✅ green |
+| T1 | 02-04 | 2 | UI-03 | T-02-08 | Difficulty selects a class from a literal 1–5 map; out-of-range clamps to neutral | component | `npm --prefix frontend run test -- src/components/FdrCell.test.tsx src/routes/Fixtures.test.tsx` | created by this task | ✅ green |
+| T2 | 02-04 | 2 | UI-04 | T-02-09 | The qualifying mode note renders in the same pass as the numbers it qualifies | component | `npm --prefix frontend run test -- src/routes/Prices.test.tsx` | created by this task | ✅ green |
+| T1 | 02-05 | 2 | UI-05 | T-02-11 | Fetch-error detail reaches console only | component | `npm --prefix frontend run test -- src/routes/League.test.tsx` | created by this task | ✅ green |
+| T2 | 02-05 | 2 | UI-05 | T-02-10 | A server failure cannot be presented as "no gameweeks scored yet" | component | `npm --prefix frontend run test -- src/routes/Scoreboard.test.tsx` | created by this task | ✅ green |
+| T1 | 02-06 | 2 | UI-05 | T-02-13 | Fetch-error detail reaches console only | component | `npm --prefix frontend run test -- src/routes/Differentials.test.tsx` | created by this task | ✅ green |
+| T2 | 02-06 | 2 | UI-05 | T-02-12 | Markdown renders to real React elements; no raw-markup sink anywhere in the source tree | component + repo gate | `npm --prefix frontend run test -- src/routes/Methodology.test.tsx` and `! grep -rq 'SetInnerHTML' frontend/src` | created by this task | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -112,4 +112,14 @@ than guessed, and the plans make that cross-check an explicit read-first obligat
 - [x] Feedback latency < 90s
 - [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending — set to validated by `/gsd-validate-phase` after execution.
+**Approval:** validated — set by `/gsd-validate-phase` on 2026-09-01 after phase execution.
+
+## Validation Audit 2026-09-01
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+All 15 mapped verifications audited against the executed codebase: every referenced test file exists, the full suite is green (169/169 Vitest, typecheck clean, `BUILD PURITY OK`), and every script gate passes (8 ledger entries in PARITY-DEVIATIONS.md, `@custom-variant dark` present, no `@media (prefers` dark path, no CDN font request, no raw-markup sink, all four 02-02-reviewed packages exactly pinned). The one manual row (02-02 T1 package gate) was exercised live — blocking-human approval recorded verbatim in 02-02-SUMMARY.md. Note: `react`/`react-dom`/`@types/react*` carry pre-existing Phase 1 caret ranges from the create-vite scaffold — outside this phase's reviewed set; flagged for Phase 5 lockfile hardening.
