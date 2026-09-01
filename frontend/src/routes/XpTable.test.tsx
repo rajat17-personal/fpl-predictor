@@ -30,8 +30,11 @@ function renderXpTable() {
 }
 
 function bodyRowNames() {
-  return screen
-    .getAllByRole("row")
+  const rows = screen.queryAllByRole("row");
+  if (rows.length === 0) {
+    return [];
+  }
+  return rows
     .slice(1) // drop the header row
     .map((row) => within(row).getAllByRole("cell")[1]?.textContent);
 }

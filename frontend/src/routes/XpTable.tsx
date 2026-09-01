@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchJson, type XpRow } from "../lib/api";
 import { Spinner } from "../components/Spinner";
@@ -6,13 +8,14 @@ import { EmptyState } from "../components/EmptyState";
 import { BandCell } from "../components/BandCell";
 import { fixed1, fixed2, orDash } from "../lib/format";
 import { sortDirGlyph, sortRows, useSortable } from "../lib/sortable";
+import { usePageMeta } from "../lib/usePageMeta";
 
 /* The flagship xP table (D-06) — ported from web/index.html's inline script
- * (lines 83-131). This slice wires ONE path end to end: JSON contract →
- * typed row → sortable header → band cell → rendered table (Task 1). Filters
- * (position chips + search), verbatim page copy and per-route meta land in
- * Task 2; the accessible status flag and the Captain picks sub-table land in
- * Task 3. */
+ * (lines 83-131). Task 1 wired ONE path end to end: JSON contract → typed
+ * row → sortable header → band cell → rendered table. Task 2 (this
+ * extension) adds the position-chip + search filters, the verbatim page
+ * copy, and the per-route <title>/<meta> pair. The accessible status flag
+ * and the Captain picks sub-table land in Task 3. */
 
 type SortKey =
   | "position"
@@ -35,7 +38,16 @@ const COLUMNS: { key: SortKey; label: string }[] = [
   { key: "xp_capt", label: "Captain xP" },
 ];
 
+const POSITIONS = ["ALL", "GK", "DEF", "MID", "FWD"] as const;
+type PositionFilter = (typeof POSITIONS)[number];
+
+function chipLabel(p: PositionFilter): string {
+  return p === "ALL" ? "All" : p;
+}
+
 export default function XpTable() {
+  usePageMeta("/");
+
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ["xp_table"],
     // Root-relative path — a bare "data/xp_table.json" resolves against the
@@ -45,6 +57,8 @@ export default function XpTable() {
   });
 
   const { sortState, onSort } = useSortable<SortKey>();
+  const [posFilter, setPosFilter] = useState<PositionFilter>("ALL");
+  const [query, setQuery] = useState("");
 
   if (isPending) {
     return <Spinner />;
@@ -64,59 +78,136 @@ export default function XpTable() {
   const top = data.slice(0, 50);
   const maxHi = Math.max(...top.map((r) => r.p90 ?? r.xp)); // R11: no floor
 
+  // R12/R13: filters run strictly on top of the already-sliced top 50, never
+  // against the full fetched array; search matches r.team (the full club
+  // name, never rendered in any cell) as well as r.team_short.
+  const normalizedQuery = query.trim().toLowerCase();
+  const filtered = top.filter(
+    (r) =>
+      (posFilter === "ALL" || r.position === posFilter) &&
+      (!normalizedQuery ||
+        r.name.toLowerCase().includes(normalizedQuery) ||
+        r.team.toLowerCase().includes(normalizedQuery) ||
+        r.team_short.toLowerCase().includes(normalizedQuery)),
+  );
+
   const visible = sortState.key
-    ? sortRows(top, sortState.key, sortState.dir, NUMERIC_KEYS.has(sortState.key))
-    : top;
+    ? sortRows(filtered, sortState.key, sortState.dir, NUMERIC_KEYS.has(sortState.key))
+    : filtered;
 
   return (
     <div className="py-8">
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-left">
-          <thead>
-            <tr className="border-b border-line bg-surface">
-              {COLUMNS.map(({ key, label }) => (
-                <th
-                  key={key}
-                  scope="col"
-                  className="px-3 py-2 font-label text-label font-bold uppercase tracking-[0.08em] text-ink-2"
-                >
-                  <button
-                    type="button"
-                    onClick={() => onSort(key)}
-                    className="inline-flex items-center gap-1"
-                  >
-                    <span>{label}</span>
-                    <span className="text-accent">
-                      {sortState.key === key ? sortDirGlyph(sortState.dir) : ""}
-                    </span>
-                  </button>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((r) => (
-              <tr key={r.player_code} className="border-b border-line">
-                <td className="px-3 py-2">{r.position}</td>
-                <td className="px-3 py-2">{r.name}</td>
-                <td className="px-3 py-2">{r.team_short}</td>
-                <td className="px-3 py-2 font-label text-label tabular-nums">
-                  {fixed1(r.price_m)}
-                </td>
-                <td className="px-3 py-2 font-label text-label tabular-nums">
-                  {orDash(r.ownership != null ? fixed1(r.ownership) : undefined)}
-                </td>
-                <td className="px-3 py-2">
-                  <BandCell row={r} maxHi={maxHi} />
-                </td>
-                <td className="px-3 py-2 font-label text-label tabular-nums">
-                  {orDash(r.xp_capt != null ? fixed2(r.xp_capt) : undefined)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <h1 className="font-display text-display font-bold text-ink">
+        Projected points, with the uncertainty shown
+      </h1>
+      <p className="mt-2 font-body text-body text-ink-2">
+        Every player's expected points for the next gameweek from a model that beats
+        FPL's own projections. The band next to each xP is the range the player's
+        actual score lands in 8 gameweeks out of 10.{" "}
+        <Link to="/scoreboard" className="text-accent underline">
+          Track its accuracy live
+        </Link>
+        .
+      </p>
+
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        {POSITIONS.map((p) => (
+          <button
+            key={p}
+            type="button"
+            aria-pressed={posFilter === p}
+            onClick={() => setPosFilter(p)}
+            className={`flex min-h-[44px] items-center rounded-full border border-line px-4 font-label text-label ${
+              posFilter === p
+                ? "bg-accent-bg font-bold text-accent-ink"
+                : "text-ink-2 hover:bg-surface"
+            }`}
+          >
+            {chipLabel(p)}
+          </button>
+        ))}
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search player or team"
+          aria-label="Search player or team"
+          className="min-h-[44px] flex-1 rounded border border-line bg-bg px-3 font-label text-label text-ink"
+        />
       </div>
+
+      {visible.length === 0 ? (
+        <div className="flex min-h-[16rem] flex-col items-center justify-center gap-2 py-12 text-center">
+          <h2 className="font-heading text-heading font-bold text-ink">No players match</h2>
+          <p className="font-body text-body text-ink-2">
+            Try a different position filter or search term.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr className="border-b border-line bg-surface">
+                {COLUMNS.map(({ key, label }) => (
+                  <th
+                    key={key}
+                    scope="col"
+                    className="px-3 py-2 font-label text-label font-bold uppercase tracking-[0.08em] text-ink-2"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => onSort(key)}
+                      className="inline-flex items-center gap-1"
+                    >
+                      <span>{label}</span>
+                      <span className="text-accent">
+                        {sortState.key === key ? sortDirGlyph(sortState.dir) : ""}
+                      </span>
+                    </button>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((r) => (
+                <tr key={r.player_code} className="border-b border-line">
+                  <td className="px-3 py-2">{r.position}</td>
+                  <td className="px-3 py-2">{r.name}</td>
+                  <td className="px-3 py-2">{r.team_short}</td>
+                  <td className="px-3 py-2 font-label text-label tabular-nums">
+                    {fixed1(r.price_m)}
+                  </td>
+                  <td className="px-3 py-2 font-label text-label tabular-nums">
+                    {orDash(r.ownership != null ? fixed1(r.ownership) : undefined)}
+                  </td>
+                  <td className="px-3 py-2">
+                    <BandCell row={r} maxHi={maxHi} />
+                  </td>
+                  <td className="px-3 py-2 font-label text-label tabular-nums">
+                    {orDash(r.xp_capt != null ? fixed2(r.xp_capt) : undefined)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <p className="mt-4 font-body text-body text-ink-2">
+        Showing the top 50 by xP — the free preview. The full table, CSV download and
+        your-team transfer planning are coming with the Pro tier.
+      </p>
+      <p className="mt-4 font-body text-body text-ink-2">
+        <strong>Reading the numbers:</strong> xP is the <em>median</em> outcome — the
+        metric that ranks players best for picking a team. Football scoring is skewy,
+        so medians look modest; the band shows the haul potential.{" "}
+        <strong>Captain xP</strong> is the <em>mean</em> outcome, used for the armband
+        because doubling rewards ceiling. Early season both lean on price and fixture
+        priors and sharpen from around GW4 as real form accumulates.
+      </p>
+
+      <h2 className="mt-8 font-heading text-heading font-bold text-ink">Captain picks</h2>
+      {/* Captain picks sub-table lands in Task 3. */}
     </div>
   );
 }
