@@ -1,4 +1,5 @@
 import ReactMarkdown from "react-markdown";
+import { Link } from "react-router";
 import content from "../content/methodology.md?raw";
 import { usePageMeta } from "../lib/usePageMeta";
 
@@ -38,7 +39,16 @@ export default function Methodology() {
             />
           ),
           li: (props) => <li {...props} />,
-          a: (props) => <a className="text-accent underline" {...props} />,
+          a: ({ href, children, ...props }) =>
+            href?.startsWith("/") ? (
+              <Link to={href} className="text-accent underline">
+                {children}
+              </Link>
+            ) : (
+              <a href={href} className="text-accent underline" {...props}>
+                {children}
+              </a>
+            ),
           strong: (props) => <strong className="font-bold text-ink" {...props} />,
         }}
       >

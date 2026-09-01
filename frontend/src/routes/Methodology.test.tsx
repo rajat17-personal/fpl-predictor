@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
@@ -104,6 +104,35 @@ describe("Methodology", () => {
     expect(footerParagraph?.textContent).toContain(
       "Predictions are statistics, not certainties.",
     );
+  });
+
+  it("navigates the internal scoreboard link client-side via react-router, not a full page reload (WR-02)", () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <MemoryRouter initialEntries={["/methodology"]}>
+        <QueryClientProvider client={queryClient}>
+          <Routes>
+            <Route element={<PageShell />}>
+              <Route path="/methodology" element={<Methodology />} />
+              <Route path="/scoreboard" element={<div>SCOREBOARD STUB</div>} />
+            </Route>
+          </Routes>
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+
+    const link = screen.getByRole("link", { name: "scoreboard" });
+    expect(link).toHaveAttribute("href", "/scoreboard");
+
+    // A plain <a href="/scoreboard"> would trigger jsdom's unimplemented
+    // full-navigation path (and never swap the rendered route tree). A
+    // react-router <Link> intercepts the click and transitions in place —
+    // asserting the stub route's content appears proves client-side
+    // routing occurred, not a full page reload.
+    fireEvent.click(link);
+    expect(screen.getByText("SCOREBOARD STUB")).toBeInTheDocument();
   });
 
   it("renders no spinner and no Retry control on this page under any condition", () => {
