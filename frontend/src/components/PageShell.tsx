@@ -1,4 +1,8 @@
 import { NavLink, Outlet } from "react-router";
+import { useQuery } from "@tanstack/react-query";
+import GwBanner from "./GwBanner";
+import ThemeToggle from "./ThemeToggle";
+import { fetchJson, type MetaResponse } from "../lib/api";
 
 /* Fixed, literal array (never Object.keys over a map) so the header nav's render
  * order is pinned to source and cannot vary between renders — UI-SPEC "Routes"
@@ -14,18 +18,24 @@ export const NAV_LINKS: { to: string; label: string }[] = [
   { to: "/methodology", label: "Method" },
 ];
 
-/* App shell chrome: non-sticky header (brand + nav + empty meta-banner slot) +
- * route content, all three sections contained at a shared 68rem centred
- * column with a full-bleed border above/below + a persistent footer
+/* App shell chrome: non-sticky header (brand + nav + GW banner + theme
+ * toggle) + route content, all three sections contained at a shared 68rem
+ * centred column with a full-bleed border above/below + a persistent footer
  * disclaimer. The header and footer outer elements carry the border and stay
  * edge to edge; the 68rem cap and the 16px gutter live on an inner wrapper so
  * chrome content edges align with the route content beneath them.
  *
- * The meta-banner slot is empty this phase — Phase 2's UI-06 live deadline
- * countdown fills it later. Every colour reference below goes through a
- * Tailwind v4 @theme token name (see src/index.css); no hex literal appears in
- * this file. */
+ * PageShell owns the single `meta.json` query (UI-06) so it is fetched once
+ * and shared by every route via GwBanner, rather than refetched per page.
+ * Every colour reference below goes through a Tailwind v4 @theme token name
+ * (see src/index.css); no hex literal appears in this file. */
 export default function PageShell() {
+  const metaQuery = useQuery({
+    queryKey: ["meta"],
+    queryFn: () => fetchJson<MetaResponse>("/data/meta.json"),
+    staleTime: 60_000,
+  });
+
   return (
     <div className="flex min-h-screen flex-col bg-bg text-ink">
       <header className="border-b border-line py-4">
@@ -51,8 +61,10 @@ export default function PageShell() {
               </NavLink>
             ))}
           </nav>
-          {/* Meta-banner slot — Phase 2 UI-06 live deadline countdown lands here. */}
-          <div className="ml-auto" />
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <GwBanner status={metaQuery.status} data={metaQuery.data} />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
