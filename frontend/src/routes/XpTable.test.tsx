@@ -4,15 +4,31 @@ import { MemoryRouter } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import XpTable from "./XpTable";
 import fixtureRows from "../test/fixtures/xp_table.json";
-import type { XpRow } from "../lib/api";
+import captainsFixture from "../test/fixtures/captains.json";
+import type { CaptainRow, XpRow } from "../lib/api";
 
 const rows = fixtureRows as XpRow[];
+const captainsRows = captainsFixture as CaptainRow[];
 
 function mockFetchOnce(body: unknown, ok = true) {
   global.fetch = vi.fn().mockResolvedValue({
     ok,
     status: ok ? 200 : 500,
     json: () => Promise.resolve(body),
+  }) as unknown as typeof fetch;
+}
+
+/* Distinguishes the two concurrent queries this route fires (xp_table.json,
+ * captains.json) by URL rather than call order, since TanStack Query does
+ * not guarantee which fires first. */
+function mockFetchByUrl(map: Record<string, unknown>) {
+  global.fetch = vi.fn((path: string) => {
+    const body = map[path];
+    return Promise.resolve({
+      ok: body !== undefined,
+      status: body !== undefined ? 200 : 404,
+      json: () => Promise.resolve(body),
+    });
   }) as unknown as typeof fetch;
 }
 
@@ -29,12 +45,17 @@ function renderXpTable() {
   );
 }
 
+/* Scoped to the main xP table (by its accessible name) so the Captain picks
+ * sub-table's rows never leak into these assertions. Returns [] when the
+ * main table isn't rendered at all (the "No players match" zero-match
+ * state). */
 function bodyRowNames() {
-  const rows = screen.queryAllByRole("row");
-  if (rows.length === 0) {
+  const table = screen.queryByRole("table", { name: "xP table" });
+  if (!table) {
     return [];
   }
-  return rows
+  return within(table)
+    .queryAllByRole("row")
     .slice(1) // drop the header row
     .map((row) => within(row).getAllByRole("cell")[1]?.textContent);
 }
@@ -217,5 +238,63 @@ describe("XpTable (Task 2 — filters, verbatim copy, page meta)", () => {
     for (const link of links) {
       expect(link.getAttribute("href")).not.toMatch(/\.html$/);
     }
+  });
+});
+
+describe("XpTable (Task 3 — status flag + captain picks)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("mounts a StatusFlag for a flagged player and none for an available one", async () => {
+    mockFetchByUrl({
+      "/data/xp_table.json": rows,
+      "/data/captains.json": captainsRows,
+    });
+    renderXpTable();
+    await screen.findByText("Haaland");
+
+    // Saka: status "i" -> flag with accessible name "unavailable"
+    const sakaRow = screen.getByText("Saka").closest("tr")!;
+    expect(within(sakaRow).getByRole("button", { name: "unavailable" })).toBeInTheDocument();
+
+    // Haaland: status "a" -> no flag element at all
+    const haalandRow = screen.getByText("Haaland").closest("tr")!;
+    expect(
+      within(haalandRow).queryByRole("button", { name: /unavailable|doubtful/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders exactly 5 captain rows from a 7-row source, using the full team name", async () => {
+    mockFetchByUrl({
+      "/data/xp_table.json": rows,
+      "/data/captains.json": captainsRows,
+    });
+    renderXpTable();
+    await screen.findByText("Haaland");
+
+    const captainsTable = await screen.findByRole("table", { name: "Captain picks" });
+    const captainRows = within(captainsTable).getAllByRole("row").slice(1);
+    expect(captainRows).toHaveLength(5);
+
+    // Full club name (not team_short) distinguishes this table from the main one.
+    expect(within(captainsTable).getByText("Man City")).toBeInTheDocument();
+    expect(within(captainsTable).queryByText("MCI")).not.toBeInTheDocument();
+
+    // Palmer is the 7th fixture row — outside the slice(0, 5).
+    expect(within(captainsTable).queryByText("Palmer")).not.toBeInTheDocument();
+  });
+
+  it("does not apply the main table's en-dash fallback to a captains row with null ownership", async () => {
+    mockFetchByUrl({
+      "/data/xp_table.json": rows,
+      "/data/captains.json": captainsRows,
+    });
+    renderXpTable();
+    await screen.findByText("Haaland");
+
+    const captainsTable = await screen.findByRole("table", { name: "Captain picks" });
+    const salahRow = within(captainsTable).getByText("Salah").closest("tr")!;
+    expect(within(salahRow).queryByText("–")).not.toBeInTheDocument();
   });
 });
