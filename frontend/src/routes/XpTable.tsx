@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { fetchJson, type XpRow } from "../lib/api";
+import { fetchJson, type CaptainRow, type XpRow } from "../lib/api";
 import { Spinner } from "../components/Spinner";
 import { ErrorState } from "../components/ErrorState";
 import { EmptyState } from "../components/EmptyState";
@@ -9,13 +9,15 @@ import { BandCell } from "../components/BandCell";
 import { fixed1, fixed2, orDash } from "../lib/format";
 import { sortDirGlyph, sortRows, useSortable } from "../lib/sortable";
 import { usePageMeta } from "../lib/usePageMeta";
+import { StatusFlag } from "../lib/statusFlag";
 
 /* The flagship xP table (D-06) — ported from web/index.html's inline script
  * (lines 83-131). Task 1 wired ONE path end to end: JSON contract → typed
- * row → sortable header → band cell → rendered table. Task 2 (this
- * extension) adds the position-chip + search filters, the verbatim page
- * copy, and the per-route <title>/<meta> pair. The accessible status flag
- * and the Captain picks sub-table land in Task 3. */
+ * row → sortable header → band cell → rendered table. Task 2 added the
+ * position-chip + search filters, the verbatim page copy, and the
+ * per-route <title>/<meta> pair. Task 3 (this extension) mounts the
+ * accessible status flag on flagged rows and adds the Captain picks
+ * sub-table. */
 
 type SortKey =
   | "position"
@@ -53,6 +55,14 @@ export default function XpTable() {
     // Root-relative path — a bare "data/xp_table.json" resolves against the
     // current client-side route and 404s (RESEARCH.md Pitfall 5).
     queryFn: () => fetchJson<XpRow[]>("/data/xp_table.json"),
+    staleTime: 60_000,
+  });
+
+  // The captains fetch failing must not take the main xP table down — its
+  // own isError branch renders a quiet inline message, never ErrorState.
+  const { data: captainsData, isError: captainsIsError } = useQuery({
+    queryKey: ["captains"],
+    queryFn: () => fetchJson<CaptainRow[]>("/data/captains.json"),
     staleTime: 60_000,
   });
 
@@ -145,7 +155,7 @@ export default function XpTable() {
         </div>
       ) : (
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+          <table aria-label="xP table" className="w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-line bg-surface">
                 {COLUMNS.map(({ key, label }) => (
@@ -172,7 +182,10 @@ export default function XpTable() {
               {visible.map((r) => (
                 <tr key={r.player_code} className="border-b border-line">
                   <td className="px-3 py-2">{r.position}</td>
-                  <td className="px-3 py-2">{r.name}</td>
+                  <td className="px-3 py-2">
+                    {r.name}
+                    <StatusFlag status={r.status} news={r.news} />
+                  </td>
                   <td className="px-3 py-2">{r.team_short}</td>
                   <td className="px-3 py-2 font-label text-label tabular-nums">
                     {fixed1(r.price_m)}
@@ -207,7 +220,55 @@ export default function XpTable() {
       </p>
 
       <h2 className="mt-8 font-heading text-heading font-bold text-ink">Captain picks</h2>
-      {/* Captain picks sub-table lands in Task 3. */}
+      {captainsIsError ? (
+        <p className="mt-2 font-body text-body text-ink-2">
+          Captain picks are unavailable right now.
+        </p>
+      ) : captainsData ? (
+        <div className="mt-4 overflow-x-auto">
+          {/* R17: top 5 of captains.json, no sort, no filter. */}
+          <table aria-label="Captain picks" className="w-full border-collapse text-left">
+            <thead>
+              <tr className="border-b border-line bg-surface">
+                {["Player", "Team", "£m", "Own %", "Captain xP"].map((label) => (
+                  <th
+                    key={label}
+                    scope="col"
+                    className="px-3 py-2 font-label text-label font-bold uppercase tracking-[0.08em] text-ink-2"
+                  >
+                    {label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {captainsData.slice(0, 5).map((r) => (
+                <tr key={r.name} className="border-b border-line">
+                  {/* Team uses the FULL club name here — unlike the main
+                   * table's team_short (R17). */}
+                  <td className="px-3 py-2">{r.name}</td>
+                  <td className="px-3 py-2">{r.team}</td>
+                  <td className="px-3 py-2 font-label text-label tabular-nums">
+                    {fixed1(r.price_m)}
+                  </td>
+                  {/* R18/Pitfall 3: NO "–" fallback here (unlike the main
+                   * table) — this reproduces vanilla's un-guarded
+                   * `r.ownership?.toFixed(1)`, which stringifies to the
+                   * literal text "undefined" for a null value. Deliberate
+                   * parity, not a bug we're introducing. */}
+                  <td className="px-3 py-2 font-label text-label tabular-nums">
+                    {String(r.ownership?.toFixed(1))}
+                  </td>
+                  {/* R19: no optional chaining — xp_capt always present. */}
+                  <td className="px-3 py-2 font-label text-label tabular-nums">
+                    {fixed2(r.xp_capt)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
     </div>
   );
 }

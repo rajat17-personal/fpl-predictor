@@ -10,23 +10,21 @@ import type { CaptainRow, XpRow } from "../lib/api";
 const rows = fixtureRows as XpRow[];
 const captainsRows = captainsFixture as CaptainRow[];
 
-function mockFetchOnce(body: unknown, ok = true) {
-  global.fetch = vi.fn().mockResolvedValue({
-    ok,
-    status: ok ? 200 : 500,
-    json: () => Promise.resolve(body),
-  }) as unknown as typeof fetch;
-}
-
-/* Distinguishes the two concurrent queries this route fires (xp_table.json,
- * captains.json) by URL rather than call order, since TanStack Query does
- * not guarantee which fires first. */
-function mockFetchByUrl(map: Record<string, unknown>) {
-  global.fetch = vi.fn((path: string) => {
-    const body = map[path];
+/* The route fires two concurrent queries (xp_table.json, captains.json);
+ * TanStack Query does not guarantee which fires first, so the mock must
+ * route by URL rather than call order. `xpTableBody` covers the tests this
+ * file is actually about; `captainsBody` defaults to an empty array so
+ * tests that don't care about the Captain picks sub-table neither crash
+ * (a null xp_capt in an xp_table row would break the captains-specific
+ * un-guarded `.toFixed()`, R19, if the same body were reused for both
+ * fetches) nor introduce player-name collisions with the main table. Tests
+ * that DO exercise the sub-table pass the real captains fixture explicitly. */
+function mockFetchOnce(xpTableBody: unknown, captainsBody: unknown = []) {
+  globalThis.fetch = vi.fn((path: string) => {
+    const body = path === "/data/captains.json" ? captainsBody : xpTableBody;
     return Promise.resolve({
-      ok: body !== undefined,
-      status: body !== undefined ? 200 : 404,
+      ok: true,
+      status: 200,
       json: () => Promise.resolve(body),
     });
   }) as unknown as typeof fetch;
@@ -57,7 +55,13 @@ function bodyRowNames() {
   return within(table)
     .queryAllByRole("row")
     .slice(1) // drop the header row
-    .map((row) => within(row).getAllByRole("cell")[1]?.textContent);
+    .map((row) => {
+      const nameCell = within(row).getAllByRole("cell")[1];
+      // The name cell's first child is the plain name text node; a second
+      // child (the mounted StatusFlag) only appears for flagged rows, so
+      // .textContent alone would append its glyph (e.g. "Saka✕").
+      return nameCell?.childNodes[0]?.textContent ?? null;
+    });
 }
 
 describe("XpTable (Task 1 — end-to-end slice)", () => {
@@ -247,31 +251,27 @@ describe("XpTable (Task 3 — status flag + captain picks)", () => {
   });
 
   it("mounts a StatusFlag for a flagged player and none for an available one", async () => {
-    mockFetchByUrl({
-      "/data/xp_table.json": rows,
-      "/data/captains.json": captainsRows,
-    });
+    // Explicit captainsRows here — this test cares about name overlap
+    // between the two tables, so both fetches carry real fixture data.
+    mockFetchOnce(rows, captainsRows);
     renderXpTable();
-    await screen.findByText("Haaland");
+    const table = await screen.findByRole("table", { name: "xP table" });
 
     // Saka: status "i" -> flag with accessible name "unavailable"
-    const sakaRow = screen.getByText("Saka").closest("tr")!;
+    const sakaRow = within(table).getByText("Saka").closest("tr")!;
     expect(within(sakaRow).getByRole("button", { name: "unavailable" })).toBeInTheDocument();
 
     // Haaland: status "a" -> no flag element at all
-    const haalandRow = screen.getByText("Haaland").closest("tr")!;
+    const haalandRow = within(table).getByText("Haaland").closest("tr")!;
     expect(
       within(haalandRow).queryByRole("button", { name: /unavailable|doubtful/ }),
     ).not.toBeInTheDocument();
   });
 
   it("renders exactly 5 captain rows from a 7-row source, using the full team name", async () => {
-    mockFetchByUrl({
-      "/data/xp_table.json": rows,
-      "/data/captains.json": captainsRows,
-    });
+    mockFetchOnce(rows, captainsRows);
     renderXpTable();
-    await screen.findByText("Haaland");
+    await screen.findByRole("table", { name: "xP table" });
 
     const captainsTable = await screen.findByRole("table", { name: "Captain picks" });
     const captainRows = within(captainsTable).getAllByRole("row").slice(1);
@@ -286,12 +286,9 @@ describe("XpTable (Task 3 — status flag + captain picks)", () => {
   });
 
   it("does not apply the main table's en-dash fallback to a captains row with null ownership", async () => {
-    mockFetchByUrl({
-      "/data/xp_table.json": rows,
-      "/data/captains.json": captainsRows,
-    });
+    mockFetchOnce(rows, captainsRows);
     renderXpTable();
-    await screen.findByText("Haaland");
+    await screen.findByRole("table", { name: "xP table" });
 
     const captainsTable = await screen.findByRole("table", { name: "Captain picks" });
     const salahRow = within(captainsTable).getByText("Salah").closest("tr")!;
