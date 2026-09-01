@@ -13,7 +13,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **UI-02**: xP table page at parity — sortable/filterable by position, team, price, xP, ownership, form, with exact sort/format semantics matching the vanilla site
 - [x] **UI-03**: Fixtures page with FDR ticker in the standard 1–5 green→red convention
 - [x] **UI-04**: Prices page with watchlist rise/fall indicators
-- [ ] **UI-05**: League, scoreboard, differentials, and methodology pages at parity
+- [x] **UI-05**: League, scoreboard, differentials, and methodology pages at parity
 - [x] **UI-06**: Persistent gameweek meta banner with deadline countdown
 - [ ] **UI-07**: Mobile-responsive pitch and tables
 
@@ -121,7 +121,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-02 | Phase 2 | Complete |
 | UI-03 | Phase 2 | Complete |
 | UI-04 | Phase 2 | Complete |
-| UI-05 | Phase 2 | Pending |
+| UI-05 | Phase 2 | Complete |
 | UI-06 | Phase 2 | Complete |
 | UIX-02 | Phase 2 | Complete |
 | PITCH-01 | Phase 3 | Pending |
