@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 01-test-base-layer-app-skeleton
 source: [01-VERIFICATION.md]
 started: 2026-09-01T05:40:00Z
@@ -48,5 +48,12 @@ blocked: 0
   reason: "User reported: The nav links text does not adapt based on screen size especially when screen size is bigger. rest work as expected"
   severity: cosmetic
   test: 3
-  artifacts: []  # Filled by diagnosis
-  missing: []    # Filled by diagnosis
+  root_cause: "PageShell.tsx:27 header is the only chrome section missing the mx-auto max-w-[68rem] containment that main (L53) and footer (L58) apply; on >1088px viewports the header renders full-bleed so the fixed 14px nav text reads stranded/undersized. Layout-containment omission vs the UI-SPEC 68rem parity contract — not a typography defect (vanilla nav font never scales either; its .wrap containment is what makes it look right)."
+  artifacts:
+    - path: "frontend/src/components/PageShell.tsx"
+      issue: "header (line 27) lacks mx-auto max-w-[68rem] inner containment"
+  missing:
+    - "Wrap header brand+nav in an inner mx-auto w-full max-w-[68rem] container (keep border/padding full-bleed on outer header)"
+    - "Do NOT add responsive font-size utilities — fixed 14px Label token is the UI-SPEC contract"
+    - "Playwright note for Phase 4 (E2E-01): assert header inner wrapper width matches main (≤1088px, centered) at 1720px viewport"
+  debug_session: ".planning/debug/nav-text-not-responsive.md" 
