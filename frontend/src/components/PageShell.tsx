@@ -15,7 +15,11 @@ export const NAV_LINKS: { to: string; label: string }[] = [
 ];
 
 /* App shell chrome: non-sticky header (brand + nav + empty meta-banner slot) +
- * a 68rem centred content wrapper + a persistent footer disclaimer.
+ * route content, all three sections contained at a shared 68rem centred
+ * column with a full-bleed border above/below + a persistent footer
+ * disclaimer. The header and footer outer elements carry the border and stay
+ * edge to edge; the 68rem cap and the 16px gutter live on an inner wrapper so
+ * chrome content edges align with the route content beneath them.
  *
  * The meta-banner slot is empty this phase — Phase 2's UI-06 live deadline
  * countdown fills it later. Every colour reference below goes through a
@@ -24,38 +28,40 @@ export const NAV_LINKS: { to: string; label: string }[] = [
 export default function PageShell() {
   return (
     <div className="flex min-h-screen flex-col bg-bg text-ink">
-      <header className="flex flex-wrap items-center gap-[18px] border-b border-line px-4 py-4">
-        <span className="font-heading text-[1.25rem] font-bold tracking-tight">
-          FPL<span className="text-accent">ML</span>
-        </span>
-        <nav aria-label="Site" className="flex flex-wrap gap-0.5">
-          {NAV_LINKS.map(({ to, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === "/"}
-              className={({ isActive }) =>
-                `flex min-h-[44px] items-center rounded px-3 py-2 font-label text-label ${
-                  isActive
-                    ? "bg-accent-bg font-bold text-accent-ink"
-                    : "text-ink-2 hover:bg-surface hover:text-ink"
-                }`
-              }
-            >
-              {label}
-            </NavLink>
-          ))}
-        </nav>
-        {/* Meta-banner slot — Phase 2 UI-06 live deadline countdown lands here. */}
-        <div className="ml-auto" />
+      <header className="border-b border-line py-4">
+        <div className="mx-auto flex w-full max-w-[68rem] flex-wrap items-center gap-[18px] px-4">
+          <span className="font-heading text-[1.25rem] font-bold tracking-tight">
+            FPL<span className="text-accent">ML</span>
+          </span>
+          <nav aria-label="Site" className="flex flex-wrap gap-0.5">
+            {NAV_LINKS.map(({ to, label }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === "/"}
+                className={({ isActive }) =>
+                  `flex min-h-[44px] items-center rounded px-3 py-2 font-label text-label ${
+                    isActive
+                      ? "bg-accent-bg font-bold text-accent-ink"
+                      : "text-ink-2 hover:bg-surface hover:text-ink"
+                  }`
+                }
+              >
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+          {/* Meta-banner slot — Phase 2 UI-06 live deadline countdown lands here. */}
+          <div className="ml-auto" />
+        </div>
       </header>
 
       <main className="mx-auto w-full max-w-[68rem] flex-1 px-4">
         <Outlet />
       </main>
 
-      <footer className="border-t border-line px-4 py-4 text-label text-ink-2">
-        <p className="mx-auto max-w-[68rem]">
+      <footer className="border-t border-line py-4 text-label text-ink-2">
+        <p className="mx-auto w-full max-w-[68rem] px-4">
           Predictions are statistics, not certainties. This site hosts no contests and
           takes no stakes. Not affiliated with the Premier League or the official
           Fantasy Premier League game.
