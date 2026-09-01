@@ -177,8 +177,8 @@ export interface ScoreboardSummary {
   mae_model: number;
   spearman_model: number;
   captain_avg_points: number;
-  mae_fpl?: number;
-  spearman_fpl?: number;
+  mae_fpl?: number | null;
+  spearman_fpl?: number | null;
 }
 
 /** web/data/scoreboard.json's top-level shape. */
