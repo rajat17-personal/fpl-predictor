@@ -1,0 +1,60 @@
+[
+  {
+    "team": "Arsenal",
+    "short": "ARS",
+    "gws": [
+      { "gw": 10, "fixtures": [{ "opp": "MCI", "home": true, "fdr": 5 }] },
+      { "gw": 11, "fixtures": [{ "opp": "LIV", "home": false, "fdr": 4 }] },
+      { "gw": 12, "fixtures": [] },
+      { "gw": 13, "fixtures": [{ "opp": "FUL", "home": true, "fdr": 3 }] }
+    ],
+    "ease": 3.75,
+    "xg_next": 1.85,
+    "xgc_next": 1.1
+  },
+  {
+    "team": "Chelsea",
+    "short": "CHE",
+    "gws": [
+      { "gw": 10, "fixtures": [{ "opp": "BOU", "home": false, "fdr": 2 }] },
+      { "gw": 11, "fixtures": [{ "opp": "SOU", "home": true, "fdr": 1 }] },
+      { "gw": 12, "fixtures": [{ "opp": "WHU", "home": false, "fdr": 3 }] },
+      { "gw": 13, "fixtures": [{ "opp": "EVE", "home": true, "fdr": 2 }] }
+    ],
+    "ease": 2.0,
+    "xg_next": null,
+    "xgc_next": 1.05
+  },
+  {
+    "team": "Liverpool",
+    "short": "LIV",
+    "gws": [
+      { "gw": 10, "fixtures": [{ "opp": "NEW", "home": true, "fdr": 3 }] },
+      {
+        "gw": 11,
+        "fixtures": [
+          { "opp": "TOT", "home": true, "fdr": 1 },
+          { "opp": "WOL", "home": false, "fdr": 2 }
+        ]
+      },
+      { "gw": 12, "fixtures": [{ "opp": "MCI", "home": false, "fdr": 4 }] },
+      { "gw": 13, "fixtures": [{ "opp": "CHE", "home": true, "fdr": 5 }] }
+    ],
+    "ease": 3.5,
+    "xg_next": 2.1,
+    "xgc_next": 0.85
+  },
+  {
+    "team": "Manchester City",
+    "short": "MCI",
+    "gws": [
+      { "gw": 10, "fixtures": [{ "opp": "BHA", "home": true, "fdr": 1 }] },
+      { "gw": 11, "fixtures": [{ "opp": "CRY", "home": false, "fdr": 2 }] },
+      { "gw": 12, "fixtures": [{ "opp": "LEE", "home": true, "fdr": 3 }] },
+      { "gw": 13, "fixtures": [{ "opp": "NFO", "home": false, "fdr": 4 }] }
+    ],
+    "ease": 2.5,
+    "xg_next": 2.5,
+    "xgc_next": 0.75
+  }
+]
