@@ -35,7 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A concurrent solve + pool-refresh test runs green repeatedly, making the cache/lock race observable in tests instead of only in production
   4. `npm run dev` serves a React (Vite, TypeScript 6.x) app whose routes for all 8 pages resolve, fetching `web/data/*.json` and `/api` at runtime through the dev proxy — with no pipeline data bundled into the build
 
-**Plans**: 5/5 plans executed (3 waves)
+**Plans**: 5/6 plans executed (4 waves)
 **Wave 1**
 
 - [x] 01-01-PLAN.md — Repo baseline (`.gitignore` + initial source commit) and the blocking package-legitimacy gate
@@ -49,6 +49,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] 01-03-PLAN.md — `/team` and `/rate` against a `responses`-mocked FPL API, three-mode `require_key` coverage, and the concurrency race test
 - [x] 01-05-PLAN.md — All 8 routes with per-route error boundaries, the loading/error/empty/404 states, and the three UI-SPEC backstop tests
+
+**Wave 4** *(gap closure — blocked on Wave 3 completion)*
+
+- [ ] 01-06-PLAN.md — Gap G-01-3: contain the header brand+nav at 68rem so header/main/footer content edges align, with a containment-parity regression test
 
 **UI hint**: yes
 
