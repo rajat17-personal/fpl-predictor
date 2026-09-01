@@ -1,7 +1,7 @@
 ---
 phase: "2"
 slug: "data-layer-non-pitch-pages"
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: "2026-09-01"
@@ -471,8 +471,12 @@ non-interactive chrome (unchanged rule).
 ## UI Considerations
 
 Probe-verified state coverage across 10 surfaces (7 pages + GW banner + theme toggle + status-flag
-tooltip). 63 applicable: 38 resolved (explicit), 17 resolved (backstop, verified by D-05's
-per-rule Vitest inventory), 8 dismissed with reason, 0 unresolved.
+tooltip). Engine run 2026-09-01: 67 applicable considerations raised; E8 (GW banner chip) came
+back `unclassified` and was user-confirmed as a data-display element (loading/error/overflow/
+long-text), then expanded below. Tables include a few rows beyond the engine's raise for
+completeness. Final tally: **43 resolved (explicit), 17 resolved (backstop — verified by D-05's
+per-rule Vitest inventory), 16 dismissed with reason, 0 unresolved.** Resolutions adopted by the
+user (propose-then-confirm, 2026-09-01).
 
 ### E1 — xP table (list-collection, flagship — deepest coverage per D-06)
 
@@ -561,11 +565,14 @@ per-rule Vitest inventory), 8 dismissed with reason, 0 unresolved.
 |----------|--------|---------------------|
 | overflow | ✅ resolved (explicit) | Long-form prose lives in the shared `68rem` wrapper, wraps normally, never clipped |
 | long-text | ✅ resolved (explicit) | Fixed developer-authored markdown, not user-generated — no truncation logic |
+| empty | ⊘ dismissed | Content is build-time bundled developer-authored markdown — it cannot be absent at runtime |
+| loading | ⊘ dismissed | Synchronous `?raw` import resolved at build time — no in-flight state exists |
+| error | ⊘ dismissed | No runtime fetch to fail; a broken import is a build failure, not a UI state |
+| populated | ⊘ dismissed | The only runtime state — covered by the section/tile contract in Page Contracts, no state branching |
+| partial | ⊘ dismissed | Single static document — no per-field optionality |
+| zero-one-many | ⊘ dismissed | Not a collection — fixed prose sections |
 
-*(No loading/empty/error/populated/partial/zero-one-many rows — the markdown import is
-synchronous/build-time, not a runtime fetch; see Design System note.)*
-
-### E8 — GW meta banner chip (nav-adjacent chrome, single shared `meta.json` fetch)
+### E8 — GW meta banner chip (data-display chrome, single shared `meta.json` fetch — kind user-confirmed after an `unclassified` probe result)
 
 | Category | Status | Resolution / Reason |
 |----------|--------|---------------------|
@@ -580,6 +587,8 @@ synchronous/build-time, not a runtime fetch; see Design System note.)*
 |----------|--------|---------------------|
 | loading | ⊘ dismissed | Theme resolves synchronously from `localStorage` + `matchMedia` at mount — no async fetch to be in-flight |
 | error | ✅ resolved (explicit) | A `localStorage` write failure degrades to session-only in-memory state — no user-facing error surface for a persistence-only failure |
+| empty | ⊘ dismissed | No stored preference is a defined state, not an absence — it resolves to `system` (D-14), never an empty surface |
+| populated | ✅ resolved (explicit) | Exactly one of the three buttons carries `aria-pressed="true"` + accent tokens, reflecting the stored/resolved value at all times |
 | long-text | ✅ resolved (explicit) | Icon-only buttons with short fixed `aria-label`s — no variable text |
 
 ### E10 — Status-flag tooltip (interactive-control, shared by E1 and E6)
@@ -588,6 +597,11 @@ synchronous/build-time, not a runtime fetch; see Design System note.)*
 |----------|--------|---------------------|
 | loading | ⊘ dismissed | Flag content comes from the already-fetched table row data, not a separate request |
 | error | ⊘ dismissed | Purely a presentational reveal of already-present data — no submission/fetch to fail |
+| empty | ✅ resolved (explicit) | The flag renders only when `status !== "a"` — an available player has no flag element at all (vanilla parity) |
+| populated | ✅ resolved (explicit) | Glyph/color per status class (`✕` bad / `▲` warn) with `aria-label`, per the App Shell contract |
+| partial | ✅ resolved (explicit) | Missing `news` falls back to the label word (`r.news \|\| label`), ported 1:1 from vanilla |
+| overflow | ✅ resolved (explicit) | Popover capped at 240px max-width, wraps within it, never clipped (same rule as long-text) |
+| zero-one-many | ⊘ dismissed | At most one flag per player row — no plurality to lay out |
 | long-text | ✅ resolved (explicit) | Injury-news strings (`r.news`) are variable-but-bounded FPL editorial text; the 240px-max-width popover wraps, never clips |
 
 ---
@@ -602,12 +616,12 @@ synchronous/build-time, not a runtime fetch; see Design System note.)*
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** APPROVED — gsd-ui-checker, 2026-09-01 (7/7 dimensions PASS, no blocking issues; UI-consideration probe run post-verification, resolutions user-confirmed)
