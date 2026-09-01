@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 02-data-layer-non-pitch-pages
 source: [02-VERIFICATION.md]
 started: 2026-09-01T11:30:00Z
@@ -53,8 +53,21 @@ blocked: 0
   reason: "User reported: dark mode looks okay although the colour looks a bit green"
   severity: cosmetic
   test: 1
-  artifacts: []  # Filled by diagnosis
-  missing: []    # Filled by diagnosis
+  root_cause: "Dark-mode neutral tokens in frontend/src/index.css .dark (lines 87-93) are green-family with up to 2.3x the chroma of their light-theme counterparts and sit within ~5-13 degrees of the brand accent hue (~154deg OKLCH), so the whole frame reads as a green wash. Values are byte-identical to vanilla web/assets/style.css:30-35 (not a port defect). Amplified by two dropped vanilla parity details: no color-scheme declaration and unpainted <body> (vanilla style.css:4,29,55)."
+  artifacts:
+    - path: "frontend/src/index.css"
+      issue: "lines 87-93: over-chromatic, accent-colliding dark neutrals (--color-bg #111815, --color-surface #18211c, --color-surface-2 #1f2a24, --color-line #2c3831)"
+    - path: "frontend/index.html"
+      issue: "line 28: body unpainted, no color-scheme declaration"
+    - path: "frontend/src/components/PageShell.tsx"
+      issue: "line 40: bg-bg on inner div where vanilla painted body"
+    - path: "web/assets/style.css"
+      issue: "lines 30-35: upstream origin of identical values — change in lockstep or log divergence in PARITY-DEVIATIONS.md"
+  missing:
+    - "Re-balance dark neutrals: lock hue to accent (~154deg), hold lightness, cut chroma to light theme's per-role budget (illustrative: bg #141715, surface #1b201c, surface-2 #222924, line #2e3731)"
+    - "Add color-scheme: light/dark declarations and paint body with --color-bg (straight parity regression fix)"
+    - "Document chosen chroma budget in UI-SPEC Color table; decide lockstep-vs-diverge for vanilla and log in PARITY-DEVIATIONS.md"
+  debug_session: .planning/debug/dark-theme-green-tint.md
 
 - gap_id: G-02-2
   truth: "Fixture ticker cells present opponent and venue legibly; venue (H/A) label placement looks intentional, not awkward"
@@ -62,5 +75,18 @@ blocked: 0
   reason: "User reported: only issue I see is that the A, H lable looks a bit akward can it come belwo the team instead of next to it"
   severity: cosmetic
   test: 2
-  artifacts: []  # Filled by diagnosis
-  missing: []    # Filled by diagnosis
+  root_cause: "Parity regression, not new design: vanilla already stacks H/A below the opponent code (.fdr small { display: block } at web/assets/style.css:155 on an inline-block, text-centered chip), but FdrCell.tsx:61 ports the chip as a row-direction flex (inline-flex items-center gap-0.5), pinning the <small> beside the code. Markup is identical to vanilla; only the CSS diverged. UI-SPEC specified chip content but not internal layout; existing tests assert text only, not geometry."
+  artifacts:
+    - path: "frontend/src/components/FdrCell.tsx"
+      issue: "line 61: row flex chip; line 64: <small> venue tag; line 56: min-w-[56px] misplaced on wrapper instead of chip (line 48 blank-cell branch already puts it on the chip)"
+    - path: "frontend/src/routes/Fixtures.tsx"
+      issue: "line 95: generic px-3 py-2 cell padding, missing vanilla's fixtures-specific tight cellpad (3px 4px, style.css:154) that absorbs the taller 2-line chip"
+    - path: "frontend/src/components/FdrCell.test.tsx"
+      issue: "7 tests, none assert layout geometry — cannot catch this regression class"
+  missing:
+    - "Swap chip to column stack (inline-flex flex-col items-center, drop gap-0.5) in FdrCell.tsx:61"
+    - "Move min-w-[56px] from wrapper onto the chip so both branches match and columns stay aligned"
+    - "Restore vanilla's tight fixtures cell padding on Fixtures.tsx:95 to cancel most of the ~14px/row growth"
+    - "Optionally close adjacent font drift (font-mono, smaller size, opacity 0.75 on venue tag)"
+    - "Add geometry regression test asserting column-direction class and min-width on the chip"
+  debug_session: .planning/debug/fixture-venue-label-placement.md
