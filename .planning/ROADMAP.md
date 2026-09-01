@@ -109,7 +109,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Plans**: TBD
 
-**Research flags**: use the Node `@playwright/test` runner, not `pytest-playwright` — the repo's `pytest.ini` disables both plugins over the `--browser` flag collision. Design the fixture strategy (E2E-01) before writing the first test.
+**Research flags**: use the Node `@playwright/test` runner, not `pytest-playwright` — the repo's `pytest.ini` disables both plugins over the `--browser` flag collision. Design the fixture strategy (E2E-01) before writing the first test. Gap `G-01-3` handoff: at a 1720px viewport, assert the header's inner content wrapper is ≤1088px wide, horizontally centered, and shares the `<main>` element's content x-range (see `.planning/phases/01-test-base-layer-app-skeleton/deferred-items.md`).
 
 ### Phase 5: Container Build & CI Pipeline
 
