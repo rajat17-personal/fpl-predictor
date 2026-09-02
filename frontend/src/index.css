@@ -83,14 +83,20 @@
   --text-display--line-height: 1.15;
 }
 
+:root {
+  color-scheme: light;
+}
+
 .dark {
-  --color-bg: #111815;
-  --color-surface: #18211c;
-  --color-surface-2: #1f2a24;
+  color-scheme: dark;
+
+  --color-bg: #141715;
+  --color-surface: #1b201c;
+  --color-surface-2: #222924;
 
   --color-ink: #e6ece6;
   --color-ink-2: #9caba0;
-  --color-line: #2c3831;
+  --color-line: #2e3731;
 
   --color-accent: #4cb878;
   --color-accent-ink: #6bcb90;
@@ -114,4 +120,9 @@
   --color-fdr4-ink: #e6ece6;
   --color-fdr5-bg: #e66767;
   --color-fdr5-ink: #111815;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
 }

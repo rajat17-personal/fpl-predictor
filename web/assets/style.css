@@ -27,12 +27,12 @@
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --bg: #111815;
-    --surface: #18211c;
-    --surface-2: #1f2a24;
+    --bg: #141715;
+    --surface: #1b201c;
+    --surface-2: #222924;
     --ink: #e6ece6;
     --ink-2: #9caba0;
-    --line: #2c3831;
+    --line: #2e3731;
     --accent: #4cb878;
     --accent-ink: #6bcb90;
     --accent-bg: #1a2e22;
