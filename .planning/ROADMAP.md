@@ -71,7 +71,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. League, scoreboard, differentials, and methodology pages present the same information as their vanilla counterparts from the same JSON files
   5. A gameweek meta banner with a live deadline countdown is visible on every page, and a dark mode toggle persists across navigation and reload
 
-**Plans**: 8 plans — 6/6 executed (2 waves), plus 2 gap-closure plans from UAT
+**Plans**: 7/8 plans executed — 6/6 executed (2 waves), plus 2 gap-closure plans from UAT
 
 **Wave 1**
 
@@ -87,7 +87,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Gap closure** *(from `02-UAT.md`, both cosmetic — 3/5 UAT tests passed)*
 
-- [ ] 02-07-PLAN.md — G-02-1: rebalance the dark neutral tokens off the accent hue and under the light theme's chroma budget (in lockstep with vanilla), restore `color-scheme` and the body paint, and gate the budget automatically *(gap-closure wave 1)*
+- [x] 02-07-PLAN.md — G-02-1: rebalance the dark neutral tokens off the accent hue and under the light theme's chroma budget (in lockstep with vanilla), restore `color-scheme` and the body paint, and gate the budget automatically *(gap-closure wave 1)*
 - [ ] 02-08-PLAN.md — G-02-2: stack the fixture chip's H/A venue tag beneath the opponent code, move the 56px minimum width onto the chip, restore vanilla's tight ticker-cell padding, and pin the geometry with tests *(gap-closure wave 2 — shares the `frontend/package.json` test script that 02-07 rewires)*
 
 **UI hint**: yes
@@ -186,7 +186,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Test Base Layer & App Skeleton | 6/6 | Complete    | 2026-09-01 |
-| 2. Data Layer & Non-Pitch Pages | 6/6 | In Progress|  |
+| 2. Data Layer & Non-Pitch Pages | 7/8 | In Progress|  |
 | 3. Pitch Renderer & Squad Views | 0/TBD | Not started | - |
 | 4. E2E Regression Suite | 0/TBD | Not started | - |
 | 5. Container Build & CI Pipeline | 0/TBD | Not started | - |
