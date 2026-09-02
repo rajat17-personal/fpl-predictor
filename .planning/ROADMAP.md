@@ -88,7 +88,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Gap closure** *(from `02-UAT.md`, both cosmetic — 3/5 UAT tests passed)*
 
 - [x] 02-07-PLAN.md — G-02-1: rebalance the dark neutral tokens off the accent hue and under the light theme's chroma budget (in lockstep with vanilla), restore `color-scheme` and the body paint, and gate the budget automatically *(gap-closure wave 1)*
-- [ ] 02-08-PLAN.md — G-02-2: stack the fixture chip's H/A venue tag beneath the opponent code, move the 56px minimum width onto the chip, restore vanilla's tight ticker-cell padding, and pin the geometry with tests *(gap-closure wave 2 — shares the `frontend/package.json` test script that 02-07 rewires)*
+- [x] 02-08-PLAN.md — G-02-2: stack the fixture chip's H/A venue tag beneath the opponent code, move the 56px minimum width onto the chip, restore vanilla's tight ticker-cell padding, and pin the geometry with tests *(gap-closure wave 2 — shares the `frontend/package.json` test script that 02-07 rewires)*
 
 **UI hint**: yes
 
