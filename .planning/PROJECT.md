@@ -27,10 +27,11 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 - ✓ Ops: daily snapshot + weekly export cron scripts; pytest suite for optimizer legality, leakage, autosubs, export builders (~18 tests) — existing
 - ✓ FastAPI integration test suite (TestClient): /solve, /rate, /team, /health, /meta against a `responses`-mocked FPL API; three-mode auth stub coverage; concurrent solve + pool-refresh race test — Phase 1
 - ✓ React/Vite app skeleton with proven dev-proxy runtime seam: all 8 routes resolve, per-route error boundaries, loading/error/empty/404 states, Vitest harness, no pipeline data bundled — Phase 1
+- ✓ Seven non-pitch pages (xP table, fixtures, prices, league, scoreboard, differentials, methodology) rebuilt at verified vanilla parity from the unchanged JSON contract, with GW deadline banner, persistent dark mode, self-hosted fonts, and a PARITY-DEVIATIONS.md ledger of every intentional delta — Phase 2
 
 ### Active
 
-- [ ] React (Vite) rebuild of the web UI — full parity with all 8 existing pages (xP table/index, team, fixtures, prices, league, scoreboard, differentials, methodology); skeleton + routing shipped in Phase 1, page parity lands in Phases 2–3
+- [ ] React (Vite) rebuild of the web UI — full parity with all 8 existing pages; skeleton + routing shipped in Phase 1, seven non-pitch pages shipped in Phase 2, team/pitch page lands in Phase 3
 - [ ] FPL-style pitch renderer: squad/XI laid out on a pitch with shirts/team visuals, used by team + solver views
 - [ ] Playwright E2E regression suite covering: team/pitch + solver flow, xP table + captains, rate-my-team, fixtures & prices pages
 - [ ] Hardened CI/CD on GitHub Actions: lint, pytest, API tests, Playwright, Docker image build + publish for the API (deploy step stubbed — no live hosting yet)
@@ -79,6 +80,8 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 | Package-legitimacy gate: exact-pin installs against a human-approved list | Supply-chain hygiene for a pre-revenue solo project | ✓ Good — Phase 1: zero registry drift at install time |
 | TypeScript 6.x (not 7.x) + Vite 7.3.6/plugin-react 5.2.0 pins | ESLint support for TS 7.0 unstable; deliberate downgrade pins | ✓ Good — Phase 1 scaffold stable |
 | All three hardening areas in scope (security, reliability, observability) | These are the "production ready" bar the user asked for pre-monetization | — Pending |
+| PARITY-DEVIATIONS.md ledger records every intentional vanilla→React delta | Phase 7 cutover must distinguish approved changes from regressions without relying on memory | ✓ Good — Phase 2 seeded all 8 known deviations |
+| Lockstep palette edits (React + vanilla in one commit) until CUT-01; fonts self-hosted via @fontsource, CDN removed | Vanilla stays authoritative pre-cutover; no third-party font requests leaking visitor IPs | ✓ Good — Phase 2, guarded by check-tokens.mjs on every test run |
 
 ## Evolution
 
@@ -98,4 +101,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-01 after Phase 1*
+*Last updated: 2026-09-02 after Phase 2*
