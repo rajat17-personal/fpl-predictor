@@ -92,7 +92,13 @@ export default function Fixtures() {
                   {orDash(t.xgc_next != null ? fixed2(t.xgc_next) : undefined)}
                 </td>
                 {t.gws.map((g) => (
-                  <td key={g.gw} className="px-3 py-2">
+                  // Vanilla's fixture-specific tight cell padding
+                  // (web/assets/style.css:154, `.cellpad`) — 4px horizontal,
+                  // 3px vertical — absorbs the two-line stacked chip so the
+                  // row grows by only a few px instead of the ~14px/row the
+                  // generic 12px/8px table padding would cost. Scoped to the
+                  // gameweek cells only; UAT gap G-02-2.
+                  <td key={g.gw} className="px-1 py-[3px]">
                     <FdrCell gw={g} />
                   </td>
                 ))}

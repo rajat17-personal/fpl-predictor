@@ -137,4 +137,18 @@ describe("Fixtures (ported from web/fixtures.html, verified 2026-09-01)", () => 
     await screen.findByText("Arsenal");
     expect(document.title).toBe("Fixture ticker — FPL ML");
   });
+
+  // UAT gap G-02-2: the tight cell padding and the two-line stacked chip are
+  // two halves of one vanilla design (web/assets/style.css:154 `.cellpad`)
+  // — restoring the chip without the padding grows the table by roughly
+  // 275px across twenty clubs.
+  it("gives gameweek cells vanilla's tight fixture-specific padding", async () => {
+    mockFetchOnce(rows);
+    renderFixtures();
+    await screen.findByText("Arsenal");
+
+    const chip = screen.getByLabelText("Home vs MCI, difficulty 5");
+    const cell = chip.closest("td")!;
+    expect(cell.className).toContain("py-[3px]");
+  });
 });
