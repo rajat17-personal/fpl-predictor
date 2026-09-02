@@ -7,6 +7,15 @@ import type { TickerGw } from "../lib/api";
  * OWN fdr value (not the cell's — a double gameweek can mix difficulties
  * within one cell).
  *
+ * UAT gap G-02-2: the chip stacks its H/A venue tag beneath the opponent
+ * code (column-direction flex, no inline gap), reproducing vanilla's
+ * `.fdr small { display: block }` rule (web/assets/style.css:155), which
+ * Tailwind has no utility to express on the parent directly. The 56px
+ * minimum width lives on the chip itself, not the wrapper, in both
+ * branches — stacking collapses a chip's intrinsic width from ~5 characters
+ * to ~3, so the minimum width has to travel with it or the chip shrinks and
+ * left-aligns inside a now-too-wide wrapper.
+ *
  * The difficulty -> token map is an explicit literal object, never a class
  * name built by interpolating the fdr value into a string — Tailwind's
  * build-time scanner cannot see a dynamically-interpolated class name and
@@ -45,7 +54,7 @@ export function FdrCell({ gw }: FdrCellProps) {
     return (
       <span
         aria-label="Blank gameweek"
-        className={`inline-flex min-w-[56px] items-center justify-center rounded px-2 py-1 font-label text-label ${fdrClasses(3)}`}
+        className={`inline-flex min-w-[56px] flex-col items-center justify-center rounded px-2 py-1 font-mono text-label ${fdrClasses(3)}`}
       >
         —
       </span>
@@ -53,15 +62,15 @@ export function FdrCell({ gw }: FdrCellProps) {
   }
 
   return (
-    <span className="inline-flex min-w-[56px] flex-wrap items-center gap-1">
+    <span className="inline-flex flex-wrap items-center gap-1">
       {gw.fixtures.map((f, i) => (
         <span
           key={`${f.opp}-${i}`}
           aria-label={`${f.home ? "Home" : "Away"} vs ${f.opp}, difficulty ${f.fdr}`}
-          className={`inline-flex items-center gap-0.5 rounded px-2 py-1 font-label text-label ${fdrClasses(f.fdr)}`}
+          className={`inline-flex min-w-[56px] flex-col items-center justify-center rounded px-2 py-1 font-mono text-label ${fdrClasses(f.fdr)}`}
         >
           {f.opp}
-          <small className="text-[0.7em]">{f.home ? "H" : "A"}</small>
+          <small className="text-[0.7em] opacity-75">{f.home ? "H" : "A"}</small>
         </span>
       ))}
     </span>
