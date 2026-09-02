@@ -396,6 +396,34 @@ Accent reserved for: active nav link, `Retry` CTA, focus-visible outline, inline
 active-direction arrow, active theme-toggle button, rise icon. Never applied to body text or
 non-interactive chrome (unchanged rule).
 
+### Dark-neutral chroma budget (origin: UAT gap G-02-1)
+
+UAT surfaced the dark theme reading green-tinted: the four neutral roles that paint nearly the
+whole viewport (`--color-bg`, `--color-surface`, `--color-surface-2`, `--color-line`) carried
+1.2x–2.3x the OKLCH chroma of their light-theme counterparts while sitting only 4.9–12.7 degrees
+off the brand accent hue — same hue plus more chroma reads as a wash, not a dark surface with an
+accent on it. The rule a future editor can apply without re-deriving it:
+
+- **Chroma budget:** in dark mode, each of the four neutral roles must carry OKLCH chroma no
+  greater than the same role's light-theme chroma plus 0.0010 (the 8-bit sRGB quantization
+  allowance).
+- **Hue lock:** each dark neutral role must sit within 8 degrees of the dark accent hue.
+- **Lightness lock:** each dark neutral role must hold its lightness — the contrast ladder does
+  not move when the chroma excess is removed.
+
+Resulting per-role figures (light budget → dark, both OKLCH chroma):
+
+| Role | Light chroma budget | Dark chroma (post-fix) |
+|------|---------------------|-------------------------|
+| bg | 0.0054 | 0.0061 |
+| surface | 0.0110 | 0.0106 |
+| surface-2 | 0.0143 | 0.0135 |
+| line | 0.0166 | 0.0161 |
+
+`frontend/scripts/check-tokens.mjs`, wired into the frontend test command (`npm run test`),
+enforces this rule automatically on every run — a future edit that reintroduces the defect fails
+the standard test command.
+
 ---
 
 ## Copywriting Contract

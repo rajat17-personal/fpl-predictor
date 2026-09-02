@@ -24,6 +24,43 @@ deviation and belongs in this ledger.
 | 7 | Table header eyebrow text and other sub-14px vanilla chrome renders at the 14px Label token instead of vanilla's ~11px | Legibility improvement, respects the four-size typography contract | 02-01 |
 | 8 | Scoreboard tile values render at the 28px Display token at weight 700 instead of vanilla's 24px weight 500 | The two-weight typography contract has no 500 | 02-05 |
 
+## Palette changes made in lockstep
+
+Changes to shared token values, applied identically to both sites in a single commit, are **not**
+deviations — a lockstep change produces no React-versus-vanilla difference for Phase 7 to find. This
+section records them so the rationale survives the phase without inflating the numbered table above.
+
+**2026-09-01 — UAT gap G-02-1 (dark theme reads green-tinted).** The four dark-mode neutral tokens
+(`--color-bg`/`--bg`, `--color-surface`/`--surface`, `--color-surface-2`/`--surface-2`,
+`--color-line`/`--line`) were rebalanced in `frontend/src/index.css` and `web/assets/style.css`
+together, in the same commit (02-07 Task 2):
+
+| Token | Before | After |
+|-------|--------|-------|
+| bg | `#111815` | `#141715` |
+| surface | `#18211c` | `#1b201c` |
+| surface-2 | `#1f2a24` | `#222924` |
+| line | `#2c3831` | `#2e3731` |
+
+**Lockstep over divergence — the decision and its reasons (applied in Task 2, recorded here):**
+
+1. The four hexes were byte-identical between React and vanilla before this fix. Diverging would
+   have been the first palette divergence in this ledger, forcing Phase 7's side-by-side pass to
+   eyeball-exempt every surface on every page — the highest-cost entry the ledger could carry.
+2. The change is token-value-only: it cannot alter data, layout, sort/filter semantics, or copy,
+   and it reverts in one `git revert` with no migration.
+3. The vanilla site is what the user actually looks at today and stays authoritative until
+   CUT-01 — diverging would ship the reported defect on the live site for a full season.
+
+`frontend/scripts/check-tokens.mjs` asserts the two files' four dark hexes stay identical (the
+"vanilla lockstep" checks), so Phase 7 can trust the invariant instead of re-checking it by eye.
+
+**Regression fix, not a deviation.** The React port additionally restored the `color-scheme`
+declarations (`:root { color-scheme: light }`, `.dark { color-scheme: dark }`) and the body paint
+(`background`/`color` from the `--color-bg`/`--color-ink` tokens) that vanilla already had at
+`web/assets/style.css:4`, `:29` and `:55`. This brings the React port back to parity with vanilla's
+existing behavior — it is not a new difference between the two sites.
+
 ## Appending an entry
 
 While executing any plan in this phase, if you find yourself about to change vanilla behaviour

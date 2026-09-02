@@ -150,8 +150,8 @@ Display → `<PlaceholderPage/>` page title, `<ErrorState/>` heading.
 
 | Role | Value | Usage |
 |------|-------|-------|
-| Dominant (60%) | `#fafbf7` light / `#111815` dark (`--bg`) | Page background |
-| Secondary (30%) | `#f1f4ec` light / `#18211c` dark (`--surface`); `#e7ece2` / `#1f2a24` (`--surface-2`) | Nav hover background, placeholder/error card surfaces |
+| Dominant (60%) | `#fafbf7` light / `#141715` dark (`--bg`) | Page background |
+| Secondary (30%) | `#f1f4ec` light / `#1b201c` dark (`--surface`); `#e7ece2` / `#222924` (`--surface-2`) | Nav hover background, placeholder/error card surfaces |
 | Accent (10%) | `#1c7a45` light / `#4cb878` dark (`--accent`), text variant `#146036` / `#6bcb90` (`--accent-ink`), background variant `#e2efe5` / `#1a2e22` (`--accent-bg`) | Reserved for: active nav link (text + background), brand wordmark's second syllable, `Retry` button, focus outline, links, loading spinner stroke |
 | Destructive | `#a3392e` light / `#e08578` dark (`--bad`) | Reserved for: `<ErrorState/>` icon/heading accent only — no destructive user *actions* exist in this phase's scope (see Copywriting) |
 
@@ -163,7 +163,7 @@ loading spinner. Never applied to body text, placeholder copy, or non-interactiv
 | Token | Light | Dark | Reserved for |
 |-------|-------|------|--------------|
 | `--ink` / `--ink-2` | `#18231d` / `#5a685f` | `#e6ece6` / `#9caba0` | Primary/secondary text — used across all phases |
-| `--line` | `#d5dcd1` | `#2c3831` | Borders, dividers |
+| `--line` | `#d5dcd1` | `#2e3731` | Borders, dividers |
 | `--warn` / `--warn-bg` | `#a8720e` / `#f6eed9` | `#d9a94a` / `#2a2415` | Phase 2+ price/injury flags — not used by app shell |
 | `--band` / `--band-pt` | `#86b6ef` / `#2a78d6` | `#184f95` / `#3987e5` | Phase 3 p10/p90 interval bands (UIX-01) |
 | `--fdr1..5-bg/ink` | see `web/assets/style.css` | see `web/assets/style.css` | Phase 2 FDR ticker (UI-03) |
