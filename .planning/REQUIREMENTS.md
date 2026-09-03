@@ -28,7 +28,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 - [x] **UIX-01**: p10/p90 prediction intervals rendered on player/captain cards
 - [x] **UIX-02**: Dark mode toggle
-- [ ] **UIX-03**: Chip-timing "why this GW" UI with DGW/BGW callouts
+- [x] **UIX-03**: Chip-timing "why this GW" UI with DGW/BGW callouts
 
 ### API Tests
 
@@ -130,7 +130,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PITCH-04 | Phase 3 | Pending |
 | UI-07 | Phase 3 | Complete |
 | UIX-01 | Phase 3 | Complete |
-| UIX-03 | Phase 3 | Pending |
+| UIX-03 | Phase 3 | Complete |
 | E2E-01 | Phase 4 | Pending |
 | E2E-02 | Phase 4 | Pending |
 | E2E-03 | Phase 4 | Pending |
