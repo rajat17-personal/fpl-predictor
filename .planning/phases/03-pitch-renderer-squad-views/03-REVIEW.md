@@ -37,196 +37,176 @@ files_reviewed_list:
   - frontend/src/lib/formation.ts
   - frontend/src/lib/pairMoves.test.ts
   - frontend/src/lib/pairMoves.ts
+  - frontend/src/lib/squadJoin.test.ts
+  - frontend/src/lib/squadJoin.ts
   - frontend/src/lib/usePageMeta.ts
   - frontend/src/routes/Team.test.tsx
   - frontend/src/routes/Team.tsx
   - frontend/src/routes/routeIsolation.test.tsx
+  - frontend/src/test/fixtures/chips.json
+  - frontend/src/test/fixtures/chips_dgw.json
+  - frontend/src/test/fixtures/plan_response.json
+  - frontend/src/test/fixtures/rate_response.json
+  - frontend/src/test/fixtures/rate_response_hold.json
+  - frontend/src/test/fixtures/solve_transfers_response.json
+  - frontend/src/test/fixtures/squad.json
+  - frontend/src/test/fixtures/team_response.json
+  - frontend/src/test/fixtures/xp_table_squad.json
 findings:
-  critical: 1
-  warning: 3
+  critical: 0
+  warning: 2
   info: 3
-  total: 7
+  total: 5
 status: issues_found
 ---
 
-# Phase 03: Code Review Report
+# Phase 3: Code Review Report
 
 **Reviewed:** 2026-09-03T00:00:00Z
 **Depth:** standard
-**Files Reviewed:** 33 (+ 1 decision doc, non-code)
+**Files Reviewed:** 33 (source + test + fixture files in required scope)
 **Status:** issues_found
 
 ## Summary
 
-Reviewed the pitch renderer, kit system, and Squad/Rate/Chips team-page components delivered
-in Phase 3, along with their supporting `lib/` helpers and tests. Overall the code is careful
-and well-tested for the behaviours its own test suite targets (DOM structure, accessible names,
-request bodies, ordering-safety of overlapping solves). The one blocker found is a real CSS
-Grid layout defect in the shared `Pitch`/`PitchRow` component: a formation row that is already
-at its 5-card ceiling (D-07) and also receives a ghost/suggested-transfer card ends up with 6
-grid items forced into a `grid-cols-5` container via inline `gridColumn` indices — the 6th card
-lands in an unsized implicit column and will overflow/clip inside the pitch surface's
-`overflow-hidden` wrapper, contradicting the component's own comment that the row "stays
-5-column" and "shrinks." This is not caught by the existing test suite because jsdom performs
-no layout, so the DOM-order assertions pass while the actual rendered layout is broken. This
-scenario is directly exercised in production by `RateDiff`'s ghost overlay and `SquadTab`'s
-solve-diff overlay whenever the suggested buy's position is already a full row.
+This is a re-review after gap-closure plan 03-05 landed, which rewrote `Pitch.tsx`'s row-centering
+mechanism (flexbox `justify-content: center` against a shared `Math.max(5, count)`-part
+`calc()` basis, driven by a new `--pitch-gap` CSS custom property) and added a dedicated row-symmetry
+regression suite (`Pitch.test.tsx`'s `describe("Pitch — row centering (G-03-1)")`).
 
-Three warnings and three info-level items are also noted below — a permanently-stuck "pending"
-solve state if the server ever violates its own response-kind contract, a fragile Tailwind
-class-conflict pattern, an unchecked type assertion that can silently drop a ghost card, and
-some minor dead-code/robustness gaps.
+**The centering fix itself is correct.** I traced the algebra by hand for every row size the
+formation supports (GK=1, DEF=3-5, MID=2-5, FWD=1-3, bench=4, and the ghost-widened 6-card case):
+for a row whose card count equals the shared part count, `parts * basis + (parts-1) * gap` reduces
+exactly to `100%` of the container, so `justify-content: center` is a no-op; for any row with fewer
+cards than the shared part count, the row is strictly narrower than the container and centers
+symmetrically. The test suite's own simulated-layout oracle (`assertRowIsExactlyCentered`) verifies
+the same algebra against two viewports and both match the `--pitch-gap` breakpoint declared in
+`index.css`. I found no defect in this code path.
 
-## Critical Issues
+Reviewing the rest of the required scope, I found two genuine logic bugs unrelated to the centering
+fix — both are input-handling edge cases that silently drop or corrupt user intent rather than
+crashing, and both are exercised by hand-written regression tests I wrote and ran against the
+current code to confirm (not hypothetical):
 
-### CR-01: Ghost card in a full formation row overflows the fixed 5-column pitch grid
+1. `SolveControls`'s "Free transfers" field sends `free_transfers: 0` when the user clears the
+   input, instead of falling back to `1` like its own `maxTransfers` sibling field and like
+   `PlanTransfers`'s analogous field both do.
+2. `PlayerCard`'s action-menu status/news paragraph is gated on `statusLabel` being non-null, so a
+   player with `status: "a"` (available) and a non-empty `news` string never has that news text
+   rendered, even though the `newsBody` variable was explicitly computed to include it.
 
-**File:** `frontend/src/components/pitch/Pitch.tsx:29-31,82-114`
-**Issue:** `PitchRow` always renders inside a `grid grid-cols-5` container (5 explicit
-`minmax(0, 1fr)` column tracks) and positions each slot via an inline `style={{ gridColumn:
-start + i }}`. `buildRowSlots` can add a ghost card to a row that already holds the D-07 ceiling
-of 5 real cards (DEF/MID max 5), producing 6 slots. `centeredStartColumn(6)` returns `1` (via
-`Math.max(1, Math.floor((5-6)/2)+1)`), so the 6 cards are placed at columns 1 through 6 — but
-the grid only defines 5 explicit tracks. CSS Grid creates an implicit 6th column track sized by
-`grid-auto-columns` (default `auto`, i.e. sized to content), which does **not** shrink to match
-the other five `1fr` tracks. The row therefore overflows its container width, and because the
-row sits inside the pitch surface's `overflow-hidden` wrapper (`Pitch.tsx:146-147`), the 6th
-(ghost) card is likely to be partially or fully clipped rather than "shrinking to fit" as the
-adjacent comment claims (`Pitch.tsx:27-28`). This is directly reachable in production:
-`RateDiff.tsx` and `SquadTab.tsx` both feed suggested-transfer ghost overlays into `<Pitch>`,
-and `Pitch.test.tsx`'s own ghost-card test exercises exactly this case (5 MID starters +
-1 ghost = 6 cards in the MID row) — it just doesn't assert on layout, so jsdom lets it pass.
-**Fix:** Either widen the grid to fit the ghost slot count and let every card shrink together,
-or exempt the row from `overflow-hidden` clipping. The simplest fix that preserves the "all
-five columns shrink together" intent:
-```tsx
-// Pitch.tsx — PitchRow
-const columns = Math.max(5, slots.length);
-return (
-  <div
-    className="grid gap-1 min-[480px]:gap-2"
-    style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
-    role="group"
-    aria-label={label}
-  >
-    {slots.map((slot, i) => (
-      <div key={`${slot.kind}-${slot.player.player_code}`} style={{ gridColumn: start + i }}>
-        ...
-      </div>
-    ))}
-  </div>
-);
-```
-and recompute `centeredStartColumn` against `columns` instead of the hard-coded `5`. This makes
-a 6-card row a genuine 6-column grid (all cards shrink together, matching the documented intent)
-instead of a 5-column grid with an overflowing 6th item.
+No security issues, hardcoded secrets, or dangerous-function usage were found. No dead/unreachable
+code beyond one intentionally-dead fallback branch (noted as Info below).
 
 ## Warnings
 
-### WR-01: A malformed `/api/solve` response leaves the Squad tab stuck in "pending" forever
+### WR-01: SolveControls sends `free_transfers: 0` instead of falling back to 1 when the input is emptied
 
-**File:** `frontend/src/components/team/SquadTab.tsx:143-160`
-**Issue:** `useSolveController.solveNow` calls `setSolve({ status: "pending" })` before awaiting
-`postSolve`. On success, if `result.kind === "transfers"` it calls `setSolve({status:
-"success", ...})`; otherwise (the `kind === "squad"` branch) it does nothing but a
-compile-time-only exhaustiveness assignment (`const stillSquad: SolveSquadResult = result; void
-stillSquad;`). No `setSolve` call happens in that branch, so if the server ever returns
-`kind: "squad"` for a solve triggered from this UI (a backend regression, or the "this UI never
-sends entry: null" assumption ever becoming false), `solve.status` stays `"pending"`
-indefinitely: the button stays disabled and "Solving your transfers…" is shown forever, with no
-error and no way to recover short of a full remount.
-**Fix:** Treat the unexpected-kind branch as a defensive error path, not a silent no-op:
+**File:** `frontend/src/components/SolveControls.tsx:38-39`
+**Issue:** `submit()` computes the request value as:
 ```ts
-} else {
-  if (seq === solveSeqRef.current) {
-    setSolve({ status: "error", error: "Unexpected solve response" });
-  }
-}
+const ftNum = Number(freeTransfers);
+const ftToSend = Number.isFinite(ftNum) ? ftNum : 1;
 ```
+`Number("")` evaluates to `0` in JavaScript, and `Number.isFinite(0)` is `true` — so when a user
+clears the "Free transfers" input (e.g. select-all + delete) and clicks "Solve transfers" without
+retyping a value, the request silently carries `free_transfers: 0` rather than falling back to `1`
+(the documented "never rendered blank" intent, and `/api/solve`'s own server-side default per the
+component's own docstring). `0` free transfers is a **materially different, valid value** from the
+server default — it tells the optimizer the user has *no* free transfer available, so every
+recommended transfer is priced with a 4-point hit that may not actually apply, producing
+incorrect financial advice in the UI.
 
-### WR-02: Conflicting Tailwind size utilities on the current-GW marker rely on cascade order
+Confirmed empirically: a throwaway test (`fireEvent.change(... , { target: { value: "" } })` then
+clicking Solve) asserts `onSolve` is called with `{ freeTransfers: 0, ... }`, not `{ freeTransfers:
+1, ... }`.
 
-**File:** `frontend/src/components/ChipTimeline.tsx:64-66`
+This is inconsistent with two sibling implementations in the same codebase that get this right:
+- `SolveControls`'s own `maxTransfers` field, a few lines below, explicitly checks
+  `trimmedMax !== ""` before parsing, treating empty as omitted.
+- `PlanTransfers.tsx:70-72`'s analogous free-transfers handling explicitly guards
+  `Number.isFinite(ftNum) && ftNum >= 1 ? ftNum : null`, which correctly treats an emptied field
+  (parses to `0`) as invalid and falls back.
+
+**Fix:**
+```ts
+const trimmedFt = freeTransfers.trim();
+const ftNum = Number(trimmedFt);
+const ftToSend = trimmedFt !== "" && Number.isFinite(ftNum) ? ftNum : 1;
+```
+(Mirror the `maxTransfers` empty-string guard above it, or use the same `>= 1` idiom as
+`PlanTransfers.tsx` if `0` should never be sendable at all — clarify which is intended and add a
+regression test for the emptied-input case, which is currently untested.)
+
+### WR-02: PlayerCard drops a player's `news` text whenever `status` is `"a"` (available)
+
+**File:** `frontend/src/components/pitch/PlayerCard.tsx:111-113, 209`
 **Issue:**
 ```ts
-const dotClasses = `h-3 w-3 shrink-0 rounded-full ${...} ${
-  isCurrent ? "h-5 w-5 ring-2 ring-accent ring-offset-1 ring-offset-surface" : ""
-}`;
+const statusLabel =
+  player.status && player.status !== "a" ? (STATUS_LABELS[player.status] ?? player.status) : null;
+const newsBody = player.news || statusLabel;
+...
+{statusLabel && <p ...>{newsBody}</p>}
 ```
-`h-3 w-3` is unconditionally present, and `h-5 w-5` is appended (not swapped in) when
-`isCurrent`. Both class names coexist in the DOM's `class` attribute; which one visually wins
-depends entirely on the order Tailwind happens to emit the two utility rules in the generated
-stylesheet, not on source order in this string. It currently likely "works" because Tailwind's
-default spacing scale is emitted in ascending numeric order (so `h-5`/`w-5` land after
-`h-3`/`w-3` and win), but that is an implementation detail of the build, not a guarantee this
-component enforces itself.
-**Fix:** Make the two class sets mutually exclusive:
-```ts
-const size = isCurrent
-  ? "h-5 w-5 ring-2 ring-accent ring-offset-1 ring-offset-surface"
-  : "h-3 w-3";
-const dotClasses = `${size} shrink-0 rounded-full ${...}`;
-```
+`newsBody` is deliberately computed as "news, falling back to the status label" — implying the
+paragraph should render whenever there is *either* real news text *or* a status label. But the
+render gate only checks `statusLabel`, ignoring `newsBody` entirely. Whenever `player.status` is
+`"a"` (or `null`/empty), `statusLabel` is `null` regardless of whether `player.news` holds real
+content, so the paragraph never renders — the news text is silently dropped even though `newsBody`
+correctly resolved to it.
 
-### WR-03: Unchecked cast can silently drop the suggested-buy ghost card
+Confirmed empirically: rendering a `PlayerCard` with `status: "a"` and
+`news: "Returned to full training this week"`, opening the action menu, and querying for that text
+fails to find it in the DOM.
 
-**File:** `frontend/src/components/RateDiff.tsx:64-68`
-**Issue:** `resolveRateOverlay` builds the ghost with `row: row.position as PitchGhost["row"]`
-— an unchecked type assertion from `XpRow.position: string` to the union `"GK" | "DEF" | "MID"
-| "FWD"`. If `xp_table.json` ever contains a position value outside that set (typo in the
-export pipeline, a new position code, etc.), `Pitch.tsx`'s `rowGhost(row)` will never match it
-against any of the four rendered rows (`ghost.row === row` never true), so the ghost simply
-never renders — no error, no console warning, no visible failure. A tester following the
-"+{xp_gain} xP" swap line but seeing no ghost card would have no signal that something is
-wrong with the underlying data rather than working as designed.
-**Fix:** Validate the position before constructing the ghost and fall back gracefully with a
-dev warning, mirroring `kitMap.ts`'s `resolveKit` pattern:
+This is a real (if likely rare in current FPL-export data) information-loss bug: it silently hides
+legitimate news copy for available players, and the behavior is untested (no `PlayerCard.test.tsx`
+case exercises `status: "a"` with a non-empty `news` value).
+
+**Fix:**
 ```ts
-const VALID_ROWS = new Set(["GK", "DEF", "MID", "FWD"]);
-if (!VALID_ROWS.has(row.position)) {
-  if (import.meta.env.DEV) {
-    console.warn(`resolveRateOverlay: unexpected position "${row.position}" for ghost buy`);
-  }
-} else {
-  ghost = { row: row.position as PitchGhost["row"], afterCode: outCode, player: ghostPlayer };
-}
+{newsBody && <p className="font-label text-label text-ink-2">{newsBody}</p>}
 ```
+(Gate on `newsBody`, not `statusLabel`, since `newsBody` is the value actually rendered — add a
+test case for `status: "a"` + non-empty `news`.)
 
 ## Info
 
-### IN-01: `hoops` kit pattern is fully implemented and tested but unused by any current club
+### IN-01: Duplicated `Tile` component definition
 
-**File:** `frontend/src/components/pitch/kitMap.ts:18-39`, `frontend/src/components/pitch/Kit.tsx:30-36`
-**Issue:** `KitPattern` includes `"hoops"`, and `Kit.tsx` renders a dedicated hoops SVG branch
-(also covered by `Kit.test.tsx`'s `it.each` over all four patterns), but no entry in `KIT_MAP`'s
-current 20 clubs uses `"hoops"`. It's dead code in production today.
-**Fix:** No action required if this is intentional forward-provisioning (kept for future club
-additions/corrections per the kit-sourcing decision doc's Assumption A1); otherwise consider a
-`kitMap.test.ts` assertion that every declared `KitPattern` is used at least once, so the map
-and the pattern enum can't silently drift apart.
+**File:** `frontend/src/components/team/RateTab.tsx:38-54` and
+`frontend/src/components/PlanTransfers.tsx:159-175`
+**Issue:** Both files declare an identical `Tile({ heading, value, detail })` component
+(same props interface, same JSX, same class strings). This is a straightforward extract-to-shared-
+component opportunity; as written, a future styling change to one tile risks drifting from the
+other.
+**Fix:** Move `Tile` (and its `TileProps` interface) into a shared file, e.g.
+`frontend/src/components/Tile.tsx`, and import it from both call sites.
 
-### IN-02: Dead fallback expressions for horizon/plan-horizon selects
+### IN-02: Duplicated outside-click/Escape dismissal `useEffect` pattern
 
-**File:** `frontend/src/components/PlanTransfers.tsx:70`, `frontend/src/components/SolveControls.tsx:48`
-**Issue:** Both `submitPlan`/`submit` compute `Number(horizon || 1)`. `horizon` is always a
-non-empty string driven by a `<select>` with a fixed default value ("3" / "1") and a fixed
-option list — it can never be `""`/falsy, so the `|| 1` fallback is unreachable.
-**Fix:** Simplify to `Number(horizon)` (or leave as defensive belt-and-braces if intentional —
-worth a one-line comment either way so a future reader doesn't wonder if it's load-bearing).
+**File:** `frontend/src/components/pitch/PlayerCard.tsx:89-109` and
+`frontend/src/components/ChipTimeline.tsx:35-55`
+**Issue:** Both components independently implement the same "attach document click + keydown
+listeners while open, tear down on close/unmount" pattern almost verbatim (same variable names,
+same structure). This is a good candidate for a shared `useDismissablePopover(open, onDismiss)`
+hook to avoid the two copies drifting (e.g. one gaining a bug fix the other doesn't get).
+**Fix:** Extract a shared hook in `frontend/src/lib/` and use it from both components (and any
+future popover/tooltip that needs the same behavior).
 
-### IN-03: Free-transfers/max-transfers inputs aren't clamped to their declared HTML bounds
+### IN-03: Dead fallback branches for values that can never occur
 
-**File:** `frontend/src/components/SolveControls.tsx:37-50`, `frontend/src/components/PlanTransfers.tsx:69-81`
-**Issue:** Both components declare `min`/`max` on their numeric `<input>`s (mirroring the
-server's `Field(ge=…, le=…)` constraints per the adjacent comments), but the values sent in
-`onSolve`/`postPlan` are only checked for finiteness, not clamped/rejected against those same
-bounds. A value entered outside the declared range (e.g. via a spinner double-click, paste, or
-programmatic `fireEvent.change`) is still submitted as-is, so out-of-range requests are caught
-only by the server's 422 response and surfaced as a generic "Couldn't solve/plan: {status}"
-message rather than an inline client-side validation error.
-**Fix:** Not a security concern (server validates), but for UX robustness, clamp before sending,
-e.g. `Math.min(5, Math.max(0, ftNum))` for free transfers, or short-circuit and show a local
-validation message instead of firing the request.
+**File:** `frontend/src/components/SolveControls.tsx:48`, `frontend/src/components/PlanTransfers.tsx:70`
+**Issue:** Both `const horizonNum = Number(horizon || 1)` (SolveControls) and
+`const hz = Number(horizon || 1)` (PlanTransfers) guard against `horizon` being falsy/empty, but
+`horizon` is always a controlled `<select>` value seeded from a fixed `HORIZON_OPTIONS`/hardcoded
+option list and can never be an empty string in practice — the `|| 1` branch is unreachable. Low
+severity (harmless, self-documenting even if dead), but worth removing or at least noting it's
+defensive-only so a future reader doesn't assume it's load-bearing.
+**Fix:** Either remove the `|| 1` (simplify to `Number(horizon)`) or add a one-line comment noting
+it's unreachable defensive code, matching the project's own convention of commenting non-obvious
+guards.
 
 ---
 
