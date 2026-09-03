@@ -93,7 +93,7 @@ function PitchRow({
   const slots = buildRowSlots(players, ghostPlayer, ghostAfterCode);
   const start = centeredStartColumn(slots.length);
   return (
-    <div className="grid grid-cols-5 gap-2" role="group" aria-label={label}>
+    <div className="grid grid-cols-5 gap-1 min-[480px]:gap-2" role="group" aria-label={label}>
       {slots.map((slot, i) => (
         <div key={`${slot.kind}-${slot.player.player_code}`} style={{ gridColumn: start + i }}>
           {slot.kind === "ghost" ? (
