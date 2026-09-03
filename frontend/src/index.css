@@ -55,6 +55,13 @@
   --color-fdr5-bg: #e34948;
   --color-fdr5-ink: #ffffff;
 
+  /* Phase 3 pitch surface (D-05) — deliberately, visibly green; not a
+   * "neutral" role, so exempt from the dark-neutral chroma-budget gate in
+   * scripts/check-tokens.mjs, which only inspects bg/surface/surface-2/line. */
+  --color-pitch-1: #3fae6a;
+  --color-pitch-2: #1c7a45;
+  --color-pitch-line: rgba(255, 255, 255, 0.55);
+
   /* Spacing scale (multiples of 4) */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
@@ -120,6 +127,10 @@
   --color-fdr4-ink: #e6ece6;
   --color-fdr5-bg: #e66767;
   --color-fdr5-ink: #111815;
+
+  --color-pitch-1: #1f5c3a;
+  --color-pitch-2: #123321;
+  --color-pitch-line: rgba(255, 255, 255, 0.3);
 }
 
 body {

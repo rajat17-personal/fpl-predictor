@@ -186,3 +186,151 @@ export interface ScoreboardResponse {
   entries: ScoreboardEntry[];
   summary: ScoreboardSummary;
 }
+
+/* Phase 3 type surface (plan 03-01), declared here in full now so plans
+ * 03-02/03-03/03-04 — which run in parallel — never re-edit this file (same
+ * discipline as the Phase 2 comment above). Field lists are copied from
+ * 03-PATTERNS.md's "New interfaces to add" block verbatim, with the two
+ * corrections recorded in 03-01-PLAN.md's <planner_corrections>: SquadResponse
+ * carries five top-level keys (not a one-key wrapper), and
+ * ChipsGwStructure.dgw_clubs/.bgw_clubs are integer counts (not string[]). */
+
+/** One row of web/data/squad.json's `squad` array, and of every squad-shaped
+ * API response (`/api/solve`, `/api/team`, `/api/rate`'s `xi`). */
+export interface SquadRow {
+  player_code: number;
+  name: string;
+  team: string;
+  position: string;
+  price_m: number;
+  xp: number;
+  starting: boolean;
+  captain: boolean;
+}
+
+/** web/data/squad.json's top-level shape — five keys, verified by reading the
+ * live export during planning (not a bare `SquadRow[]` and not a `{ squad }`
+ * one-key wrapper — see <planner_corrections> in 03-01-PLAN.md). */
+export interface SquadResponse {
+  squad: SquadRow[];
+  captain: string;
+  formation: string;
+  cost: number;
+  xi_xp: number;
+}
+
+/** `/api/solve`'s request body. `locks`/`excludes` are always numeric
+ * `player_code`, never free-text names, from this client (Pitfall 3). */
+export interface SolveRequest {
+  entry: number | null;
+  free_transfers: number;
+  horizon: number;
+  mode?: "normal" | "tc" | "bb";
+  max_transfers?: number | null;
+  locks: number[];
+  excludes: number[];
+}
+
+/** `/api/solve`'s response when `entry` is null (from-scratch/wildcard build). */
+export interface SolveSquadResult {
+  gw: number;
+  kind: "squad";
+  squad: SquadRow[];
+  captain: string;
+  formation: string;
+  cost: number;
+  xi_xp: number;
+}
+
+/** `/api/solve`'s response when `entry` is provided (transfers). */
+export interface SolveTransfersResult {
+  gw: number;
+  kind: "transfers";
+  entry: number;
+  transfers: number;
+  hits: number;
+  buys: { name: string; position: string; price_m: number }[];
+  sells: { name: string; position: string; price_m: number }[];
+  captain: string;
+  bank_after: number;
+  xi_xp: number;
+  squad: SquadRow[];
+}
+
+/** Discriminated on `kind` — TypeScript forces exhaustive handling at the
+ * consuming component rather than an `any`-typed branch. */
+export type SolveResult = SolveSquadResult | SolveTransfersResult;
+
+/** `/api/rate/{entry}`'s single best-transfer suggestion. `null` at the
+ * top level when no improving one-transfer swap exists (the "Hold" case). */
+export interface RateBestMove {
+  sell: string[];
+  buy: string[];
+  xp_gain: number;
+}
+
+/** `/api/rate/{entry}`'s response. */
+export interface RateResponse {
+  manager?: {
+    team_name?: string;
+    manager?: string;
+    overall_points?: number;
+    overall_rank?: number | null;
+    gw_points?: number;
+  };
+  score: number;
+  xi_xp: number;
+  xi_p10: number | null;
+  xi_p90: number | null;
+  ideal_xi_xp: number;
+  captain: string;
+  best_move: RateBestMove | null;
+  gw: number;
+  xi: SquadRow[];
+  free_transfers?: number;
+}
+
+/** One week of `/api/plan`'s multi-week horizon response. */
+export interface PlanWeek {
+  gw: number;
+  buys: { name: string; position: string; price_m: number }[];
+  sells: { name: string; position: string; price_m: number }[];
+  hits: number;
+  free_transfers_after: number;
+  xi_xp: number;
+  xi_p10: number | null;
+  xi_p90: number | null;
+  captain: string;
+  bank: number;
+  squad: SquadRow[];
+}
+
+/** `/api/plan`'s top-level response shape. */
+export interface PlanResponse {
+  weeks: PlanWeek[];
+}
+
+/** `/api/team/{entry}`'s response. */
+export interface TeamResponse {
+  picks: SquadRow[];
+  bank: number;
+  value: number;
+  manager?: { team_name?: string; manager?: string };
+}
+
+/** One gameweek's DGW/BGW structure within `web/data/chips.json`'s
+ * `structure` array. `dgw_clubs`/`bgw_clubs` are integer counts, not arrays
+ * of club names — verified against `predict/export.py:197-198`'s
+ * `sum(1 for v in counts.values() if v > 1)` / `len(all_teams) - len(counts)`
+ * (see <planner_corrections> in 03-01-PLAN.md). */
+export interface ChipsGwStructure {
+  gw: number;
+  dgw_clubs: number;
+  bgw_clubs: number;
+}
+
+/** web/data/chips.json's top-level shape. */
+export interface ChipsResponse {
+  note: string;
+  structure: ChipsGwStructure[];
+}

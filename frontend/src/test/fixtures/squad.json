@@ -1,0 +1,158 @@
+{
+  "squad": [
+    {
+      "player_code": 97032,
+      "name": "Virgil",
+      "team": "Liverpool",
+      "position": "DEF",
+      "price_m": 6.5,
+      "xp": 2.68,
+      "starting": true,
+      "captain": false
+    },
+    {
+      "player_code": 108416,
+      "name": "Egan",
+      "team": "Hull City",
+      "position": "DEF",
+      "price_m": 4.0,
+      "xp": 1.66,
+      "starting": false,
+      "captain": false
+    },
+    {
+      "player_code": 141746,
+      "name": "B.Fernandes",
+      "team": "Man Utd",
+      "position": "MID",
+      "price_m": 12.0,
+      "xp": 3.63,
+      "starting": true,
+      "captain": false
+    },
+    {
+      "player_code": 169432,
+      "name": "McBurnie",
+      "team": "Hull City",
+      "position": "FWD",
+      "price_m": 5.5,
+      "xp": 2.13,
+      "starting": false,
+      "captain": false
+    },
+    {
+      "player_code": 184029,
+      "name": "Ødegaard",
+      "team": "Arsenal",
+      "position": "MID",
+      "price_m": 6.6,
+      "xp": 2.61,
+      "starting": true,
+      "captain": false
+    },
+    {
+      "player_code": 191866,
+      "name": "Ajer",
+      "team": "Brentford",
+      "position": "DEF",
+      "price_m": 4.5,
+      "xp": 2.13,
+      "starting": false,
+      "captain": false
+    },
+    {
+      "player_code": 200720,
+      "name": "Kelleher",
+      "team": "Brentford",
+      "position": "GK",
+      "price_m": 5.0,
+      "xp": 2.41,
+      "starting": true,
+      "captain": false
+    },
+    {
+      "player_code": 209036,
+      "name": "Guéhi",
+      "team": "Man City",
+      "position": "DEF",
+      "price_m": 6.0,
+      "xp": 2.71,
+      "starting": true,
+      "captain": false
+    },
+    {
+      "player_code": 219168,
+      "name": "Isak",
+      "team": "Liverpool",
+      "position": "FWD",
+      "price_m": 9.0,
+      "xp": 2.42,
+      "starting": true,
+      "captain": true
+    },
+    {
+      "player_code": 219847,
+      "name": "Havertz",
+      "team": "Arsenal",
+      "position": "FWD",
+      "price_m": 7.5,
+      "xp": 2.63,
+      "starting": true,
+      "captain": false
+    },
+    {
+      "player_code": 223340,
+      "name": "Saka",
+      "team": "Arsenal",
+      "position": "MID",
+      "price_m": 9.5,
+      "xp": 3.48,
+      "starting": true,
+      "captain": false
+    },
+    {
+      "player_code": 466052,
+      "name": "Cherki",
+      "team": "Man City",
+      "position": "MID",
+      "price_m": 7.6,
+      "xp": 2.77,
+      "starting": true,
+      "captain": false
+    },
+    {
+      "player_code": 473284,
+      "name": "Tzolakis",
+      "team": "Hull City",
+      "position": "GK",
+      "price_m": 4.5,
+      "xp": 2.24,
+      "starting": false,
+      "captain": false
+    },
+    {
+      "player_code": 477424,
+      "name": "Gvardiol",
+      "team": "Man City",
+      "position": "DEF",
+      "price_m": 5.6,
+      "xp": 2.49,
+      "starting": true,
+      "captain": false
+    },
+    {
+      "player_code": 513418,
+      "name": "Schade",
+      "team": "Brentford",
+      "position": "MID",
+      "price_m": 6.0,
+      "xp": 2.45,
+      "starting": true,
+      "captain": false
+    }
+  ],
+  "captain": "Isak",
+  "formation": "3-5-2",
+  "cost": 99.8,
+  "xi_xp": 32.71
+}
