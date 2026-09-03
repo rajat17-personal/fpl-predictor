@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 04
 current_phase_name: E2E Regression Suite
 status: executing
-stopped_at: Phase 4 context gathered
-last_updated: "2026-09-03T15:47:22.396Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-09-03T16:12:13.259Z"
 last_activity: 2026-09-03
-last_activity_desc: Phase 03 complete, transitioned to Phase 4
-state_head: b3f401ef394c4579290c67ead501ce188bf89fdd
+last_activity_desc: Phase 04 execution started
+state_head: f080e035eddb9a228061189dfc36b8ccdc0cd6cc
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 25
-  completed_plans: 19
+  completed_plans: 20
   percent: 43
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-03)
 
 **Core value:** The weekly recommendations (xP table, squad, captains, transfers) must keep flowing reliably — every change must leave the pipeline, API, and site at least as correct and more trustworthy than before.
-**Current focus:** Phase 4 — E2E Regression Suite
+**Current focus:** Phase 04 — E2E Regression Suite
 
 ## Current Position
 
-Phase: 04 (E2E Regression Suite) — READY TO EXECUTE
-Plan: Not started
+Phase: 04 (E2E Regression Suite) — EXECUTING
+Plan: 2 of 6
 Status: Ready to execute
-Last activity: 2026-09-03 — Phase 03 complete, transitioned to Phase 4
+Last activity: 2026-09-03 — Phase 04 execution started
 
 Progress: [████░░░░░░] 43% (3/7 phases, 19 plans complete)
 
@@ -79,6 +79,7 @@ Progress: [████░░░░░░] 43% (3/7 phases, 19 plans complete)
 | Phase 03 P03 | 48min | 3 tasks | 9 files |
 | Phase 03 P04 | 42min | 3 tasks | 7 files |
 | Phase 03 P05 | 7min | 2 tasks | 4 files |
+| Phase 04 P01 | 55min | 3 tasks | 28 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,8 @@ Recent decisions affecting current work:
 - [Phase 03]: [Phase 03]: [Phase 3 Plan 4]: SolveResultsBar's Hold condition checks result.buys.length, not pairMoves()'s own output length -- pairMoves buckets by the sells side and would still produce non-empty pairs (with a '?' buyName) if pairs.length itself were the check. Matches PlanTransfers.tsx's identical week.buys.length > 0 rule.
 - [Phase 03]: [Phase 03 Plan 05]: Continuous flex centering (flex-basis: calc((100% - (parts-1)*gap)/parts), parts=max(5,cardCount)) replaces integer CSS-grid start-column placement in PitchRow, closing G-03-1 -- the old scheme was exact only when row cardinality and the 5-column track count shared parity
 - [Phase 03]: [Phase 03 Plan 05]: Deferred Task 1's human visual re-check of UAT test 1 to the next verify-work/UAT pass -- HUMAN_VERIFY_MODE is end-of-phase project-wide and no Playwright/screenshot tooling exists yet in this milestone; all 6 automated verify gates passed and the dev server (localhost:5173/team) plus API (localhost:8000) remain live for that check
+- [Phase 04]: [Phase 04-01] Task 1 checkpoint:decision (gate=blocking-human) -- manager-field capture policy: scrub-names. entries/6980093/summary.json blanks player_first_name/player_last_name; team name and all numeric season figures (overall points/rank, gw points) captured verbatim. Applied to summary.json only; picks_event2.json/history.json carry no name fields. — tests/test_api.py's adjacent convention is synthetic-identity-only for committed fixtures (a permanent public record); scrub-names keeps a recognisable team name for debuggability while never committing the two genuinely personal free-text name fields.
+- [Phase 04]: [Phase 04-01] Rebound predict.live._gw_pool (the single model-inference leaf), not _pool/_gw_pools, so build_pool/build_horizon_pool's real aggregation and horizon-decay math still run over the frozen per-gameweek inputs in fixture mode. — build_pool/build_horizon_pool resolve _gw_pool from predict.live's own module globals at call time, so rebinding only api.main's imported name would not affect them -- both api.main._gw_pool and live._gw_pool must be rebound.
 
 ### Pending Todos
 
@@ -152,6 +155,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-03T14:19:31.166Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-e2e-regression-suite/04-CONTEXT.md
+Last session: 2026-09-03T16:12:13.181Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: None
