@@ -1,13 +1,13 @@
 {
   "entry": 6980093,
   "gw": 3,
-  "score": 84,
+  "score": 91,
   "xi_xp": 32.71,
-  "xi_p10": 18.4,
-  "xi_p90": 46.9,
-  "ideal_xi_xp": 38.9,
+  "xi_p10": null,
+  "xi_p90": null,
+  "ideal_xi_xp": 33.4,
   "captain": "Isak",
-  "best_move": { "sell": ["Havertz"], "buy": ["Haaland"], "xp_gain": 0.68 },
+  "best_move": null,
   "manager": {
     "team_name": "The Testers",
     "manager": "Ada Lovelace",

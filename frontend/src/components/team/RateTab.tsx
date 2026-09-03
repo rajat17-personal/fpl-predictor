@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { RateResponse } from "../../lib/api";
+import { fetchJson, type RateResponse, type XpRow } from "../../lib/api";
+import { ErrorState } from "../ErrorState";
+import { RateDiff } from "../RateDiff";
 
 export interface RateTabProps {
   entry: number | null;
@@ -63,6 +65,16 @@ export function RateTab({ entry }: RateTabProps) {
     enabled: entry != null,
     retry: false,
   });
+  /* The diff (D-18) resolves the suggested buy against the full player
+   * pool, not just the 15-row squad — see RateDiff.tsx's resolveRateOverlay.
+   * Gated on `entry != null` like rateQuery so this tab never fetches while
+   * unmounted/inactive (D-20). */
+  const xpQuery = useQuery({
+    queryKey: ["xp_table"],
+    queryFn: () => fetchJson<XpRow[]>("/data/xp_table.json"),
+    enabled: entry != null,
+    staleTime: 60_000,
+  });
 
   if (entry == null) {
     return (
@@ -75,7 +87,7 @@ export function RateTab({ entry }: RateTabProps) {
     );
   }
 
-  if (rateQuery.isPending) {
+  if (rateQuery.isPending || xpQuery.isPending) {
     return (
       <p role="status" className="py-4 font-body text-body text-ink-2">
         Solving your squad…
@@ -93,11 +105,17 @@ export function RateTab({ entry }: RateTabProps) {
     );
   }
 
-  if (!rateQuery.data) {
+  if (xpQuery.isError) {
+    console.error(xpQuery.error);
+    return <ErrorState resource="the player data" onRetry={() => xpQuery.refetch()} />;
+  }
+
+  if (!rateQuery.data || !xpQuery.data) {
     return null;
   }
 
   const d = rateQuery.data;
+  const xpTable = xpQuery.data;
   const manager = d.manager;
 
   return (
@@ -150,6 +168,8 @@ export function RateTab({ entry }: RateTabProps) {
           <Tile heading="Best move" value="Hold" detail="no single transfer beats your current squad" />
         )}
       </div>
+
+      <RateDiff xi={d.xi} bestMove={d.best_move} xpTable={xpTable} gw={d.gw} />
     </div>
   );
 }
