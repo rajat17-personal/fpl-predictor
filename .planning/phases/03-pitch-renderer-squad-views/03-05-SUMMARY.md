@@ -171,3 +171,10 @@ None - no external service configuration required.
 ---
 *Phase: 03-pitch-renderer-squad-views*
 *Completed: 2026-09-03*
+
+## Self-Check: PASSED
+
+All 5 modified files confirmed present on disk (`frontend/src/index.css`,
+`frontend/src/components/pitch/Pitch.tsx`, `frontend/src/components/pitch/Pitch.test.tsx`,
+`.planning/phases/03-pitch-renderer-squad-views/03-UI-SPEC.md`, this SUMMARY). All 3 commit
+hashes confirmed in `git log` (`25a7244`, `4e83899`, `250f589`).

@@ -107,7 +107,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Rate-my-team shows a visual diff of the user's squad against the optimal one with suggested swaps
   5. Chip timing shows a "why this GW" explanation with DGW/BGW callouts
 
-**Plans**: 5 plans (4 waves) — 4/5 executed; 03-05 is UAT gap closure
+**Plans**: 5/5 plans executed (4 waves) — 4/5 executed; 03-05 is UAT gap closure
 
 **Wave 1**
 
@@ -124,7 +124,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 4** *(UAT gap closure — blocked on Wave 3)*
 
-- [ ] 03-05-PLAN.md — Close G-03-1: center every formation row continuously so 2-card, 4-card and bench rows stop drifting half a column left; add the missing symmetry regression test and correct the UI-SPEC's defective centering mechanism
+- [x] 03-05-PLAN.md — Close G-03-1: center every formation row continuously so 2-card, 4-card and bench rows stop drifting half a column left; add the missing symmetry regression test and correct the UI-SPEC's defective centering mechanism
 
 **UI hint**: yes
 
@@ -205,7 +205,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Test Base Layer & App Skeleton | 6/6 | Complete    | 2026-09-01 |
 | 2. Data Layer & Non-Pitch Pages | 8/8 | Complete    | 2026-09-02 |
-| 3. Pitch Renderer & Squad Views | 4/4 | In Progress|  |
+| 3. Pitch Renderer & Squad Views | 5/5 | In Progress|  |
 | 4. E2E Regression Suite | 0/TBD | Not started | - |
 | 5. Container Build & CI Pipeline | 0/TBD | Not started | - |
 | 6. Security, Reliability & Observability Hardening | 0/TBD | Not started | - |
