@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchJson, type RateResponse, type XpRow } from "../../lib/api";
 import { ErrorState } from "../ErrorState";
 import { RateDiff } from "../RateDiff";
+import { PlanTransfers } from "../PlanTransfers";
 
 export interface RateTabProps {
   entry: number | null;
@@ -170,6 +171,8 @@ export function RateTab({ entry }: RateTabProps) {
       </div>
 
       <RateDiff xi={d.xi} bestMove={d.best_move} xpTable={xpTable} gw={d.gw} />
+
+      <PlanTransfers entryId={entry} freeTransfersEstimate={d.free_transfers ?? null} xpTable={xpTable} />
     </div>
   );
 }
