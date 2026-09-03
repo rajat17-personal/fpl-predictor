@@ -1,18 +1,18 @@
 ---
 gsd_state_version: 1.0
 current_phase: 03
-current_phase_name: pitch-renderer-squad-views
+current_phase_name: Pitch Renderer & Squad Views
 status: executing
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-09-03T01:43:42.571Z"
-last_activity: 2026-09-02
-last_activity_desc: Phase 02 complete, transitioned to Phase 3
-state_head: e09fa1d2d317601692b6a9ca887e118198a26ac8
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-09-03T04:26:58.304Z"
+last_activity: 2026-09-03
+last_activity_desc: Phase 03 execution started
+state_head: 4c868a8fdbb55f59201a9b93c72f97e40f3e5cfb
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 18
-  completed_plans: 14
+  completed_plans: 15
   percent: 29
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-02)
 
 **Core value:** The weekly recommendations (xP table, squad, captains, transfers) must keep flowing reliably — every change must leave the pipeline, API, and site at least as correct and more trustworthy than before.
-**Current focus:** Phase 3 — Pitch Renderer & Squad Views
+**Current focus:** Phase 03 — Pitch Renderer & Squad Views
 
 ## Current Position
 
-Phase: 03 (pitch-renderer-squad-views) — READY TO EXECUTE
-Plan: Not started
+Phase: 03 (Pitch Renderer & Squad Views) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-09-02 — Phase 02 complete, transitioned to Phase 3
+Last activity: 2026-09-03 — Phase 03 execution started
 
 Progress: [███░░░░░░░] 29% (2/7 phases, 14 plans complete)
 
@@ -73,6 +73,7 @@ Progress: [███░░░░░░░] 29% (2/7 phases, 14 plans complete)
 | Phase 02 P06 | 25min | 2 tasks | 6 files |
 | Phase 02 P07 | 25min | 3 tasks | 7 files |
 | Phase 02-data-layer-non-pitch-pages P08 | 2min | 3 tasks | 4 files |
+| Phase 03 P01 | 55min | 3 tasks | 24 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,9 @@ Recent decisions affecting current work:
 - [Phase 02]: [Phase 02]: [Plan 02-06]: Styled react-markdown's output via its components prop (tag->token-class map) rather than a CSS-cascade wrapper class, keeping the markdown-to-typography mapping declared once in Methodology.tsx.
 - [Phase 02]: [Phase 02]: [Plan 02-07]: Lockstep over divergence for the G-02-1 dark-neutral palette fix -- changed the four dark hexes in both frontend/src/index.css and web/assets/style.css in one commit rather than diverging the React palette (D-01/D-04), since the values were byte-identical before the fix and vanilla stays authoritative until CUT-01. — Diverging would have been the first palette divergence in PARITY-DEVIATIONS.md, forcing Phase 7's side-by-side pass to eyeball-exempt every surface on every page.
 - [Phase 02]: [Phase 02]: [Plan 02-08]: Adopted vanilla's mono family and 0.75 venue-tag opacity for the fixture chip but deliberately did not adopt vanilla's smaller chip/venue font sizes, per the plan's gap-coverage audit -- already governed by PARITY-DEVIATIONS.md entry 7 (sub-14px vanilla chrome renders at the 14px Label token); no new ledger entry required since every change in this plan moves the port toward vanilla.
+- [Phase 03]: [Phase 3] [Plan 01]: View-only default Squad tab (no lock/exclude/solve controls on the model-squad pitch) — Loaded-team flow (plan 03-04) already fully covers that interaction surface; keeps this plan's scope aligned with its success criteria (03-RESEARCH.md Open Question 1).
+- [Phase 03]: [Phase 3] [Plan 01]: splitPitchRows made generic over T extends SquadRow (Rule 3 deviation) — Plain tsc --noEmit missed the narrowing loss (PitchPlayer[] -> SquadRow[] buckets) that the stricter tsc -b build-mode check (npm run build) caught, per bash scripts/verify_frontend_build.sh.
+- [Phase 03]: [Phase 3] [Plan 01]: PITCH-01 trademark posture settled — docs/decisions/pitch-kit-sourcing.md committed, footer disclaimer sentence added sitewide, nav/title renamed to My team — Retires the STATE.md blocker for this phase by documented decision, not by capturing FPL CDN URLs (which D-01 makes moot).
 
 ### Pending Todos
 
@@ -136,6 +140,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-03T01:07:10.228Z
-Stopped at: Phase 3 UI-SPEC approved
-Resume file: /home/sraja/fpl/.planning/phases/03-pitch-renderer-squad-views/03-UI-SPEC.md
+Last session: 2026-09-03T04:26:58.246Z
+Stopped at: Completed 03-01-PLAN.md
+Resume file: None

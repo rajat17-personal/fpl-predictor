@@ -15,18 +15,18 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **UI-04**: Prices page with watchlist rise/fall indicators
 - [x] **UI-05**: League, scoreboard, differentials, and methodology pages at parity
 - [x] **UI-06**: Persistent gameweek meta banner with deadline countdown
-- [ ] **UI-07**: Mobile-responsive pitch and tables
+- [x] **UI-07**: Mobile-responsive pitch and tables
 
 ### Pitch View
 
-- [ ] **PITCH-01**: Shirt/kit asset sourcing decision documented before component build (verify FPL CDN URLs via devtools, or neutral generated kits) with non-affiliation disclaimer
-- [ ] **PITCH-02**: Pitch renderer — formation-driven rows (GK/DEF/MID/FWD + bench), player cards with shirt, name, price, xP, and C/VC badges
+- [x] **PITCH-01**: Shirt/kit asset sourcing decision documented before component build (verify FPL CDN URLs via devtools, or neutral generated kits) with non-affiliation disclaimer
+- [x] **PITCH-02**: Pitch renderer — formation-driven rows (GK/DEF/MID/FWD + bench), player cards with shirt, name, price, xP, and C/VC badges
 - [ ] **PITCH-03**: Team page — load a squad (default entry 6980093), render on pitch, lock/exclude players, request solve, see transfers/XI update
 - [ ] **PITCH-04**: Rate-my-team view — visual diff of user squad vs optimal with suggested swaps
 
 ### UI Extras
 
-- [ ] **UIX-01**: p10/p90 prediction intervals rendered on player/captain cards
+- [x] **UIX-01**: p10/p90 prediction intervals rendered on player/captain cards
 - [x] **UIX-02**: Dark mode toggle
 - [ ] **UIX-03**: Chip-timing "why this GW" UI with DGW/BGW callouts
 
@@ -124,12 +124,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-05 | Phase 2 | Complete |
 | UI-06 | Phase 2 | Complete |
 | UIX-02 | Phase 2 | Complete |
-| PITCH-01 | Phase 3 | Pending |
-| PITCH-02 | Phase 3 | Pending |
+| PITCH-01 | Phase 3 | Complete |
+| PITCH-02 | Phase 3 | Complete |
 | PITCH-03 | Phase 3 | Pending |
 | PITCH-04 | Phase 3 | Pending |
-| UI-07 | Phase 3 | Pending |
-| UIX-01 | Phase 3 | Pending |
+| UI-07 | Phase 3 | Complete |
+| UIX-01 | Phase 3 | Complete |
 | UIX-03 | Phase 3 | Pending |
 | E2E-01 | Phase 4 | Pending |
 | E2E-02 | Phase 4 | Pending |
