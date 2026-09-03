@@ -25,9 +25,11 @@ export interface PitchProps {
  * fewer than 5 cards centres them within the row (GK's single card sits at
  * column 3, matching 03-UI-SPEC.md's Pitch Design section) rather than
  * changing grid-template-columns. A row holding a ghost card may momentarily
- * contain six cards — the grid stays 5-column and that row's cards shrink. */
-function centeredStartColumn(count: number): number {
-  return Math.max(1, Math.floor((5 - count) / 2) + 1);
+ * contain six cards — the grid grows to that column count so every card in
+ * the row (including the ghost) shrinks together instead of overflowing the
+ * fixed 5-column track set. */
+function centeredStartColumn(count: number, columns: number): number {
+  return Math.max(1, Math.floor((columns - count) / 2) + 1);
 }
 
 /* Ghost/insert card (D-16, D-18): same kit/name/price/xP layout as a real
@@ -91,9 +93,15 @@ function PitchRow({
   label,
 }: PitchRowProps) {
   const slots = buildRowSlots(players, ghostPlayer, ghostAfterCode);
-  const start = centeredStartColumn(slots.length);
+  const columns = Math.max(5, slots.length);
+  const start = centeredStartColumn(slots.length, columns);
   return (
-    <div className="grid grid-cols-5 gap-1 min-[480px]:gap-2" role="group" aria-label={label}>
+    <div
+      className="grid gap-1 min-[480px]:gap-2"
+      style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+      role="group"
+      aria-label={label}
+    >
       {slots.map((slot, i) => (
         <div key={`${slot.kind}-${slot.player.player_code}`} style={{ gridColumn: start + i }}>
           {slot.kind === "ghost" ? (
