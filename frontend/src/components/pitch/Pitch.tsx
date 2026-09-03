@@ -19,17 +19,30 @@ export interface PitchProps {
   ghost?: PitchGhost | null;
 }
 
-/* One shared 5-column grid definition for every formation row (D-07's
- * verified ceiling: DEF max 5, MID max 5). The column count never changes
- * with viewport width — cards shrink, the layout never reflows. A row with
- * fewer than 5 cards centres them within the row (GK's single card sits at
- * column 3, matching 03-UI-SPEC.md's Pitch Design section) rather than
- * changing grid-template-columns. A row holding a ghost card may momentarily
- * contain six cards — the grid grows to that column count so every card in
- * the row (including the ghost) shrinks together instead of overflowing the
- * fixed 5-column track set. */
-function centeredStartColumn(count: number, columns: number): number {
-  return Math.max(1, Math.floor((columns - count) / 2) + 1);
+/* One shared card measure for every formation row (D-07's verified ceiling:
+ * DEF max 5, MID max 5). Every card in a row shares one fixed flex basis
+ * derived from `Math.max(5, cardCount)` parts — the part count never drops
+ * below 5, so cards shrink and the row never reflows at any viewport width.
+ * A row holding a ghost card may momentarily hold six cards — the part
+ * count grows to 6 so every card in the row (including the ghost) shrinks
+ * together instead of overflowing.
+ *
+ * Centering is continuous (flex `justify-content: center` against this fixed
+ * basis), not integer-quantized. Two prior mechanisms were tried here and
+ * are both defective: distributing free space across tracks that already
+ * absorb all of it is a no-op, and placing a row at a single whole-number
+ * start position cannot express the half-step an even-cardinality row needs
+ * against an odd part count — that mechanism is exact only when row size and
+ * part count share parity. Continuous centering has no parity condition, so
+ * it is exact at every row size. See
+ * .planning/debug/pitch-row-centering-drift.md for the algebra and measured
+ * offsets (G-03-1). */
+function rowParts(count: number): number {
+  return Math.max(5, count);
+}
+
+function cardMeasure(parts: number): string {
+  return `calc((100% - ${parts - 1} * var(--pitch-gap)) / ${parts})`;
 }
 
 /* Ghost/insert card (D-16, D-18): same kit/name/price/xP layout as a real
@@ -93,17 +106,19 @@ function PitchRow({
   label,
 }: PitchRowProps) {
   const slots = buildRowSlots(players, ghostPlayer, ghostAfterCode);
-  const columns = Math.max(5, slots.length);
-  const start = centeredStartColumn(slots.length, columns);
+  const parts = rowParts(slots.length);
+  const basis = cardMeasure(parts);
   return (
     <div
-      className="grid gap-1 min-[480px]:gap-2"
-      style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+      style={{ display: "flex", justifyContent: "center", gap: "var(--pitch-gap)" }}
       role="group"
       aria-label={label}
     >
-      {slots.map((slot, i) => (
-        <div key={`${slot.kind}-${slot.player.player_code}`} style={{ gridColumn: start + i }}>
+      {slots.map((slot) => (
+        <div
+          key={`${slot.kind}-${slot.player.player_code}`}
+          style={{ flexGrow: 0, flexShrink: 1, flexBasis: basis, minWidth: "0px" }}
+        >
           {slot.kind === "ghost" ? (
             <GhostCard player={slot.player} />
           ) : (

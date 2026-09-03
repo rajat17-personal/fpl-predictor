@@ -108,3 +108,96 @@ describe("Pitch — onMark threading", () => {
     expect(screen.getByRole("button", { name: "Virgil actions" })).toBeInTheDocument();
   });
 });
+
+describe("Pitch — row centering (G-03-1)", () => {
+  // Row sizes present on the default 3-5-2 fixture, covering the two rows that drifted
+  // left under the old integer-column scheme (Forwards at 2, Bench at 4) and the three
+  // odd controls that must NOT move (Goalkeeper at 1, Defenders at 3, Midfielders at 5).
+  const ROWS: { label: string; count: number }[] = [
+    { label: "Goalkeeper", count: 1 },
+    { label: "Defenders", count: 3 },
+    { label: "Midfielders", count: 5 },
+    { label: "Forwards", count: 2 },
+    { label: "Bench", count: 4 },
+  ];
+
+  const VIEWPORTS = [
+    { width: 600, gap: 8 }, // desktop
+    { width: 311, gap: 4 }, // 375px
+  ] as const;
+
+  function parseBasis(cell: HTMLElement): { k: number; d: number } {
+    const basis = cell.style.flexBasis;
+    const match = basis.match(/^calc\(\(100% - (\d+) \* var\(--pitch-gap\)\) \/ (\d+)\)$/);
+    expect(match, `unexpected flex-basis "${basis}"`).not.toBeNull();
+    return { k: Number(match![1]), d: Number(match![2]) };
+  }
+
+  function assertRowIsExactlyCentered(row: HTMLElement, count: number) {
+    const cells = Array.from(row.children) as HTMLElement[];
+    expect(cells).toHaveLength(count);
+
+    // Test 1 — continuous centering declared inline (invisible to jsdom via className)
+    expect(row.style.display).toBe("flex");
+    expect(row.style.justifyContent).toBe("center");
+
+    // Test 2 — integer-quantized scheme is gone: no inline track list on the row,
+    // no inline column placement on any cell.
+    expect(row.style.gridTemplateColumns).toBe("");
+    for (const cell of cells) {
+      expect(cell.style.gridColumn).toBe("");
+    }
+
+    // Test 3 — every cell shares one basis; d === max(5, cellCount), k === d - 1.
+    // Sizes 1-5 all resolve to the shared 5-part measure (D-07); size 6 (ghost) to 6.
+    const bases = cells.map(parseBasis);
+    const [first, ...rest] = bases;
+    for (const b of rest) {
+      expect(b).toEqual(first);
+    }
+    const expectedD = Math.max(5, count);
+    expect(first.d).toBe(expectedD);
+    expect(first.k).toBe(expectedD - 1);
+
+    // Test 4 — zero grow and zero minimum inline size on every cell, so a long name
+    // ellipsizes instead of forcing its cell wider than its measure.
+    for (const cell of cells) {
+      expect(cell.style.flexGrow).toBe("0");
+      expect(cell.style.minWidth).toBe("0px");
+    }
+
+    // Test 5 — symmetry oracle at both UAT viewports, driven by the parsed part count.
+    // jsdom has no layout engine, so this asserts the declared layout model produces
+    // equal leading/trailing free space and never overflows its container.
+    const d = first.d;
+    for (const { width: W, gap: g } of VIEWPORTS) {
+      const basis = (W - (d - 1) * g) / d;
+      const rowWidth = count * basis + (count - 1) * g;
+      const leading = (W - rowWidth) / 2;
+      const trailing = W - rowWidth - leading;
+      expect(leading).toBeCloseTo(trailing, 10);
+      expect(rowWidth).toBeLessThanOrEqual(W + 1e-9);
+    }
+  }
+
+  describe.each(ROWS)("row size $count ($label)", ({ label, count }) => {
+    it(`centers the ${label} row (n=${count}) with equal leading/trailing space and no integer column placement`, () => {
+      render(<Pitch players={players} captainCode={captainCode} viceCode={null} />);
+      const row = screen.getByRole("group", { name: label });
+      assertRowIsExactlyCentered(row, count);
+    });
+  });
+
+  it("grows the ghost-holding Midfielders row to a 6-part measure and keeps it exactly centered", () => {
+    render(
+      <Pitch
+        players={players}
+        captainCode={captainCode}
+        viceCode={null}
+        ghost={{ row: "MID", afterCode: ODEGAARD, player: GHOST_PLAYER }}
+      />,
+    );
+    const midRow = screen.getByRole("group", { name: "Midfielders" });
+    assertRowIsExactlyCentered(midRow, 6);
+  });
+});

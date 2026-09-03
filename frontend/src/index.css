@@ -92,6 +92,16 @@
 
 :root {
   color-scheme: light;
+  /* Pitch row gap (PITCH-02, G-03-1 fix): a custom property, not a Tailwind gap
+   * utility, because the card measure below is computed in a `calc()` that must
+   * subtract the same gap — a utility class is invisible to `calc()`. */
+  --pitch-gap: var(--spacing-xs);
+}
+
+@media (min-width: 480px) {
+  :root {
+    --pitch-gap: var(--spacing-sm);
+  }
 }
 
 .dark {
