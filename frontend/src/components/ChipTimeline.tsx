@@ -61,9 +61,12 @@ function Marker({ row, isCurrent }: { row: ChipsGwStructure; isCurrent: boolean 
   // alone (UI-SPEC "assertable attribute or accessible name").
   const label = `GW${row.gw}${isCurrent ? " — current gameweek" : ""} — ${kindWord}`;
 
-  const dotClasses = `h-3 w-3 shrink-0 rounded-full ${
+  const size = isCurrent
+    ? "h-5 w-5 ring-2 ring-accent ring-offset-1 ring-offset-surface"
+    : "h-3 w-3";
+  const dotClasses = `${size} shrink-0 rounded-full ${
     kind === "dgw" ? "bg-accent" : kind === "bgw" ? "bg-bad" : "bg-ink-2"
-  } ${isCurrent ? "h-5 w-5 ring-2 ring-accent ring-offset-1 ring-offset-surface" : ""}`;
+  }`;
 
   return (
     <div
