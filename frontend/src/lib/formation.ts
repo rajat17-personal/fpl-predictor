@@ -20,18 +20,23 @@ export function deriveFormation(rows: FormationRow[]): string {
   return `${count("DEF")}-${count("MID")}-${count("FWD")}`;
 }
 
-export interface PitchRows {
-  gk: SquadRow[];
-  def: SquadRow[];
-  mid: SquadRow[];
-  fwd: SquadRow[];
-  bench: SquadRow[];
+export interface PitchRows<T extends SquadRow = SquadRow> {
+  gk: T[];
+  def: T[];
+  mid: T[];
+  fwd: T[];
+  bench: T[];
 }
 
 /* Bucket order (GK/DEF/MID/FWD) mirrors web/team.html:69's squadCards()
  * grouping. Bucketing is a stable filter, never a sort — source-array order
- * is preserved within each bucket (UIX-01 edge probe). */
-export function splitPitchRows(rows: SquadRow[]): PitchRows {
+ * is preserved within each bucket (UIX-01 edge probe). Generic over T so a
+ * caller passing a SquadRow subtype (e.g. PitchPlayer, which adds the
+ * joined xp_table fields) gets that subtype back out of every bucket rather
+ * than losing it to the SquadRow base type — the plain `tsc --noEmit`
+ * typecheck doesn't catch this narrowing loss, but the stricter `tsc -b`
+ * build-mode check (used by `npm run build`) does. */
+export function splitPitchRows<T extends SquadRow>(rows: T[]): PitchRows<T> {
   const starters = rows.filter((r) => r.starting);
   const bench = rows.filter((r) => !r.starting);
   const byPos = (position: string) => starters.filter((r) => r.position === position);
