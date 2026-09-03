@@ -310,12 +310,36 @@ export interface PlanResponse {
   weeks: PlanWeek[];
 }
 
-/** `/api/team/{entry}`'s response. */
+/** One pick within `/api/team/{entry}`'s response. Deliberately narrower
+ * than `SquadRow` — verified from `api/main.py`'s `_fetch_team` (the picks
+ * comprehension at lines 199-205): the real payload carries only these five
+ * fields, never `xp`/`starting`/`captain` (03-02-PLAN.md Task 1's "real
+ * integration risk"). A caller that needs a full `SquadRow` must derive
+ * `xp`/`starting`/`captain` itself — see
+ * `components/team/SquadTab.tsx`'s `selectLoadedSquad`. */
+export interface TeamPick {
+  player_code: number;
+  name: string;
+  team: string;
+  position: string;
+  price_m: number;
+}
+
+/** `/api/team/{entry}`'s response (verified from `api/main.py`'s
+ * `_fetch_team`, lines 174-209 — corrects `picks`'s prior `SquadRow[]`
+ * typing, which claimed fields the endpoint never returns). */
 export interface TeamResponse {
-  picks: SquadRow[];
+  entry: number;
+  picks: TeamPick[];
   bank: number;
   value: number;
-  manager?: { team_name?: string; manager?: string };
+  manager?: {
+    team_name?: string;
+    manager?: string;
+    overall_points?: number;
+    overall_rank?: number | null;
+    gw_points?: number;
+  };
 }
 
 /** One gameweek's DGW/BGW structure within `web/data/chips.json`'s
