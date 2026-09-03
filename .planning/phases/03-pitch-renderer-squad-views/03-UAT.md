@@ -1,14 +1,21 @@
 ---
-status: diagnosed
+status: testing
 phase: 03-pitch-renderer-squad-views
 source: [03-VERIFICATION.md]
 started: 2026-09-03T07:00:00Z
-updated: 2026-09-03T09:00:00Z
+updated: 2026-09-03T07:45:00Z
 ---
 
 ## Current Test
 
-[testing complete]
+number: 4
+name: Visual re-check of pitch row centering after 03-05 fix (G-03-1)
+expected: |
+  Open /team at desktop and 375px viewport, light and dark mode, on the 3-5-2 model
+  squad and a loaded 4-4-2 entry. Every formation row and the bench read as
+  horizontally centered on the pitch midline — including the 2-card FWD row and
+  4-card DEF/MID/bench rows — with no horizontal overflow and name ellipsis intact.
+awaiting: user response
 
 ## Tests
 
@@ -27,12 +34,16 @@ note: "User confirmed ghost card okay; asked about 5-DEF edge case (verified han
 expected: Read docs/decisions/pitch-kit-sourcing.md in full. The neutral-SVG-kit posture (no crest/sponsor/CDN imagery, non-legal-opinion caveat) reads as sound and sufficient without formal legal review at this stage — something you are willing to stand behind at a future payment-gateway review.
 result: pass
 
+### 4. Visual re-check of pitch row centering after 03-05 fix (G-03-1)
+expected: Open /team at desktop and 375px viewport, light and dark mode, on the 3-5-2 model squad and a loaded 4-4-2 entry. Every formation row and the bench read as horizontally centered on the pitch midline — including the 2-card FWD row and 4-card DEF/MID/bench rows — with no horizontal overflow and name ellipsis intact.
+result: [pending]
+
 ## Summary
 
-total: 3
+total: 4
 passed: 2
 issues: 1
-pending: 0
+pending: 1
 skipped: 0
 blocked: 0
 
@@ -46,7 +57,8 @@ blocked: 0
 
 - gap_id: G-03-1
   truth: "Formation rows render centered on the pitch regardless of row size — a 2-striker row or 4-player DEF/MID row sits horizontally centered, matching the 5-column grid's visual midline"
-  status: failed
+  status: fix_shipped
+  closed_by: 03-05 (commits 25a7244, 4e83899; awaiting visual confirmation — test 4)
   reason: "User reported: when the team loads two strikers they are not central. and instead a drift a bit left. same when I load my team and 4 def and 4 mid are displayed."
   severity: cosmetic
   test: 1
