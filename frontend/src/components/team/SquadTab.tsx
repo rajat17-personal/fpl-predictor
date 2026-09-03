@@ -6,6 +6,7 @@ import {
   type MetaResponse,
   type SolveRequest,
   type SolveResult,
+  type SolveSquadResult,
   type SolveTransfersResult,
   type SquadResponse,
   type SquadRow,
@@ -145,6 +146,17 @@ export function useSolveController(entry: number | null, marks: MarkRecord) {
       }
       if (result.kind === "transfers") {
         setSolve({ status: "success", data: result });
+      } else {
+        /* This UI never sends entry: null (the view-only default-squad mode
+         * resolved in 03-01), so /api/solve never returns "squad" here in
+         * practice — but the branch is handled explicitly, compiler-checked,
+         * rather than a silent no-op assumption: narrowing result to
+         * SolveSquadResult here means the compiler rejects this assignment
+         * (and this whole file fails to build) the moment SolveResult ever
+         * grows a third `kind`, per the plan's exhaustive-handling
+         * requirement. */
+        const stillSquad: SolveSquadResult = result;
+        void stillSquad;
       }
     } catch (e) {
       if (seq !== solveSeqRef.current) {
