@@ -94,21 +94,32 @@ disclaimer lives (this footer).
   background, per the established secondary-surface role) — visually and semantically distinct
   from the starting XI, matching the official FPL app's convention.
 
-### Layout — CSS Grid, verified 5-column ceiling (D-07)
+### Layout — continuous flex centering, verified 5-part ceiling (D-07)
 
-- One shared grid definition for every formation row: `grid-template-columns: repeat(5,
-  minmax(0, 1fr))`. This does **not** change column count at any viewport width — D-07 requires
-  the full formation to "always fit," which this contract satisfies by keeping the column count
-  fixed and shrinking card content instead of reflowing. GK's row uses the same 5-column grid
-  with the single GK card centered (`grid-column: 3 / 4`); rows with fewer than 5 starters (e.g.
-  a 3-DEF row) center their cards within the row via `justify-content: center` on the row
-  container, not by changing `grid-template-columns`.
-- Row gap: `--spacing-sm` (8px) at ≥480px viewport width; `--spacing-xs` (4px) below 480px
-  (spacing-scale exception, same category as Phase 2's FDR cell `min-width`).
+- One shared row definition for every formation row: `display: flex; justify-content: center`,
+  and every card in the row takes a fixed `flex-basis` measure of
+  `calc((100% - (parts - 1) * var(--pitch-gap)) / parts)` where
+  `parts = max(5, cardsInRow)`. This measure is unchanged for every row of 5 cards or fewer, so
+  D-07's "always fit, never reflow" contract holds exactly as before — the part count never
+  drops below 5, cards shrink and the layout never reflows at any viewport width. Centering is
+  exact at every row size, not only odd ones: flex distributes free space continuously against
+  this fixed basis, with no parity condition between row size and part count. A 1-card row (GK)
+  is centered by the same rule as any other — there is no special-cased single-card placement.
+  **Why not:** two mechanisms were tried here and are both defective — distributing free space
+  across tracks that already consume it changes nothing, and placing a row at a single
+  whole-number start position cannot express the half-step an even-cardinality row needs against
+  an odd part count, so it lands off-center by half a step for every even row. See
+  `.planning/debug/pitch-row-centering-drift.md` for the algebra and the measured offsets
+  (G-03-1).
+- Row gap: `--pitch-gap` custom property — `--spacing-sm` (8px) at ≥480px viewport width;
+  `--spacing-xs` (4px) below 480px (spacing-scale exception, same category as Phase 2's FDR cell
+  `min-width`). Declared as a custom property, not a utility class, because the card measure
+  above subtracts this same gap inside a `calc()`, and a utility class is invisible from inside
+  `calc()`.
 - Bench strip: always exactly 4 cards (`15 − 11`, verified against `config.SQUAD_SIZE`/
-  `POSITION_QUOTA` per `03-RESEARCH.md`), same 5-column grid (4 cards + 1 empty/spacer cell,
-  or a 4-column grid dedicated to the bench — either is acceptable; the constraint is "never
-  wider than the widest formation row above it").
+  `POSITION_QUOTA` per `03-RESEARCH.md`), centered by the same shared measure — the bench is 4
+  cards on the 5-part measure, which satisfies its stated constraint of "never wider than the
+  widest formation row above it."
 - Formation label: rendered once above the pitch, e.g. **"3-5-2"**, derived via
   `deriveFormation()` (see `03-RESEARCH.md` Pattern 1) — never hand-entered, never fetched.
 
