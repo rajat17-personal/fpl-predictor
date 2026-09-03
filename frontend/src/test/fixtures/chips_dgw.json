@@ -1,0 +1,13 @@
+{
+  "note": "GW3: hand-built DGW/BGW fixture for test coverage — the live export has no DGW/BGW gameweeks yet, so this file exists solely to exercise the marked timeline paths.",
+  "structure": [
+    { "gw": 3, "dgw_clubs": 0, "bgw_clubs": 0 },
+    { "gw": 4, "dgw_clubs": 0, "bgw_clubs": 0 },
+    { "gw": 5, "dgw_clubs": 4, "bgw_clubs": 0 },
+    { "gw": 6, "dgw_clubs": 0, "bgw_clubs": 0 },
+    { "gw": 7, "dgw_clubs": 0, "bgw_clubs": 6 },
+    { "gw": 8, "dgw_clubs": 0, "bgw_clubs": 0 },
+    { "gw": 9, "dgw_clubs": 0, "bgw_clubs": 0 },
+    { "gw": 10, "dgw_clubs": 0, "bgw_clubs": 0 }
+  ]
+}
