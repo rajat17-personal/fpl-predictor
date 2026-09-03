@@ -19,6 +19,7 @@ import { EmptyState } from "../EmptyState";
 import { Pitch } from "../pitch/Pitch";
 import type { PlayerMark } from "../pitch/PlayerCard";
 import { SolveControls, type SolveControlValues } from "../SolveControls";
+import { SolveResultsBar } from "../SolveResultsBar";
 import { deriveFormation } from "../../lib/formation";
 import { deriveViceCaptain, joinSquad } from "../../lib/squadJoin";
 
@@ -346,7 +347,15 @@ export function SquadTab({ entry, onLoadEntry, onClearEntry }: SquadTabProps) {
     });
   }
 
-  const { solve, solveNow } = useSolveController(entry, marks);
+  const { solve, solveNow, resetSolve } = useSolveController(entry, marks);
+
+  /* Reset to loaded squad (D-17, verbatim CTA copy): clears marks and
+   * discards the current solve result via resetSolve(); performs no network
+   * request — the solve was only ever a local preview. */
+  function handleReset() {
+    setMarks({});
+    resetSolve();
+  }
 
   const metaQuery = useQuery({
     queryKey: ["meta"],
@@ -439,10 +448,24 @@ export function SquadTab({ entry, onLoadEntry, onClearEntry }: SquadTabProps) {
      * Reset target, and Task 3's IN-badge diff base). */
     const squadRows = selectLoadedSquad(teamQuery.data.picks, xpTable);
     /* D-16: a completed solve re-renders the same pitch in place with the
-     * solve's own squad — never a second pitch. Diffing against squadRows
-     * (not the previous solve) is Task 3's job. */
+     * solve's own squad — never a second pitch. */
     const displayedRows =
       solve.status === "success" && solve.data ? solve.data.squad : squadRows;
+    /* IN diff (D-16): computed against the codes of the squad as originally
+     * loaded (squadRows, above) — never against a previous solve's result —
+     * so a player who came in on an earlier solve and stayed keeps their IN
+     * badge, and solving twice with an unchanged response leaves the badges
+     * identical (idempotency). No "out" treatment on this pitch; outgoing
+     * players simply disappear from the re-rendered squad. */
+    const asLoadedCodes = new Set(squadRows.map((r) => r.player_code));
+    const diffs: Record<number, "in"> = {};
+    if (solve.status === "success" && solve.data) {
+      for (const row of solve.data.squad) {
+        if (!asLoadedCodes.has(row.player_code)) {
+          diffs[row.player_code] = "in";
+        }
+      }
+    }
     const players = joinSquad(displayedRows, xpTable);
     const formation = deriveFormation(displayedRows);
     const captainCode = displayedRows.find((r) => r.captain)?.player_code ?? null;
@@ -477,6 +500,7 @@ export function SquadTab({ entry, onLoadEntry, onClearEntry }: SquadTabProps) {
             captainCode={captainCode}
             viceCode={viceCode}
             marks={marks}
+            diffs={diffs}
             onMark={handleMark}
           />
         </div>
@@ -494,11 +518,21 @@ export function SquadTab({ entry, onLoadEntry, onClearEntry }: SquadTabProps) {
           onSolve={(values) => void solveNow(values)}
         />
 
+        <button
+          type="button"
+          onClick={handleReset}
+          className="mt-2 min-h-[44px] font-label text-label text-ink-2 underline"
+        >
+          Reset to loaded squad
+        </button>
+
         {solve.status === "error" && (
           <p className="mt-2 font-body text-body text-ink-2">
             Couldn't solve: {solve.error}. Check your inputs and try again.
           </p>
         )}
+
+        {solve.status === "success" && solve.data && <SolveResultsBar result={solve.data} />}
       </div>
     );
   }

@@ -422,3 +422,129 @@ describe("useSolveController ordering safety (03-04 Task 2, T-03-16)", () => {
     expect(result.current.solve.data?.captain).toBe("Haaland");
   });
 });
+
+describe("SquadTab solve results — in-place update, results bar, Reset (03-04 Task 3)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  async function solveOnce() {
+    mockFetchWithSolve(() =>
+      Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(solveFixture) }),
+    );
+    renderSquadTab({ entry: 6980093 });
+    await screen.findByText("The Testers · GW3");
+    fireEvent.click(screen.getByRole("button", { name: "Solve transfers" }));
+    await screen.findByText("Haaland");
+  }
+
+  it("renders exactly one pitch with the solve fixture's 15 players after a solve resolves", async () => {
+    await solveOnce();
+    expect(screen.getAllByTestId("bench")).toHaveLength(1);
+    for (const row of solveFixture.squad) {
+      expect(screen.getByText(row.name)).toBeInTheDocument();
+    }
+  });
+
+  it("badges only the two incoming players (absent from the loaded-team fixture) as New signing this transfer", async () => {
+    await solveOnce();
+    expect(screen.getAllByLabelText("New signing this transfer")).toHaveLength(2);
+  });
+
+  it("carries no out treatment on any card after a solve", async () => {
+    await solveOnce();
+    expect(screen.queryByText("Suggested transfer out")).not.toBeInTheDocument();
+  });
+
+  it("renders the results bar with one line per sell-to-buy pair from the fixture", async () => {
+    await solveOnce();
+    const bar = screen.getByTestId("solve-results-bar");
+    expect(bar.textContent).toContain("McBurnie");
+    expect(bar.textContent).toContain("Haaland");
+    expect(bar.textContent).toContain("Unmapped");
+    expect(bar.textContent).toContain("Palmer");
+  });
+
+  it("renders Hold in the results bar for a mutated zero-buys solve", async () => {
+    const noBuys = { ...solveFixture, buys: [] };
+    mockFetchWithSolve(() =>
+      Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(noBuys) }),
+    );
+    renderSquadTab({ entry: 6980093 });
+    await screen.findByText("The Testers · GW3");
+    fireEvent.click(screen.getByRole("button", { name: "Solve transfers" }));
+
+    const bar = await screen.findByTestId("solve-results-bar");
+    expect(within(bar).getByText("Hold")).toBeInTheDocument();
+  });
+
+  it("renders −8 pts in hits for the two-hit fixture", async () => {
+    await solveOnce();
+    expect(screen.getByText("−8 pts in hits")).toBeInTheDocument();
+  });
+
+  it("omits the hit-cost clause for a mutated zero-hit solve", async () => {
+    const zeroHits = { ...solveFixture, hits: 0 };
+    mockFetchWithSolve(() =>
+      Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(zeroHits) }),
+    );
+    renderSquadTab({ entry: 6980093 });
+    await screen.findByText("The Testers · GW3");
+    fireEvent.click(screen.getByRole("button", { name: "Solve transfers" }));
+
+    const bar = await screen.findByTestId("solve-results-bar");
+    expect(within(bar).queryByText(/pts in hits/)).not.toBeInTheDocument();
+  });
+
+  it("renders the bank, xi_xp and captain in the results bar", async () => {
+    await solveOnce();
+    const bar = screen.getByTestId("solve-results-bar");
+    expect(bar.textContent).toContain(`Bank £${solveFixture.bank_after.toFixed(1)}m`);
+    expect(bar.textContent).toContain(`XI xP ${solveFixture.xi_xp}`);
+    expect(bar.textContent).toContain(`Captain ${solveFixture.captain}`);
+  });
+
+  it("Reset to loaded squad restores the loaded team, clears marks and the results bar, and issues no further fetch", async () => {
+    const solveCalls = mockFetchWithSolve(() =>
+      Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(solveFixture) }),
+    );
+    renderSquadTab({ entry: 6980093 });
+
+    await screen.findByText("The Testers · GW3");
+    fireEvent.click(screen.getByRole("button", { name: "Virgil actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Lock in squad" }));
+    fireEvent.click(screen.getByRole("button", { name: "Solve transfers" }));
+    await screen.findByText("Haaland");
+    expect(solveCalls).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset to loaded squad" }));
+
+    expect(screen.queryByText("Haaland")).not.toBeInTheDocument();
+    expect(screen.getByText("McBurnie")).toBeInTheDocument();
+    expect(screen.queryAllByLabelText("Locked — always included in solve")).toHaveLength(0);
+    expect(screen.queryByTestId("solve-results-bar")).not.toBeInTheDocument();
+    expect(solveCalls).toHaveLength(1);
+  });
+
+  it("solving twice with identical marks and control values renders an identical squad, results bar, and captain", async () => {
+    mockFetchWithSolve(() =>
+      Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(solveFixture) }),
+    );
+    renderSquadTab({ entry: 6980093 });
+    await screen.findByText("The Testers · GW3");
+
+    fireEvent.click(screen.getByRole("button", { name: "Solve transfers" }));
+    await screen.findByText("Haaland");
+    const firstBarText = screen.getByTestId("solve-results-bar").textContent;
+
+    fireEvent.click(screen.getByRole("button", { name: "Solve transfers" }));
+    await vi.waitFor(() => expect(screen.getByTestId("solve-results-bar")).toBeInTheDocument());
+
+    const secondBarText = screen.getByTestId("solve-results-bar").textContent;
+    expect(secondBarText).toBe(firstBarText);
+    for (const row of solveFixture.squad) {
+      expect(screen.getByText(row.name)).toBeInTheDocument();
+    }
+    expect(screen.getByText(`Captain ${solveFixture.captain}`)).toBeInTheDocument();
+  });
+});
