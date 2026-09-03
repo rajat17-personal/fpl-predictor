@@ -1,7 +1,7 @@
 import { describe, expect, it, afterEach, vi } from "vitest";
 import { render, screen, within, fireEvent } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { SquadTab, selectLoadedSquad } from "./SquadTab";
+import { SquadTab, selectLoadedSquad, lockedCodes, excludedCodes, type MarkRecord } from "./SquadTab";
 import squadFixture from "../../test/fixtures/squad.json";
 import xpFixture from "../../test/fixtures/xp_table_squad.json";
 import metaFixture from "../../test/fixtures/meta.json";
@@ -62,6 +62,22 @@ describe("selectLoadedSquad (03-02 Task 1: starter/captain reconstruction)", () 
   });
 });
 
+describe("lockedCodes / excludedCodes (03-04 Task 1: mark-record derivations)", () => {
+  it("returns numeric player_code values for locked players and an empty array when nothing is locked", () => {
+    const marks: MarkRecord = { 97032: "locked", 141746: "excluded", 184029: "locked" };
+    const locked = lockedCodes(marks);
+    expect(locked.sort((a, b) => a - b)).toEqual([97032, 184029]);
+    expect(locked.every((c) => typeof c === "number")).toBe(true);
+    expect(lockedCodes({})).toEqual([]);
+  });
+
+  it("returns numeric player_code values for excluded players and an empty array when nothing is excluded", () => {
+    const marks: MarkRecord = { 97032: "locked", 141746: "excluded" };
+    expect(excludedCodes(marks)).toEqual([141746]);
+    expect(excludedCodes({})).toEqual([]);
+  });
+});
+
 describe("SquadTab (03-02 Task 1)", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -113,5 +129,93 @@ describe("SquadTab (03-02 Task 1)", () => {
 
     await screen.findByText("The Testers · GW3");
     expect(within(screen.getByTestId("bench")).getByText("Unmapped")).toBeInTheDocument();
+  });
+});
+
+describe("SquadTab lock/exclude marks (03-04 Task 1)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("renders no popover trigger and no menu in the default model-squad mode", async () => {
+    mockFetchByUrl();
+    renderSquadTab();
+
+    await screen.findByText("Model squad · GW3");
+    fireEvent.click(screen.getByText("Virgil"));
+    expect(screen.queryAllByRole("button", { name: /actions$/ })).toHaveLength(0);
+    expect(screen.queryAllByRole("menu")).toHaveLength(0);
+  });
+
+  it("locks a player through the action menu, rendering the Locked badge on that card and no other", async () => {
+    mockFetchByUrl();
+    renderSquadTab({ entry: 6980093 });
+
+    await screen.findByText("The Testers · GW3");
+    fireEvent.click(screen.getByRole("button", { name: "Virgil actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Lock in squad" }));
+
+    expect(
+      screen.getAllByLabelText("Locked — always included in solve"),
+    ).toHaveLength(1);
+    expect(screen.queryAllByLabelText("Excluded from solve")).toHaveLength(0);
+  });
+
+  it("excluding an already-locked player leaves exactly one badge on that card, the excluded one", async () => {
+    mockFetchByUrl();
+    renderSquadTab({ entry: 6980093 });
+
+    await screen.findByText("The Testers · GW3");
+    fireEvent.click(screen.getByRole("button", { name: "Virgil actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Lock in squad" }));
+    expect(screen.getAllByLabelText("Locked — always included in solve")).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Virgil actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Exclude from squad" }));
+
+    expect(screen.queryAllByLabelText("Locked — always included in solve")).toHaveLength(0);
+    expect(screen.getAllByLabelText("Excluded from solve")).toHaveLength(1);
+  });
+
+  it("Clear removes the badge and the Clear item is then absent from the reopened menu", async () => {
+    mockFetchByUrl();
+    renderSquadTab({ entry: 6980093 });
+
+    await screen.findByText("The Testers · GW3");
+    fireEvent.click(screen.getByRole("button", { name: "Virgil actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Lock in squad" }));
+    expect(screen.getAllByLabelText("Locked — always included in solve")).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Virgil actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Clear" }));
+
+    expect(screen.queryAllByLabelText("Locked — always included in solve")).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: "Virgil actions" }));
+    expect(screen.queryByRole("menuitem", { name: "Clear" })).not.toBeInTheDocument();
+  });
+
+  it("keeps both marks in place after the loaded squad re-renders with a new squad array (e.g. after a solve)", async () => {
+    mockFetchByUrl();
+    const { rerender } = renderSquadTab({ entry: 6980093 });
+
+    await screen.findByText("The Testers · GW3");
+    fireEvent.click(screen.getByRole("button", { name: "Virgil actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Lock in squad" }));
+    fireEvent.click(screen.getByRole("button", { name: "Egan actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Exclude from squad" }));
+
+    expect(screen.getAllByLabelText("Locked — always included in solve")).toHaveLength(1);
+    expect(screen.getAllByLabelText("Excluded from solve")).toHaveLength(1);
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <SquadTab entry={6980093} onLoadEntry={vi.fn()} onClearEntry={vi.fn()} />
+      </QueryClientProvider>,
+    );
+
+    await screen.findByText("The Testers · GW3");
+    expect(screen.getAllByLabelText("Locked — always included in solve")).toHaveLength(1);
+    expect(screen.getAllByLabelText("Excluded from solve")).toHaveLength(1);
   });
 });

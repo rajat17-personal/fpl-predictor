@@ -14,6 +14,7 @@ import { Spinner } from "../Spinner";
 import { ErrorState } from "../ErrorState";
 import { EmptyState } from "../EmptyState";
 import { Pitch } from "../pitch/Pitch";
+import type { PlayerMark } from "../pitch/PlayerCard";
 import { deriveFormation } from "../../lib/formation";
 import { deriveViceCaptain, joinSquad } from "../../lib/squadJoin";
 
@@ -21,6 +22,32 @@ export interface SquadTabProps {
   entry: number | null;
   onLoadEntry: (entry: number) => void;
   onClearEntry: () => void;
+}
+
+/* Lock/exclude marks (D-13, D-17): keyed by player_code, values are the two
+ * mutually-exclusive marks Pitch/PlayerCard already render (03-01's prop
+ * surface) — clearing an entry removes the key entirely rather than storing
+ * a null value, so the record only ever holds real marks and a plain key
+ * filter turns it into a request array. Lives in this component's state
+ * only: never the URL, never storage (D-13's "MARKS STAY EPHEMERAL" gate),
+ * and never cleared by a solve (D-17) — only Task 3's Reset action clears
+ * it. */
+export type MarkRecord = Record<number, "locked" | "excluded">;
+
+/* Derived request arrays (Pitfall 3): numeric player_code by construction, a
+ * card's displayed name never enters them. Exported so this file's own solve
+ * request builder (Task 2) and their direct unit tests share one
+ * implementation instead of re-deriving the filter per call site. */
+export function lockedCodes(marks: MarkRecord): number[] {
+  return Object.entries(marks)
+    .filter(([, mark]) => mark === "locked")
+    .map(([code]) => Number(code));
+}
+
+export function excludedCodes(marks: MarkRecord): number[] {
+  return Object.entries(marks)
+    .filter(([, mark]) => mark === "excluded")
+    .map(([code]) => Number(code));
 }
 
 /* DEF/MID/FWD starter-count bounds, mirrored from optimize/squad_ilp.py's
@@ -187,6 +214,23 @@ function LoadTeamControl({ onLoadEntry }: { onLoadEntry: (entry: number) => void
  * and renders the loaded squad with a Change-team affordance. Follows
  * Prices.tsx's isPending/isError/!data shell for every query. */
 export function SquadTab({ entry, onLoadEntry, onClearEntry }: SquadTabProps) {
+  /* Marks are supplied to <Pitch> only in loaded-team mode (below) — the
+   * default model-squad pitch stays view-only (03-01's resolved
+   * Claude's-Discretion item) by simply never receiving onMark, so
+   * PlayerCard renders no popover trigger at all for it. */
+  const [marks, setMarks] = useState<MarkRecord>({});
+
+  function handleMark(code: number, mark: PlayerMark) {
+    setMarks((prev) => {
+      if (mark == null) {
+        const next = { ...prev };
+        delete next[code];
+        return next;
+      }
+      return { ...prev, [code]: mark };
+    });
+  }
+
   const metaQuery = useQuery({
     queryKey: ["meta"],
     queryFn: () => fetchJson<MetaResponse>("/data/meta.json"),
@@ -302,7 +346,13 @@ export function SquadTab({ entry, onLoadEntry, onClearEntry }: SquadTabProps) {
         <p className="mt-1 font-mono text-label tabular-nums text-ink-2">{formation}</p>
 
         <div className="mt-4">
-          <Pitch players={players} captainCode={captainCode} viceCode={viceCode} />
+          <Pitch
+            players={players}
+            captainCode={captainCode}
+            viceCode={viceCode}
+            marks={marks}
+            onMark={handleMark}
+          />
         </div>
       </div>
     );
