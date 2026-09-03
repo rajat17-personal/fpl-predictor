@@ -1,12 +1,22 @@
 import { splitPitchRows } from "../../lib/formation";
 import type { PitchPlayer } from "../../lib/squadJoin";
-import { PlayerCard } from "./PlayerCard";
+import { PlayerCard, type PlayerMark } from "./PlayerCard";
 import { EmptyState } from "../EmptyState";
+
+export interface PitchGhost {
+  row: "GK" | "DEF" | "MID" | "FWD";
+  afterCode: number | null;
+  player: PitchPlayer;
+}
 
 export interface PitchProps {
   players: PitchPlayer[];
   captainCode: number | null;
   viceCode: number | null;
+  marks?: Record<number, "locked" | "excluded">;
+  diffs?: Record<number, "in" | "out">;
+  onMark?: (code: number, mark: PlayerMark) => void;
+  ghost?: PitchGhost | null;
 }
 
 /* One shared 5-column grid definition for every formation row (D-07's
@@ -14,29 +24,90 @@ export interface PitchProps {
  * with viewport width — cards shrink, the layout never reflows. A row with
  * fewer than 5 cards centres them within the row (GK's single card sits at
  * column 3, matching 03-UI-SPEC.md's Pitch Design section) rather than
- * changing grid-template-columns. */
+ * changing grid-template-columns. A row holding a ghost card may momentarily
+ * contain six cards — the grid stays 5-column and that row's cards shrink. */
 function centeredStartColumn(count: number): number {
   return Math.max(1, Math.floor((5 - count) / 2) + 1);
+}
+
+/* Ghost/insert card (D-16, D-18): same kit/name/price/xP layout as a real
+ * card, reduced opacity, dashed accent border — a suggested incoming
+ * player, not yet part of the squad. No onMark, no captain/vice, no marks. */
+function GhostCard({ player }: { player: PitchPlayer }) {
+  return (
+    <div
+      aria-label="Suggested incoming player"
+      className="rounded-lg border-2 border-dashed border-accent bg-accent-bg opacity-70"
+    >
+      <PlayerCard player={player} captain={false} vice={false} />
+    </div>
+  );
+}
+
+type RowSlot =
+  | { kind: "player"; player: PitchPlayer }
+  | { kind: "ghost"; player: PitchPlayer };
+
+function buildRowSlots(
+  players: PitchPlayer[],
+  ghostPlayer: PitchPlayer | undefined,
+  ghostAfterCode: number | null | undefined,
+): RowSlot[] {
+  const slots: RowSlot[] = players.map((player) => ({ kind: "player", player }));
+  if (!ghostPlayer) {
+    return slots;
+  }
+  if (ghostAfterCode == null) {
+    slots.push({ kind: "ghost", player: ghostPlayer });
+    return slots;
+  }
+  const idx = slots.findIndex((s) => s.player.player_code === ghostAfterCode);
+  const insertAt = idx === -1 ? slots.length : idx + 1;
+  slots.splice(insertAt, 0, { kind: "ghost", player: ghostPlayer });
+  return slots;
 }
 
 interface PitchRowProps {
   players: PitchPlayer[];
   captainCode: number | null;
   viceCode: number | null;
+  marks: Record<number, "locked" | "excluded">;
+  diffs: Record<number, "in" | "out">;
+  onMark?: (code: number, mark: PlayerMark) => void;
+  ghostPlayer?: PitchPlayer;
+  ghostAfterCode?: number | null;
   label: string;
 }
 
-function PitchRow({ players, captainCode, viceCode, label }: PitchRowProps) {
-  const start = centeredStartColumn(players.length);
+function PitchRow({
+  players,
+  captainCode,
+  viceCode,
+  marks,
+  diffs,
+  onMark,
+  ghostPlayer,
+  ghostAfterCode,
+  label,
+}: PitchRowProps) {
+  const slots = buildRowSlots(players, ghostPlayer, ghostAfterCode);
+  const start = centeredStartColumn(slots.length);
   return (
     <div className="grid grid-cols-5 gap-2" role="group" aria-label={label}>
-      {players.map((player, i) => (
-        <div key={player.player_code} style={{ gridColumn: start + i }}>
-          <PlayerCard
-            player={player}
-            captain={player.player_code === captainCode}
-            vice={player.player_code === viceCode}
-          />
+      {slots.map((slot, i) => (
+        <div key={`${slot.kind}-${slot.player.player_code}`} style={{ gridColumn: start + i }}>
+          {slot.kind === "ghost" ? (
+            <GhostCard player={slot.player} />
+          ) : (
+            <PlayerCard
+              player={slot.player}
+              captain={slot.player.player_code === captainCode}
+              vice={slot.player.player_code === viceCode}
+              mark={marks[slot.player.player_code] ?? null}
+              diff={diffs[slot.player.player_code] ?? "none"}
+              onMark={onMark}
+            />
+          )}
         </div>
       ))}
     </div>
@@ -47,13 +118,28 @@ function PitchRow({ players, captainCode, viceCode, label }: PitchRowProps) {
  * formation rows top to bottom (GK/DEF/MID/FWD), bench in a separate
  * non-green container below. All colour comes from the pitch-1/pitch-2/
  * pitch-line/surface tokens declared in index.css's @theme block — no hex
- * literal anywhere in this file. */
-export function Pitch({ players, captainCode, viceCode }: PitchProps) {
+ * literal anywhere in this file. `marks`/`diffs`/`onMark`/`ghost` are the
+ * full wave-3 prop surface (03-01-PLAN.md Task 2) declared once here so
+ * plans 03-03/03-04, which run in parallel, never re-edit this file. */
+export function Pitch({
+  players,
+  captainCode,
+  viceCode,
+  marks = {},
+  diffs = {},
+  onMark,
+  ghost = null,
+}: PitchProps) {
   if (players.length === 0) {
     return <EmptyState />;
   }
 
   const { gk, def, mid, fwd, bench } = splitPitchRows(players);
+
+  const rowGhost = (row: PitchGhost["row"]) =>
+    ghost && ghost.row === row
+      ? { ghostPlayer: ghost.player, ghostAfterCode: ghost.afterCode }
+      : { ghostPlayer: undefined, ghostAfterCode: undefined };
 
   return (
     <div>
@@ -106,16 +192,60 @@ export function Pitch({ players, captainCode, viceCode }: PitchProps) {
           />
         </svg>
         <div className="relative flex flex-col gap-4">
-          <PitchRow players={gk} captainCode={captainCode} viceCode={viceCode} label="Goalkeeper" />
-          <PitchRow players={def} captainCode={captainCode} viceCode={viceCode} label="Defenders" />
-          <PitchRow players={mid} captainCode={captainCode} viceCode={viceCode} label="Midfielders" />
-          <PitchRow players={fwd} captainCode={captainCode} viceCode={viceCode} label="Forwards" />
+          <PitchRow
+            players={gk}
+            captainCode={captainCode}
+            viceCode={viceCode}
+            marks={marks}
+            diffs={diffs}
+            onMark={onMark}
+            label="Goalkeeper"
+            {...rowGhost("GK")}
+          />
+          <PitchRow
+            players={def}
+            captainCode={captainCode}
+            viceCode={viceCode}
+            marks={marks}
+            diffs={diffs}
+            onMark={onMark}
+            label="Defenders"
+            {...rowGhost("DEF")}
+          />
+          <PitchRow
+            players={mid}
+            captainCode={captainCode}
+            viceCode={viceCode}
+            marks={marks}
+            diffs={diffs}
+            onMark={onMark}
+            label="Midfielders"
+            {...rowGhost("MID")}
+          />
+          <PitchRow
+            players={fwd}
+            captainCode={captainCode}
+            viceCode={viceCode}
+            marks={marks}
+            diffs={diffs}
+            onMark={onMark}
+            label="Forwards"
+            {...rowGhost("FWD")}
+          />
         </div>
       </div>
 
       <div className="mt-4 rounded-lg bg-surface p-4" data-testid="bench">
         <h3 className="mb-2 font-label text-label font-bold text-ink-2">Bench</h3>
-        <PitchRow players={bench} captainCode={captainCode} viceCode={viceCode} label="Bench" />
+        <PitchRow
+          players={bench}
+          captainCode={captainCode}
+          viceCode={viceCode}
+          marks={marks}
+          diffs={diffs}
+          onMark={onMark}
+          label="Bench"
+        />
       </div>
     </div>
   );
