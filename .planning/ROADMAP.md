@@ -107,7 +107,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Rate-my-team shows a visual diff of the user's squad against the optimal one with suggested swaps
   5. Chip timing shows a "why this GW" explanation with DGW/BGW callouts
 
-**Plans**: 4/4 plans executed (3 waves)
+**Plans**: 5 plans (4 waves) — 4/5 executed; 03-05 is UAT gap closure
 
 **Wave 1**
 
@@ -121,6 +121,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] 03-03-PLAN.md — Rate tab completion: single-pitch visual diff with the suggested swap, the best-XI section, and the multi-week plan-transfers flow
 - [x] 03-04-PLAN.md — Squad tab solver: lock/exclude marks, the three bounded solver knobs, in-place pitch update with IN badges, the results bar, and reset
+
+**Wave 4** *(UAT gap closure — blocked on Wave 3)*
+
+- [ ] 03-05-PLAN.md — Close G-03-1: center every formation row continuously so 2-card, 4-card and bench rows stop drifting half a column left; add the missing symmetry regression test and correct the UI-SPEC's defective centering mechanism
 
 **UI hint**: yes
 
