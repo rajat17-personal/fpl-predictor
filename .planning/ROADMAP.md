@@ -107,10 +107,24 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Rate-my-team shows a visual diff of the user's squad against the optimal one with suggested swaps
   5. Chip timing shows a "why this GW" explanation with DGW/BGW callouts
 
-**Plans**: TBD
+**Plans**: 4 plans (3 waves)
+
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Pitch tracer: Phase 3 type surface, pitch tokens, kit system, player card, and the model squad rendered on `/team`; plus the PITCH-01 decision doc, footer disclaimer and "My team" rename
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 03-02-PLAN.md — Three-tab shell with `?entry=`/`?tab=` URL state, the load-your-own-team flow, the chip-timing timeline, the four verbatim rate tiles, and the shared `pairMoves` port
+
+**Wave 3** *(blocked on Wave 2; the two run in parallel — zero file overlap)*
+
+- [ ] 03-03-PLAN.md — Rate tab completion: single-pitch visual diff with the suggested swap, the best-XI section, and the multi-week plan-transfers flow
+- [ ] 03-04-PLAN.md — Squad tab solver: lock/exclude marks, the three bounded solver knobs, in-place pitch update with IN badges, the results bar, and reset
+
 **UI hint**: yes
 
-**Research flags**: FPL shirt/badge CDN URL patterns are community knowledge, not documented — open devtools on `fantasy.premierleague.com`'s My Team page and capture the exact `<img src>` values. **Do not guess URL patterns.** Trademark posture must be settled here, not at payment-gateway review.
+**Research flags**: ~~FPL shirt/badge CDN URL patterns~~ — **closed as moot at planning time.** `03-CONTEXT.md` D-01 chose self-hosted neutral generated kits over FPL CDN imagery, so no CDN URLs are needed and no devtools capture is required. The trademark posture is settled here as required, via the committed decision doc (`docs/decisions/pitch-kit-sourcing.md`) plus the sitewide footer disclaimer — not deferred to payment-gateway review.
 
 ### Phase 4: E2E Regression Suite
 
