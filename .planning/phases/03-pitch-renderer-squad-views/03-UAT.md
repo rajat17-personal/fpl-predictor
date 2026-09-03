@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 03-pitch-renderer-squad-views
 source: [03-VERIFICATION.md]
 started: 2026-09-03T07:00:00Z
@@ -50,5 +50,17 @@ blocked: 0
   reason: "User reported: when the team loads two strikers they are not central. and instead a drift a bit left. same when I load my team and 4 def and 4 mid are displayed."
   severity: cosmetic
   test: 1
-  artifacts: []  # Filled by diagnosis
-  missing: []    # Filled by diagnosis
+  root_cause: "centeredStartColumn() in Pitch.tsx (L31-33) centers rows by integer CSS grid start column in a fixed 5-column grid; even card counts (2, 4) need a half-integer start, Math.floor drops the 0.5, shifting the row half a column-pitch left (~61px desktop, ~32px at 375px). Odd rows (1/3/5) center exactly, matching the report. Bench (n=4) affected too. UI-SPEC L103-105 prescribed a no-op mechanism (justify-content:center on 1fr tracks), so the implementer improvised the defective integer scheme."
+  artifacts:
+    - path: "frontend/src/components/pitch/Pitch.tsx"
+      issue: "L31-33 centeredStartColumn integer-only centering; L96-97 columns/start; L100-101 row container; L106 per-cell gridColumn — one shared PitchRow serves GK/DEF/MID/FWD and bench, so one fix corrects all"
+    - path: "frontend/src/components/pitch/Pitch.test.tsx"
+      issue: "no positional/centering assertions — coverage hole that let a pure integer function ship wrong"
+    - path: ".planning/phases/03-pitch-renderer-squad-views/03-UI-SPEC.md"
+      issue: "L103-105 prescribes justify-content:center on minmax(0,1fr) tracks, a no-op — spec itself is wrong"
+  missing:
+    - "Swap PitchRow to display:flex justify-content:center with fixed basis calc((100% - (cols-1)*var(--pitch-gap))/cols), cols = max(5, slots.length) — continuous centering, D-07 no-reflow invariant holds, ghost row still divides by 6"
+    - "Lift responsive gap to a custom property (--pitch-gap 4px/8px) so it survives inside the calc"
+    - "Correct 03-UI-SPEC.md L103-105 so the broken mechanism isn't re-derived"
+    - "Add symmetry regression test over n in {1,2,3,4,5,6} including odd controls (n=3, n=5)"
+  debug_session: .planning/debug/pitch-row-centering-drift.md
