@@ -21,7 +21,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 - [x] **PITCH-01**: Shirt/kit asset sourcing decision documented before component build (verify FPL CDN URLs via devtools, or neutral generated kits) with non-affiliation disclaimer
 - [x] **PITCH-02**: Pitch renderer — formation-driven rows (GK/DEF/MID/FWD + bench), player cards with shirt, name, price, xP, and C/VC badges
-- [ ] **PITCH-03**: Team page — load a squad (default entry 6980093), render on pitch, lock/exclude players, request solve, see transfers/XI update
+- [x] **PITCH-03**: Team page — load a squad (default entry 6980093), render on pitch, lock/exclude players, request solve, see transfers/XI update
 - [x] **PITCH-04**: Rate-my-team view — visual diff of user squad vs optimal with suggested swaps
 
 ### UI Extras
@@ -126,7 +126,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UIX-02 | Phase 2 | Complete |
 | PITCH-01 | Phase 3 | Complete |
 | PITCH-02 | Phase 3 | Complete |
-| PITCH-03 | Phase 3 | Pending |
+| PITCH-03 | Phase 3 | Complete |
 | PITCH-04 | Phase 3 | Complete |
 | UI-07 | Phase 3 | Complete |
 | UIX-01 | Phase 3 | Complete |

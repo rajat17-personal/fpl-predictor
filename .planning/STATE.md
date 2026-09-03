@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 current_phase: 03
 current_phase_name: Pitch Renderer & Squad Views
-status: executing
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-09-03T05:08:10.343Z"
+status: verifying
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-09-03T06:08:48.117Z"
 last_activity: 2026-09-03
 last_activity_desc: Phase 03 execution started
-state_head: 8c73cf20e742dc1cedb8b5910756d411ba4be2f7
+state_head: f8ce932e6eec60d381bee294166145f16bbb8ded
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 18
-  completed_plans: 17
+  completed_plans: 18
   percent: 29
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-02)
 
 Phase: 03 (Pitch Renderer & Squad Views) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-03 — Phase 03 execution started
 
 Progress: [███░░░░░░░] 29% (2/7 phases, 14 plans complete)
@@ -76,6 +76,7 @@ Progress: [███░░░░░░░] 29% (2/7 phases, 14 plans complete)
 | Phase 03 P01 | 55min | 3 tasks | 24 files |
 | Phase 03 P02 | 62min | 3 tasks | 17 files |
 | Phase 03 P03 | 48min | 3 tasks | 9 files |
+| Phase 03 P04 | 42min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -117,6 +118,9 @@ Recent decisions affecting current work:
 - [Phase 03]: [Phase 3 Plan 3]: Single-pitch arrangement for the best-XI/diff layout — one <Pitch> under the verbatim 'Your best XI for GW{n}' heading with diffs/ghost layered onto it, satisfying D-18's single-pitch rule and D-19's copy-preservation rule at once.
 - [Phase 03]: [Phase 3 Plan 3]: Corrected rate_response.json's best_move fixture (Havertz(FWD, starting)->Haaland(FWD, not owned)) — the inherited Egan/Gvardiol pairing put the out card on a bench player and the buy target on an already-owned starter, which cannot satisfy the ghost-same-row acceptance criterion.
 - [Phase 03]: [Phase 3 Plan 3]: PlanTransfers.tsx uses local useState for the plan request lifecycle rather than TanStack Query's useMutation — no existing precedent for useMutation in this codebase.
+- [Phase 03]: [Phase 03]: [Phase 3 Plan 4]: freeTransfersEstimate resolved as null with a fallback-to-1 default -- the only endpoint returning that estimate is /api/rate/{entry}, and D-20 forbids the Squad tab firing a rate-cost fetch just to prefill one input.
+- [Phase 03]: [Phase 03]: [Phase 3 Plan 4]: Extracted useSolveController() as an exported hook, tested via renderHook, because jsdom/React suppress a simulated second click on a genuinely-disabled DOM button regardless of DOM-level attribute manipulation -- a real double-click reproduction of the ordering-safety guard was not reliable in this test environment.
+- [Phase 03]: [Phase 03]: [Phase 3 Plan 4]: SolveResultsBar's Hold condition checks result.buys.length, not pairMoves()'s own output length -- pairMoves buckets by the sells side and would still produce non-empty pairs (with a '?' buyName) if pairs.length itself were the check. Matches PlanTransfers.tsx's identical week.buys.length > 0 rule.
 
 ### Pending Todos
 
@@ -145,6 +149,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-03T05:08:10.287Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-09-03T06:08:48.060Z
+Stopped at: Completed 03-04-PLAN.md
 Resume file: None
