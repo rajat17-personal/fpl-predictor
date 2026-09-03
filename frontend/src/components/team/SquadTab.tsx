@@ -154,9 +154,14 @@ export function useSolveController(entry: number | null, marks: MarkRecord) {
          * SolveSquadResult here means the compiler rejects this assignment
          * (and this whole file fails to build) the moment SolveResult ever
          * grows a third `kind`, per the plan's exhaustive-handling
-         * requirement. */
+         * requirement. If the server ever actually returns "squad" here
+         * (backend regression, or the entry:null assumption above becoming
+         * false), surface it as an error rather than leaving `solve.status`
+         * stuck on "pending" forever with no way to recover short of a full
+         * remount. */
         const stillSquad: SolveSquadResult = result;
         void stillSquad;
+        setSolve({ status: "error", error: "Unexpected solve response" });
       }
     } catch (e) {
       if (seq !== solveSeqRef.current) {
