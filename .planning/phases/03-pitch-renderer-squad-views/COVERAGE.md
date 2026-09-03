@@ -16,14 +16,14 @@ FastAPI service, consumed for the first time from the React client in this phase
 | `POST /api/solve` (`entry: <id>` → `kind: "transfers"`) | INTEGRATE | PITCH-03 solve flow; plan 03-04 Task 2 |
 | `POST /api/solve` `locks[]` / `excludes[]` | INTEGRATE | D-13 lock/exclude; always sent as `player_code` ints (Pitfall 3) |
 | `POST /api/solve` `free_transfers`, `max_transfers` | INTEGRATE | D-14 essentials-only knob set |
-| `POST /api/solve` (`entry: null` → `kind: "squad"`, wildcard/from-scratch) | OPT-OUT | Claude's Discretion resolved to view-only default Squad tab (`03-RESEARCH.md` Open Question 1) — the loaded-team flow already covers the whole solve surface; the `SolveSquadResult` arm is still typed so the discriminated union stays exhaustive and a later phase can enable it without a type change |
+| `POST /api/solve` (`entry: null` → `kind: "squad"`, wildcard/from-scratch) | OPT-OUT | View-only default Squad tab (`03-RESEARCH.md` Open Q1); loaded-team flow covers the solve surface. `SolveSquadResult` stays typed so a later phase can enable it without a type change |
 | `POST /api/solve` `mode` (`normal`/`tc`/`bb`) | OPT-OUT | D-14 explicitly limits exposed knobs to essentials; server default `"normal"` applies |
 | `POST /api/solve` `budget` | OPT-OUT | D-14 — server default applies; a client-set budget only has meaning for the opted-out `entry: null` arm |
 | `POST /api/solve` `horizon` | INTEGRATE | D-14 plan horizon knob; plan 03-04 Task 2 |
 | `GET /api/rate/{entry}` — score, tiles, `best_move`, `xi[]`, `free_transfers` | INTEGRATE | PITCH-04 + D-19/D-20; plans 03-02 Task 3 and 03-03 |
 | `POST /api/plan` — multi-week joint plan | INTEGRATE | D-19 plan-transfers flow carried over verbatim; plan 03-03 Task 3 |
 | `GET /api/meta` | OPT-OUT | Duplicate of `web/data/meta.json`, which `PageShell` already fetches once and shares app-wide (UI-06). Adding a second source of gameweek truth would let the banner and the pitch label disagree |
-| `GET /api/health` | OPT-OUT | Operations/liveness probe, not user-facing data. Vanilla's `detectApiBase()` used it for API-availability probing; the React app uses relative paths with no base detection (`lib/api.ts` module contract), so there is nothing to probe |
+| `GET /api/health` | OPT-OUT | Operations/liveness probe, not user-facing data. Vanilla's `detectApiBase()` probed it; the React app uses relative paths with no base detection (`lib/api.ts`), so there is nothing to probe |
 
 ## Static export contract (`web/data/*.json`, consumed unchanged)
 
