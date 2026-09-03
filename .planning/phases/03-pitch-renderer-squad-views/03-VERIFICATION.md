@@ -1,7 +1,7 @@
 ---
 phase: 03-pitch-renderer-squad-views
 verified: 2026-09-03T11:30:00Z
-status: human_needed
+status: passed
 score: 12/12 must-haves verified (automated)
 behavior_unverified: 0
 overrides_applied: 0
@@ -13,6 +13,7 @@ re_verification:
   gaps_remaining: []
   regressions: []
 human_verification:
+
   - test: "Open /team at desktop width and at 375px, in both light and dark mode. On the default model squad (3-5-2), confirm the 2-card Forwards row and the 4-card bench sit centered on the pitch midline — aligned with the SVG center circle and the single GK card — and that the 3-card Defenders and 5-card Midfielders rows have not moved. Load a real entry with a 4-4-2 formation and confirm the 4-card Defenders and Midfielders rows are centered too. Confirm names still ellipsize, price/xP stay visible, and no row overflows horizontally."
     expected: "Every formation row (1, 2, 3, 4, or 5 cards) and the 4-card bench read as horizontally centered on the pitch, matching the FPL-style pitch's visual midline, in both light and dark mode and at both viewport widths — this is UAT test 1 / gap G-03-1, now re-checked against the 03-05 fix."
     why_human: "jsdom performs no real layout — 03-05's Pitch.test.tsx suite (12/12 passing) asserts the declared layout model (inline flex/justify-content/flex-basis/flex-grow/min-width and a computed symmetry oracle), not measured pixels in an actual browser. The plan's own Task 1 <human-check> requires this browser confirmation, and 03-05-SUMMARY.md explicitly deferred it to this end-of-phase UAT pass per the project's human_verify_mode=end-of-phase setting — it has not yet been re-checked by a human since the fix shipped."

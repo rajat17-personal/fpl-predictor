@@ -14,9 +14,8 @@ updated: 2026-09-03T08:15:00Z
 
 ### 1. Pitch visual rendering and mobile responsiveness (UI-07, PITCH-02)
 expected: Open /team (no ?entry=) at desktop and 375px viewport. Green gradient surface with white decorative markings, formation rows top-to-bottom (GK/DEF/MID/FWD), bench in its own non-green strip. Cards shrink without the 5-column grid reflowing; name ellipsis works; price/xP never hidden; no horizontal overflow; dark mode legible.
-result: issue
-reported: "when the team loads two strikers they are not central. and instead a drift a bit left. same when I load my team and 4 def and 4 mid are displayed."
-severity: cosmetic
+result: pass
+note: "Originally reported issue (G-03-1, cosmetic): 'when the team loads two strikers they are not central. and instead a drift a bit left. same when I load my team and 4 def and 4 mid are displayed.' Fixed by gap-closure plan 03-05 (commits 25a7244, 4e83899); visual confirmation passed as test 4 covering the same criteria (row centering, overflow, ellipsis) at both viewports and themes."
 
 ### 2. Rate-tab diff styling and post-solve badges (PITCH-03, PITCH-04)
 expected: With an entry loaded, the Rate tab's out card is visually dimmed/marked distinct; the ghost card (dashed border, reduced opacity) sits in the correct formation row; Squad tab post-solve IN badges visible and placed per UI-SPEC; solve results bar and plan-transfers per-week blocks wrap correctly at phone width.
@@ -34,8 +33,8 @@ result: pass
 ## Summary
 
 total: 4
-passed: 3
-issues: 1
+passed: 4
+issues: 0
 pending: 0
 skipped: 0
 blocked: 0
