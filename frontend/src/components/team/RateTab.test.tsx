@@ -170,4 +170,54 @@ describe("RateTab lazy-fetch integration (03-02 Task 3: D-20 on-demand)", () => 
     const rateCalls = calls.filter((url) => url.includes("/api/rate/"));
     expect(rateCalls).toHaveLength(1);
   });
+
+  it("runs the rating immediately on arrival at /team?entry=6980093&tab=rate — no interaction", async () => {
+    const calls: string[] = [];
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input.toString();
+      calls.push(url);
+      const path = Object.keys(FIXTURES).find((key) => url.endsWith(key));
+      if (!path) {
+        return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(FIXTURES[path]) });
+    }) as unknown as typeof fetch;
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <MemoryRouter initialEntries={["/team?entry=6980093&tab=rate"]}>
+        <QueryClientProvider client={queryClient}>
+          <Team />
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("Team score")).toBeInTheDocument();
+    expect(calls.some((url) => url.includes("/api/rate/6980093"))).toBe(true);
+  });
+
+  it("Change team clears ?entry= and returns the Squad tab to the model squad view", async () => {
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input.toString();
+      const path = Object.keys(FIXTURES).find((key) => url.endsWith(key));
+      if (!path) {
+        return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(FIXTURES[path]) });
+    }) as unknown as typeof fetch;
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <MemoryRouter initialEntries={["/team?entry=6980093"]}>
+        <QueryClientProvider client={queryClient}>
+          <Team />
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("The Testers · GW3");
+    fireEvent.click(screen.getByRole("button", { name: "Change team" }));
+
+    expect(await screen.findByText("Model squad · GW3")).toBeInTheDocument();
+  });
 });
