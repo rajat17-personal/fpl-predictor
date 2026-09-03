@@ -1,0 +1,5861 @@
+[
+ {
+  "player_code": 17761,
+  "name": "Tarkowski",
+  "team": "Everton",
+  "position": "DEF",
+  "xp": 2.4391871263,
+  "xp_capt": 3.47441451,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 21205,
+  "name": "Heaton",
+  "team": "Man Utd",
+  "position": "GK",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 40383,
+  "name": "Forster",
+  "team": "Bournemouth",
+  "position": "GK",
+  "xp": 0.1275656076,
+  "xp_capt": 0.1964687532,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 49262,
+  "name": "Steele",
+  "team": "Brighton",
+  "position": "GK",
+  "xp": 0.1292399871,
+  "xp_capt": 0.1981111598,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 50093,
+  "name": "Button",
+  "team": "Ipswich Town",
+  "position": "GK",
+  "xp": 0.0119903052,
+  "xp_capt": 0.0191978401,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 50175,
+  "name": "Welbeck",
+  "team": "Chelsea",
+  "position": "FWD",
+  "xp": 0.3054853111,
+  "xp_capt": 0.4854275711,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 54469,
+  "name": "Smith",
+  "team": "Bournemouth",
+  "position": "DEF",
+  "xp": 1.192063616,
+  "xp_capt": 1.6800215092,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 56979,
+  "name": "Henderson",
+  "team": "Chelsea",
+  "position": "MID",
+  "xp": 0.0591954799,
+  "xp_capt": 0.0971945517,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 59735,
+  "name": "Darlow",
+  "team": "Man Utd",
+  "position": "GK",
+  "xp": 0.0115486703,
+  "xp_capt": 0.0191310361,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 60307,
+  "name": "Gro\u00df",
+  "team": "Brighton",
+  "position": "MID",
+  "xp": 2.0608950808,
+  "xp_capt": 2.9814321548,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 60689,
+  "name": "Wood",
+  "team": "Nott'm Forest",
+  "position": "FWD",
+  "xp": 0.8991992697,
+  "xp_capt": 1.9470092744,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 67089,
+  "name": "Dubravka",
+  "team": "Spurs",
+  "position": "GK",
+  "xp": 0.115592307,
+  "xp_capt": 0.1854049061,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 72147,
+  "name": "M.Bizot",
+  "team": "Aston Villa",
+  "position": "GK",
+  "xp": 0.2206028292,
+  "xp_capt": 0.3639149739,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 75115,
+  "name": "Wilson",
+  "team": "Brentford",
+  "position": "FWD",
+  "xp": 0.9629676945,
+  "xp_capt": 1.5083410527,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 76357,
+  "name": "Cairney",
+  "team": "Fulham",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 78916,
+  "name": "Burn",
+  "team": "Newcastle",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 79602,
+  "name": "Bentley",
+  "team": "Coventry City",
+  "position": "GK",
+  "xp": 0.0679049802,
+  "xp_capt": 0.1119997119,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 80178,
+  "name": "Bidwell",
+  "team": "Coventry City",
+  "position": "DEF",
+  "xp": 0.0346844052,
+  "xp_capt": 0.0638082097,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 80201,
+  "name": "Leno",
+  "team": "Fulham",
+  "position": "GK",
+  "xp": 2.1620546974,
+  "xp_capt": 2.9696010804,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 81441,
+  "name": "Gillespie",
+  "team": "Newcastle",
+  "position": "GK",
+  "xp": 0.0116896945,
+  "xp_capt": 0.020099256,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 83299,
+  "name": "Dunk",
+  "team": "Brighton",
+  "position": "DEF",
+  "xp": 1.7134270694,
+  "xp_capt": 2.4394547011,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 84450,
+  "name": "Xhaka",
+  "team": "Sunderland",
+  "position": "MID",
+  "xp": 2.1560477545,
+  "xp_capt": 2.8429786656,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 85633,
+  "name": "Sels",
+  "team": "Nott'm Forest",
+  "position": "GK",
+  "xp": 2.1650351992,
+  "xp_capt": 3.6302772026,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 86873,
+  "name": "Lecomte",
+  "team": "Fulham",
+  "position": "GK",
+  "xp": 0.0378417234,
+  "xp_capt": 0.0613995116,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 88894,
+  "name": "Barkley",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 1.8356283681,
+  "xp_capt": 2.1837920355,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 91651,
+  "name": "Kova\u010di\u0107",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 0.7017337088,
+  "xp_capt": 1.2751351358,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 93605,
+  "name": "Meunier",
+  "team": "Sunderland",
+  "position": "DEF",
+  "xp": 2.0062823229,
+  "xp_capt": 3.179039989,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 95658,
+  "name": "Maguire",
+  "team": "Man Utd",
+  "position": "DEF",
+  "xp": 1.8774135529,
+  "xp_capt": 3.0885213715,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 97032,
+  "name": "Virgil",
+  "team": "Liverpool",
+  "position": "DEF",
+  "xp": 1.7865897066,
+  "xp_capt": 3.6247146829,
+  "price_m": 6.5
+ },
+ {
+  "player_code": 97846,
+  "name": "Cairns",
+  "team": "Leeds",
+  "position": "GK",
+  "xp": 0.0633178341,
+  "xp_capt": 0.0905218597,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 98747,
+  "name": "Pope",
+  "team": "Newcastle",
+  "position": "GK",
+  "xp": 0.1414450992,
+  "xp_capt": 0.2384884864,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 98980,
+  "name": "Martinez",
+  "team": "Chelsea",
+  "position": "GK",
+  "xp": 1.9809619771,
+  "xp_capt": 3.4296066853,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 101188,
+  "name": "Digne",
+  "team": "Aston Villa",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 101282,
+  "name": "Crooks",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.9672935178,
+  "xp_capt": 1.0098606874,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 105666,
+  "name": "Butland",
+  "team": "Hull City",
+  "position": "GK",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 105717,
+  "name": "Masuaku",
+  "team": "Sunderland",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 106611,
+  "name": "Keane",
+  "team": "Everton",
+  "position": "DEF",
+  "xp": 0.4437112556,
+  "xp_capt": 0.7646890045,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 106760,
+  "name": "Shaw",
+  "team": "Man Utd",
+  "position": "DEF",
+  "xp": 1.536822567,
+  "xp_capt": 2.4956923313,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 106921,
+  "name": "Rulli",
+  "team": "Man City",
+  "position": "GK",
+  "xp": 0.0116407344,
+  "xp_capt": 0.018400485,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 108413,
+  "name": "Hughes",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 0.396056518,
+  "xp_capt": 0.6538332023,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 108416,
+  "name": "Egan",
+  "team": "Hull City",
+  "position": "DEF",
+  "xp": 1.742590495,
+  "xp_capt": 2.1033245859,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 108813,
+  "name": "Walton",
+  "team": "Ipswich Town",
+  "position": "GK",
+  "xp": 0.069487708,
+  "xp_capt": 0.1175564987,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 109646,
+  "name": "Tosin",
+  "team": "Spurs",
+  "position": "DEF",
+  "xp": 0.2482869448,
+  "xp_capt": 0.3690050221,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 109745,
+  "name": "Arrizabalaga",
+  "team": "Arsenal",
+  "position": "GK",
+  "xp": 0.042721241,
+  "xp_capt": 0.0720386735,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 110690,
+  "name": "Wilson",
+  "team": "Coventry City",
+  "position": "GK",
+  "xp": 0.069487708,
+  "xp_capt": 0.1175564987,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 111234,
+  "name": "Pickford",
+  "team": "Everton",
+  "position": "GK",
+  "xp": 2.5634808609,
+  "xp_capt": 3.7562340107,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 111317,
+  "name": "Brooks",
+  "team": "Bournemouth",
+  "position": "MID",
+  "xp": 0.9494163593,
+  "xp_capt": 1.5058918624,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 112520,
+  "name": "Palmer",
+  "team": "Ipswich Town",
+  "position": "GK",
+  "xp": 0.071775452,
+  "xp_capt": 0.1091666671,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 114243,
+  "name": "J.Murphy",
+  "team": "Newcastle",
+  "position": "MID",
+  "xp": 0.6641865998,
+  "xp_capt": 1.2198632989,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 114283,
+  "name": "Grealish",
+  "team": "Everton",
+  "position": "MID",
+  "xp": 0.9536006608,
+  "xp_capt": 2.012279857,
+  "price_m": 6.5
+ },
+ {
+  "player_code": 115556,
+  "name": "Davies",
+  "team": "Spurs",
+  "position": "DEF",
+  "xp": 0.0856030206,
+  "xp_capt": 0.1275617439,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 116535,
+  "name": "A.Becker",
+  "team": "Liverpool",
+  "position": "GK",
+  "xp": 1.9291832082,
+  "xp_capt": 3.033183897,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 119090,
+  "name": "Goretzka",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 0.7348524716,
+  "xp_capt": 1.4123188289,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 119471,
+  "name": "Sch\u00e4r",
+  "team": "Newcastle",
+  "position": "DEF",
+  "xp": 0.4525190473,
+  "xp_capt": 0.9195867033,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 121709,
+  "name": "Benitez",
+  "team": "Crystal Palace",
+  "position": "GK",
+  "xp": 0.0115394174,
+  "xp_capt": 0.0190582475,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 122074,
+  "name": "Bettinelli",
+  "team": "Man City",
+  "position": "GK",
+  "xp": 0.0112600349,
+  "xp_capt": 0.0169027376,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 122798,
+  "name": "Robertson",
+  "team": "Spurs",
+  "position": "DEF",
+  "xp": 1.0499346638,
+  "xp_capt": 1.5582182099,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 122806,
+  "name": "McGinn",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 1.4509412985,
+  "xp_capt": 2.1956687085,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 128295,
+  "name": "N\u00f8rgaard",
+  "team": "Everton",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 135720,
+  "name": "Danso",
+  "team": "Sunderland",
+  "position": "DEF",
+  "xp": 0.2355287386,
+  "xp_capt": 0.5312844055,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 138001,
+  "name": "King",
+  "team": "Everton",
+  "position": "GK",
+  "xp": 0.0124672945,
+  "xp_capt": 0.0210727283,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 141746,
+  "name": "B.Fernandes",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 3.8246840371,
+  "xp_capt": 6.1267070151,
+  "price_m": 12.0
+ },
+ {
+  "player_code": 146426,
+  "name": "Ajayi",
+  "team": "Hull City",
+  "position": "DEF",
+  "xp": 1.7267524893,
+  "xp_capt": 2.0221332114,
+  "price_m": 4.1
+ },
+ {
+  "player_code": 147675,
+  "name": "Akpom",
+  "team": "Ipswich Town",
+  "position": "FWD",
+  "xp": 1.5904907658,
+  "xp_capt": 2.7969229218,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 149484,
+  "name": "Mings",
+  "team": "Aston Villa",
+  "position": "DEF",
+  "xp": 0.4564931079,
+  "xp_capt": 0.9511287276,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 149929,
+  "name": "Burns",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 152551,
+  "name": "Lerma",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 0.2277559615,
+  "xp_capt": 0.3739582582,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 153133,
+  "name": "Iwobi",
+  "team": "Fulham",
+  "position": "MID",
+  "xp": 2.0189891856,
+  "xp_capt": 2.8481974142,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 153366,
+  "name": "Reed",
+  "team": "Fulham",
+  "position": "MID",
+  "xp": 0.1548876342,
+  "xp_capt": 0.2468929295,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 153682,
+  "name": "Wilson",
+  "team": "Leeds",
+  "position": "MID",
+  "xp": 1.7065113843,
+  "xp_capt": 2.3380424905,
+  "price_m": 6.4
+ },
+ {
+  "player_code": 154043,
+  "name": "Maitland-Niles",
+  "team": "Everton",
+  "position": "DEF",
+  "xp": 0.7375204047,
+  "xp_capt": 1.3685380898,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 154561,
+  "name": "Raya",
+  "team": "Arsenal",
+  "position": "GK",
+  "xp": 2.3600609758,
+  "xp_capt": 3.6961337481,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 154566,
+  "name": "Solanke",
+  "team": "Spurs",
+  "position": "FWD",
+  "xp": 1.3045656403,
+  "xp_capt": 2.3523307723,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 155405,
+  "name": "Phillips",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 155408,
+  "name": "Cook",
+  "team": "Bournemouth",
+  "position": "MID",
+  "xp": 1.7979053963,
+  "xp_capt": 2.0564759497,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 155465,
+  "name": "Zetterer",
+  "team": "Leeds",
+  "position": "GK",
+  "xp": 0.115641229,
+  "xp_capt": 0.1612071349,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 155503,
+  "name": "Woodman",
+  "team": "Liverpool",
+  "position": "GK",
+  "xp": 0.0650299459,
+  "xp_capt": 0.1007005856,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 158499,
+  "name": "Christie",
+  "team": "Bournemouth",
+  "position": "MID",
+  "xp": 0.7365602531,
+  "xp_capt": 1.1897640989,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 158983,
+  "name": "Endo",
+  "team": "Liverpool",
+  "position": "MID",
+  "xp": 0.2277559615,
+  "xp_capt": 0.3734809985,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 159506,
+  "name": "Aina",
+  "team": "Nott'm Forest",
+  "position": "DEF",
+  "xp": 1.6751519962,
+  "xp_capt": 2.139092032,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 160817,
+  "name": "McNair",
+  "team": "Hull City",
+  "position": "DEF",
+  "xp": 0.1597952607,
+  "xp_capt": 0.2874866195,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 166477,
+  "name": "Castagne",
+  "team": "Fulham",
+  "position": "DEF",
+  "xp": 1.9340498923,
+  "xp_capt": 3.6329501961,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 166989,
+  "name": "Tielemans",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 1.792634217,
+  "xp_capt": 2.5085583341,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 167074,
+  "name": "Tete",
+  "team": "Fulham",
+  "position": "DEF",
+  "xp": 0.3216038304,
+  "xp_capt": 0.5558057822,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 167512,
+  "name": "O'Nien",
+  "team": "Sunderland",
+  "position": "DEF",
+  "xp": 0.8072124137,
+  "xp_capt": 1.1050406487,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 167825,
+  "name": "Phillips",
+  "team": "Hull City",
+  "position": "GK",
+  "xp": 0.0531487777,
+  "xp_capt": 0.0789366553,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 168144,
+  "name": "Grimes",
+  "team": "Coventry City",
+  "position": "MID",
+  "xp": 1.8767989147,
+  "xp_capt": 2.3499922363,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 168636,
+  "name": "Enes \u00dcnal",
+  "team": "Bournemouth",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 169359,
+  "name": "Targett",
+  "team": "Hull City",
+  "position": "DEF",
+  "xp": 0.4724093975,
+  "xp_capt": 0.8205336671,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 169432,
+  "name": "McBurnie",
+  "team": "Hull City",
+  "position": "FWD",
+  "xp": 2.107312226,
+  "xp_capt": 4.4100004901,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 169528,
+  "name": "Robinson",
+  "team": "Fulham",
+  "position": "DEF",
+  "xp": 1.6733179338,
+  "xp_capt": 2.4010864067,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 169593,
+  "name": "Matthews",
+  "team": "Crystal Palace",
+  "position": "GK",
+  "xp": 0.0367525724,
+  "xp_capt": 0.0612301548,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 171270,
+  "name": "Dowell",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.1548876342,
+  "xp_capt": 0.2380527334,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 171287,
+  "name": "Gomez",
+  "team": "Liverpool",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 171314,
+  "name": "R\u00faben",
+  "team": "Man City",
+  "position": "DEF",
+  "xp": 1.4203922065,
+  "xp_capt": 2.4736966262,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 172453,
+  "name": "Szmodics",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 172649,
+  "name": "Henderson",
+  "team": "Crystal Palace",
+  "position": "GK",
+  "xp": 2.1448394065,
+  "xp_capt": 3.6560996687,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 172780,
+  "name": "Maddison",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 0.3870032903,
+  "xp_capt": 0.7842298512,
+  "price_m": 6.4
+ },
+ {
+  "player_code": 172850,
+  "name": "Chilwell",
+  "team": "Crystal Palace",
+  "position": "DEF",
+  "xp": 0.6215449461,
+  "xp_capt": 1.0862801923,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 173774,
+  "name": "Elvedi",
+  "team": "Leeds",
+  "position": "DEF",
+  "xp": 0.693809802,
+  "xp_capt": 0.8960985959,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 173878,
+  "name": "Dasilva",
+  "team": "Coventry City",
+  "position": "DEF",
+  "xp": 1.7752855073,
+  "xp_capt": 2.5769985279,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 173879,
+  "name": "Abraham",
+  "team": "Aston Villa",
+  "position": "FWD",
+  "xp": 0.3894544759,
+  "xp_capt": 0.5825750053,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 174594,
+  "name": "Nmecha",
+  "team": "Leeds",
+  "position": "FWD",
+  "xp": 0.9631630173,
+  "xp_capt": 1.8316905059,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 174874,
+  "name": "Andersen",
+  "team": "Fulham",
+  "position": "DEF",
+  "xp": 1.3486420278,
+  "xp_capt": 2.0084024243,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 176297,
+  "name": "Rashford",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 1.8322694599,
+  "xp_capt": 2.7710267244,
+  "price_m": 7.0
+ },
+ {
+  "player_code": 176412,
+  "name": "Wright",
+  "team": "Coventry City",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 176420,
+  "name": "Furlong",
+  "team": "Ipswich Town",
+  "position": "DEF",
+  "xp": 0.2489909526,
+  "xp_capt": 0.499339945,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 177815,
+  "name": "Calvert-Lewin",
+  "team": "Leeds",
+  "position": "FWD",
+  "xp": 1.8098708071,
+  "xp_capt": 3.1680849472,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 178301,
+  "name": "Watkins",
+  "team": "Aston Villa",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 7.8
+ },
+ {
+  "player_code": 180135,
+  "name": "Longstaff",
+  "team": "Leeds",
+  "position": "MID",
+  "xp": 0.6691462874,
+  "xp_capt": 1.0508706059,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 180736,
+  "name": "Chalobah",
+  "team": "Chelsea",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 180974,
+  "name": "Joelinton",
+  "team": "Newcastle",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 183015,
+  "name": "Kipr\u00e9",
+  "team": "Ipswich Town",
+  "position": "DEF",
+  "xp": 0.0863544444,
+  "xp_capt": 0.1638847247,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 183656,
+  "name": "Dasilva",
+  "team": "Brentford",
+  "position": "MID",
+  "xp": 0.0789273066,
+  "xp_capt": 0.1279229823,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 184029,
+  "name": "\u00d8degaard",
+  "team": "Arsenal",
+  "position": "MID",
+  "xp": 2.0295338432,
+  "xp_capt": 3.7828586983,
+  "price_m": 6.6
+ },
+ {
+  "player_code": 184254,
+  "name": "Vicario",
+  "team": "Spurs",
+  "position": "GK",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 184341,
+  "name": "Mount",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 0.0813970093,
+  "xp_capt": 0.1410667433,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 184349,
+  "name": "Sessegnon",
+  "team": "Fulham",
+  "position": "DEF",
+  "xp": 0.7783133724,
+  "xp_capt": 1.5746005314,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 184667,
+  "name": "Lindel\u00f6f",
+  "team": "Aston Villa",
+  "position": "DEF",
+  "xp": 1.1886113976,
+  "xp_capt": 1.6414490631,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 191866,
+  "name": "Ajer",
+  "team": "Brentford",
+  "position": "DEF",
+  "xp": 1.3984778098,
+  "xp_capt": 2.2208155981,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 193278,
+  "name": "Coyle",
+  "team": "Hull City",
+  "position": "DEF",
+  "xp": 0.5021764732,
+  "xp_capt": 0.7616987376,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 194010,
+  "name": "Henry",
+  "team": "Brentford",
+  "position": "DEF",
+  "xp": 0.4545809772,
+  "xp_capt": 0.6893504786,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 195384,
+  "name": "Merino",
+  "team": "Arsenal",
+  "position": "MID",
+  "xp": 0.7259081237,
+  "xp_capt": 1.3651048323,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 195546,
+  "name": "Buend\u00eda",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 1.5861764618,
+  "xp_capt": 2.3002911329,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 196100,
+  "name": "Hamer",
+  "team": "Coventry City",
+  "position": "MID",
+  "xp": 0.7016046636,
+  "xp_capt": 1.2765165202,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 198869,
+  "name": "White",
+  "team": "Arsenal",
+  "position": "DEF",
+  "xp": 2.5283804864,
+  "xp_capt": 4.5334366939,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 199598,
+  "name": "Ampadu",
+  "team": "Leeds",
+  "position": "MID",
+  "xp": 1.8677988193,
+  "xp_capt": 2.0708500295,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 199796,
+  "name": "Cash",
+  "team": "Aston Villa",
+  "position": "DEF",
+  "xp": 1.3432874941,
+  "xp_capt": 1.9569098471,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 199798,
+  "name": "Konsa",
+  "team": "Arsenal",
+  "position": "DEF",
+  "xp": 0.8060870233,
+  "xp_capt": 2.4093841268,
+  "price_m": 4.4
+ },
+ {
+  "player_code": 200089,
+  "name": "Willock",
+  "team": "Newcastle",
+  "position": "MID",
+  "xp": 1.8850925077,
+  "xp_capt": 2.5102666479,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 200617,
+  "name": "James",
+  "team": "Leeds",
+  "position": "MID",
+  "xp": 0.5364128585,
+  "xp_capt": 0.8131834927,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 200641,
+  "name": "Nelson",
+  "team": "Arsenal",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 200720,
+  "name": "Kelleher",
+  "team": "Brentford",
+  "position": "GK",
+  "xp": 2.2243069698,
+  "xp_capt": 3.8869596482,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 200785,
+  "name": "Adams",
+  "team": "Bournemouth",
+  "position": "MID",
+  "xp": 0.9756410887,
+  "xp_capt": 1.6848185321,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 200834,
+  "name": "Mukiele",
+  "team": "Sunderland",
+  "position": "DEF",
+  "xp": 1.6590910606,
+  "xp_capt": 2.4510494101,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 201595,
+  "name": "Perri",
+  "team": "Leeds",
+  "position": "GK",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 201658,
+  "name": "Tavernier",
+  "team": "Bournemouth",
+  "position": "MID",
+  "xp": 1.9111646358,
+  "xp_capt": 3.0338096774,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 201666,
+  "name": "Barnes",
+  "team": "Newcastle",
+  "position": "MID",
+  "xp": 1.9675295142,
+  "xp_capt": 2.5394322547,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 201895,
+  "name": "Alderete",
+  "team": "Sunderland",
+  "position": "DEF",
+  "xp": 0.400782388,
+  "xp_capt": 0.9155901882,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 202993,
+  "name": "Bentancur",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 1.5233407328,
+  "xp_capt": 1.6663039235,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 204120,
+  "name": "Boscagli",
+  "team": "Brighton",
+  "position": "DEF",
+  "xp": 1.7957086615,
+  "xp_capt": 2.2623527646,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 204480,
+  "name": "Rice",
+  "team": "Arsenal",
+  "position": "MID",
+  "xp": 1.6738617922,
+  "xp_capt": 2.9356443851,
+  "price_m": 7.5
+ },
+ {
+  "player_code": 204561,
+  "name": "Schlager",
+  "team": "Nott'm Forest",
+  "position": "MID",
+  "xp": 1.7417087083,
+  "xp_capt": 1.8730174716,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 204580,
+  "name": "Janelt",
+  "team": "Brentford",
+  "position": "MID",
+  "xp": 2.0382294241,
+  "xp_capt": 2.5750337315,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 204813,
+  "name": "Latibeaudiere",
+  "team": "Coventry City",
+  "position": "DEF",
+  "xp": 0.0299754276,
+  "xp_capt": 0.0544002498,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 204822,
+  "name": "O.Richards",
+  "team": "Nott'm Forest",
+  "position": "DEF",
+  "xp": 0.0299754272,
+  "xp_capt": 0.0455220593,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 204936,
+  "name": "Donnarumma",
+  "team": "Man City",
+  "position": "GK",
+  "xp": 2.0377836113,
+  "xp_capt": 3.1803954596,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 204968,
+  "name": "Yates",
+  "team": "Nott'm Forest",
+  "position": "MID",
+  "xp": 0.1548876342,
+  "xp_capt": 0.2400395918,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 205533,
+  "name": "Nketiah",
+  "team": "Crystal Palace",
+  "position": "FWD",
+  "xp": 1.9837507741,
+  "xp_capt": 2.8390045558,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 205651,
+  "name": "G.Jesus",
+  "team": "Arsenal",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 206915,
+  "name": "C.Jones",
+  "team": "Liverpool",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 207189,
+  "name": "Berge",
+  "team": "Fulham",
+  "position": "MID",
+  "xp": 1.8288799168,
+  "xp_capt": 2.0609510123,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 207283,
+  "name": "Jensen",
+  "team": "Brentford",
+  "position": "MID",
+  "xp": 0.9179269112,
+  "xp_capt": 1.3870977922,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 208481,
+  "name": "\u00d6m\u00fcr",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.0789273066,
+  "xp_capt": 0.1295927355,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 208706,
+  "name": "Bruno G.",
+  "team": "Arsenal",
+  "position": "MID",
+  "xp": 0.4768824919,
+  "xp_capt": 1.1171525192,
+  "price_m": 6.8
+ },
+ {
+  "player_code": 209036,
+  "name": "Gu\u00e9hi",
+  "team": "Man City",
+  "position": "DEF",
+  "xp": 1.679333285,
+  "xp_capt": 2.8231717462,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 209046,
+  "name": "Hudson-Odoi",
+  "team": "Nott'm Forest",
+  "position": "MID",
+  "xp": 0.4769653322,
+  "xp_capt": 0.8928058861,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 209244,
+  "name": "Foden",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 2.0922523641,
+  "xp_capt": 3.327949987,
+  "price_m": 7.0
+ },
+ {
+  "player_code": 209289,
+  "name": "Smith Rowe",
+  "team": "Fulham",
+  "position": "MID",
+  "xp": 0.5207856227,
+  "xp_capt": 0.9102957042,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 209365,
+  "name": "De Ligt",
+  "team": "Man Utd",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 209400,
+  "name": "Kamada",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 1.9085744594,
+  "xp_capt": 2.2318936321,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 210156,
+  "name": "Awoniyi",
+  "team": "Coventry City",
+  "position": "FWD",
+  "xp": 1.4519365996,
+  "xp_capt": 2.4065763178,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 210462,
+  "name": "I.Sangar\u00e9",
+  "team": "Nott'm Forest",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 212314,
+  "name": "Luki\u0107",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 1.8429324861,
+  "xp_capt": 2.0390350717,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 212319,
+  "name": "Richarlison",
+  "team": "Spurs",
+  "position": "FWD",
+  "xp": 1.0740788628,
+  "xp_capt": 1.8993933674,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 213292,
+  "name": "Akintola",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.0789273066,
+  "xp_capt": 0.1295927355,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 214225,
+  "name": "Rodon",
+  "team": "Leeds",
+  "position": "DEF",
+  "xp": 0.3268173237,
+  "xp_capt": 0.4256704883,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 214285,
+  "name": "Tsimikas",
+  "team": "Liverpool",
+  "position": "DEF",
+  "xp": 0.3656277352,
+  "xp_capt": 0.7555182958,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 214572,
+  "name": "Austin",
+  "team": "Spurs",
+  "position": "GK",
+  "xp": 0.0641003105,
+  "xp_capt": 0.0984010595,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 214590,
+  "name": "Wan-Bissaka",
+  "team": "Aston Villa",
+  "position": "DEF",
+  "xp": 0.4564930996,
+  "xp_capt": 1.0844708156,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 215059,
+  "name": "S\u00e1nchez",
+  "team": "Chelsea",
+  "position": "GK",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 215136,
+  "name": "N.Williams",
+  "team": "Nott'm Forest",
+  "position": "DEF",
+  "xp": 1.9682932478,
+  "xp_capt": 2.6499932904,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 215379,
+  "name": "Anderson",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 1.791454467,
+  "xp_capt": 2.6555755952,
+  "price_m": 6.4
+ },
+ {
+  "player_code": 215413,
+  "name": "Dewsbury-Hall",
+  "team": "Everton",
+  "position": "MID",
+  "xp": 1.9180533333,
+  "xp_capt": 3.620832543,
+  "price_m": 6.5
+ },
+ {
+  "player_code": 215711,
+  "name": "Bailey",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 0.2307540612,
+  "xp_capt": 0.3893220137,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 216051,
+  "name": "Dalot",
+  "team": "Man Utd",
+  "position": "DEF",
+  "xp": 1.2964220203,
+  "xp_capt": 2.0757907016,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 216055,
+  "name": "Florentino",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 0.1708169711,
+  "xp_capt": 0.2834021367,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 216094,
+  "name": "Frimpong",
+  "team": "Liverpool",
+  "position": "DEF",
+  "xp": 1.4667904541,
+  "xp_capt": 2.6748958777,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 216616,
+  "name": "O'Shea",
+  "team": "Ipswich Town",
+  "position": "DEF",
+  "xp": 1.5748408503,
+  "xp_capt": 2.2720519869,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 216646,
+  "name": "Wissa",
+  "team": "Newcastle",
+  "position": "FWD",
+  "xp": 2.2048650555,
+  "xp_capt": 3.7470626585,
+  "price_m": 6.1
+ },
+ {
+  "player_code": 218364,
+  "name": "Sosa",
+  "team": "Crystal Palace",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 218543,
+  "name": "Palacios",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 0.9429580699,
+  "xp_capt": 1.6831133568,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 218997,
+  "name": "Simms",
+  "team": "Coventry City",
+  "position": "FWD",
+  "xp": 1.1713582833,
+  "xp_capt": 1.9132494972,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 219168,
+  "name": "Isak",
+  "team": "Liverpool",
+  "position": "FWD",
+  "xp": 2.2814116955,
+  "xp_capt": 4.9983992659,
+  "price_m": 9.0
+ },
+ {
+  "player_code": 219249,
+  "name": "O'Riley",
+  "team": "Brighton",
+  "position": "MID",
+  "xp": 0.2307540612,
+  "xp_capt": 0.3981177076,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 219847,
+  "name": "Havertz",
+  "team": "Arsenal",
+  "position": "FWD",
+  "xp": 1.701692437,
+  "xp_capt": 3.5348868626,
+  "price_m": 7.5
+ },
+ {
+  "player_code": 219924,
+  "name": "Diop",
+  "team": "Ipswich Town",
+  "position": "DEF",
+  "xp": 1.8293191244,
+  "xp_capt": 2.8939348371,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 220237,
+  "name": "Botman",
+  "team": "Newcastle",
+  "position": "DEF",
+  "xp": 1.8611700356,
+  "xp_capt": 3.4862116568,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 220362,
+  "name": "Disasi",
+  "team": "Crystal Palace",
+  "position": "DEF",
+  "xp": 0.7322949484,
+  "xp_capt": 1.6224411481,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 220566,
+  "name": "Rodrigo",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 6.5
+ },
+ {
+  "player_code": 220583,
+  "name": "Woolfenden",
+  "team": "Coventry City",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 220627,
+  "name": "Justin",
+  "team": "Leeds",
+  "position": "DEF",
+  "xp": 1.1255447669,
+  "xp_capt": 1.4445833839,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 221389,
+  "name": "John",
+  "team": "Nott'm Forest",
+  "position": "GK",
+  "xp": 0.0114166932,
+  "xp_capt": 0.0189667938,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 221399,
+  "name": "Harrison",
+  "team": "Leeds",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 221466,
+  "name": "Senesi",
+  "team": "Spurs",
+  "position": "DEF",
+  "xp": 0.6346409871,
+  "xp_capt": 1.1055172679,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 221632,
+  "name": "Romero",
+  "team": "Spurs",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 221820,
+  "name": "Martinez",
+  "team": "Man Utd",
+  "position": "DEF",
+  "xp": 1.0242828213,
+  "xp_capt": 1.5964616747,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 222018,
+  "name": "Johnson",
+  "team": "Ipswich Town",
+  "position": "DEF",
+  "xp": 0.0346844052,
+  "xp_capt": 0.0638082097,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 222531,
+  "name": "Gibbs-White",
+  "team": "Nott'm Forest",
+  "position": "MID",
+  "xp": 2.136489194,
+  "xp_capt": 3.6411276684,
+  "price_m": 7.9
+ },
+ {
+  "player_code": 222625,
+  "name": "Hirst",
+  "team": "Ipswich Town",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 222683,
+  "name": "Kluivert",
+  "team": "Bournemouth",
+  "position": "MID",
+  "xp": 1.9286270434,
+  "xp_capt": 2.5426663119,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 222694,
+  "name": "Struijk",
+  "team": "Brighton",
+  "position": "DEF",
+  "xp": 0.3139941507,
+  "xp_capt": 0.5599992568,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 223094,
+  "name": "Haaland",
+  "team": "Man City",
+  "position": "FWD",
+  "xp": 2.8198627428,
+  "xp_capt": 5.8916220967,
+  "price_m": 15.5
+ },
+ {
+  "player_code": 223340,
+  "name": "Saka",
+  "team": "Arsenal",
+  "position": "MID",
+  "xp": 3.3202239053,
+  "xp_capt": 5.3463501286,
+  "price_m": 9.5
+ },
+ {
+  "player_code": 223434,
+  "name": "Igor",
+  "team": "Brighton",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 223541,
+  "name": "Chiesa",
+  "team": "Liverpool",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 223723,
+  "name": "Tomiyasu",
+  "team": "Crystal Palace",
+  "position": "DEF",
+  "xp": 0.6572857732,
+  "xp_capt": 1.0105791306,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 223827,
+  "name": "Ballard",
+  "team": "Sunderland",
+  "position": "DEF",
+  "xp": 2.0712947509,
+  "xp_capt": 2.9847008509,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 224117,
+  "name": "Gy\u00f6keres",
+  "team": "Arsenal",
+  "position": "FWD",
+  "xp": 0.8888355921,
+  "xp_capt": 1.9699973388,
+  "price_m": 7.3
+ },
+ {
+  "player_code": 224967,
+  "name": "Mykolenko",
+  "team": "Everton",
+  "position": "DEF",
+  "xp": 2.0280904553,
+  "xp_capt": 3.3663584509,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 225796,
+  "name": "James",
+  "team": "Chelsea",
+  "position": "DEF",
+  "xp": 0.9177940115,
+  "xp_capt": 1.5769213665,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 226182,
+  "name": "Bogle",
+  "team": "Leeds",
+  "position": "DEF",
+  "xp": 0.8765543934,
+  "xp_capt": 1.1764698334,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 226597,
+  "name": "Gabriel",
+  "team": "Arsenal",
+  "position": "DEF",
+  "xp": 1.7522690888,
+  "xp_capt": 2.2262183472,
+  "price_m": 8.0
+ },
+ {
+  "player_code": 226944,
+  "name": "Kamara",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 1.4162780348,
+  "xp_capt": 1.6024818633,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 226965,
+  "name": "Torp",
+  "team": "Coventry City",
+  "position": "MID",
+  "xp": 1.1381901226,
+  "xp_capt": 1.7741136441,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 227444,
+  "name": "Milenkovi\u0107",
+  "team": "Nott'm Forest",
+  "position": "DEF",
+  "xp": 1.7252723085,
+  "xp_capt": 2.9638550504,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 229164,
+  "name": "Ogbene",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 229600,
+  "name": "Travers",
+  "team": "Everton",
+  "position": "GK",
+  "xp": 0.013086273,
+  "xp_capt": 0.0221608393,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 230001,
+  "name": "Mazraoui",
+  "team": "Man Utd",
+  "position": "DEF",
+  "xp": 1.007707919,
+  "xp_capt": 1.6961928166,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 230650,
+  "name": "Di Gregorio",
+  "team": "Bournemouth",
+  "position": "GK",
+  "xp": 0.2131642434,
+  "xp_capt": 0.330948181,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 230730,
+  "name": "Thomas-Asante",
+  "team": "Coventry City",
+  "position": "FWD",
+  "xp": 1.570448157,
+  "xp_capt": 2.6748242067,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 231065,
+  "name": "Pinnock",
+  "team": "Coventry City",
+  "position": "DEF",
+  "xp": 0.3741813371,
+  "xp_capt": 0.755137584,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 231416,
+  "name": "F.Kad\u0131o\u011flu",
+  "team": "Brighton",
+  "position": "DEF",
+  "xp": 0.6873537243,
+  "xp_capt": 1.0121666346,
+  "price_m": 4.4
+ },
+ {
+  "player_code": 231747,
+  "name": "Mateta",
+  "team": "Crystal Palace",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 6.4
+ },
+ {
+  "player_code": 231899,
+  "name": "Taylor",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 232112,
+  "name": "Ugarte",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 232185,
+  "name": "Sarr",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 6.3
+ },
+ {
+  "player_code": 232351,
+  "name": "Giles",
+  "team": "Hull City",
+  "position": "DEF",
+  "xp": 1.7198770209,
+  "xp_capt": 2.4217208986,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 232413,
+  "name": "Eze",
+  "team": "Arsenal",
+  "position": "MID",
+  "xp": 0.7538751231,
+  "xp_capt": 1.6465037153,
+  "price_m": 6.4
+ },
+ {
+  "player_code": 232457,
+  "name": "Mehmeti",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 0.0789273066,
+  "xp_capt": 0.1309481557,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 232571,
+  "name": "Patterson",
+  "team": "Sunderland",
+  "position": "GK",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 232653,
+  "name": "J.Ramsey",
+  "team": "Newcastle",
+  "position": "MID",
+  "xp": 0.753815415,
+  "xp_capt": 1.2933901279,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 232787,
+  "name": "Gallagher",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 0.538468155,
+  "xp_capt": 0.8253444489,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 232859,
+  "name": "Spence",
+  "team": "Spurs",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 232892,
+  "name": "Bassey",
+  "team": "Fulham",
+  "position": "DEF",
+  "xp": 1.7024863656,
+  "xp_capt": 2.318150115,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 232905,
+  "name": "Millar",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 232928,
+  "name": "Garner",
+  "team": "Everton",
+  "position": "MID",
+  "xp": 1.3545939442,
+  "xp_capt": 2.0737460753,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 235826,
+  "name": "Piroe",
+  "team": "Leeds",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 240514,
+  "name": "Scherpen",
+  "team": "Ipswich Town",
+  "position": "GK",
+  "xp": 1.7902187322,
+  "xp_capt": 2.6840996573,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 241117,
+  "name": "Matusiwa",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 241293,
+  "name": "Mason-Clark",
+  "team": "Coventry City",
+  "position": "MID",
+  "xp": 0.6324648637,
+  "xp_capt": 0.8623481581,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 242313,
+  "name": "Mingueza",
+  "team": "Crystal Palace",
+  "position": "DEF",
+  "xp": 0.3214456051,
+  "xp_capt": 0.6339149068,
+  "price_m": 4.4
+ },
+ {
+  "player_code": 242880,
+  "name": "B.Badiashile",
+  "team": "Chelsea",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 242882,
+  "name": "Diakit\u00e9",
+  "team": "Bournemouth",
+  "position": "DEF",
+  "xp": 0.242270537,
+  "xp_capt": 0.3969273122,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 242898,
+  "name": "Johnson",
+  "team": "Everton",
+  "position": "MID",
+  "xp": 0.6358003295,
+  "xp_capt": 1.3506053159,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 243016,
+  "name": "Mac Allister",
+  "team": "Liverpool",
+  "position": "MID",
+  "xp": 1.5712104389,
+  "xp_capt": 1.9125588579,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 243298,
+  "name": "Gakpo",
+  "team": "Liverpool",
+  "position": "MID",
+  "xp": 2.2644441515,
+  "xp_capt": 3.6063109518,
+  "price_m": 7.0
+ },
+ {
+  "player_code": 243413,
+  "name": "Slater",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 2.0087054432,
+  "xp_capt": 2.7449489959,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 243526,
+  "name": "Gudmundsson",
+  "team": "Leeds",
+  "position": "DEF",
+  "xp": 0.3378943755,
+  "xp_capt": 0.3905432988,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 243571,
+  "name": "Patterson",
+  "team": "Everton",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 243951,
+  "name": "Thomas",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.7302849793,
+  "xp_capt": 1.5790311412,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 244042,
+  "name": "Muniz",
+  "team": "Fulham",
+  "position": "FWD",
+  "xp": 0.8775677704,
+  "xp_capt": 1.4156384783,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 244723,
+  "name": "Mitchell",
+  "team": "Crystal Palace",
+  "position": "DEF",
+  "xp": 1.4817824558,
+  "xp_capt": 2.2622174366,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 244850,
+  "name": "Rogers",
+  "team": "Chelsea",
+  "position": "MID",
+  "xp": 2.3233893567,
+  "xp_capt": 4.5283339101,
+  "price_m": 7.5
+ },
+ {
+  "player_code": 244851,
+  "name": "Palmer",
+  "team": "Chelsea",
+  "position": "MID",
+  "xp": 3.0055146374,
+  "xp_capt": 4.9477897141,
+  "price_m": 9.6
+ },
+ {
+  "player_code": 244858,
+  "name": "Carvalho",
+  "team": "Brentford",
+  "position": "MID",
+  "xp": 0.5090657052,
+  "xp_capt": 0.7930726849,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 244860,
+  "name": "Hackney",
+  "team": "Everton",
+  "position": "MID",
+  "xp": 1.5047613793,
+  "xp_capt": 1.8367398783,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 244954,
+  "name": "Pau",
+  "team": "Aston Villa",
+  "position": "DEF",
+  "xp": 1.2640548214,
+  "xp_capt": 1.79042289,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 245719,
+  "name": "Harwood-Bellis",
+  "team": "Aston Villa",
+  "position": "DEF",
+  "xp": 0.6229584387,
+  "xp_capt": 1.0400349456,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 246301,
+  "name": "J.Cuenca",
+  "team": "Fulham",
+  "position": "DEF",
+  "xp": 0.7726954373,
+  "xp_capt": 1.2061042723,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 247348,
+  "name": "Mu\u00f1oz",
+  "team": "Nott'm Forest",
+  "position": "DEF",
+  "xp": 0.6961577221,
+  "xp_capt": 1.1574072885,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 247412,
+  "name": "Strand Larsen",
+  "team": "Crystal Palace",
+  "position": "FWD",
+  "xp": 1.4165526595,
+  "xp_capt": 2.0728629441,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 247632,
+  "name": "Neto",
+  "team": "Chelsea",
+  "position": "MID",
+  "xp": 1.8573245994,
+  "xp_capt": 2.7404055067,
+  "price_m": 6.5
+ },
+ {
+  "player_code": 248056,
+  "name": "Tanaka",
+  "team": "Leeds",
+  "position": "MID",
+  "xp": 0.8592895136,
+  "xp_capt": 1.1828795084,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 248857,
+  "name": "Madueke",
+  "team": "Arsenal",
+  "position": "MID",
+  "xp": 0.7210431321,
+  "xp_capt": 1.7145265084,
+  "price_m": 6.4
+ },
+ {
+  "player_code": 248875,
+  "name": "Doku",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 7.4
+ },
+ {
+  "player_code": 249231,
+  "name": "Lewis-Potter",
+  "team": "Brentford",
+  "position": "MID",
+  "xp": 2.1710286885,
+  "xp_capt": 2.652831775,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 250199,
+  "name": "Dominguez",
+  "team": "Nott'm Forest",
+  "position": "MID",
+  "xp": 0.3961161056,
+  "xp_capt": 0.6428430144,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 424876,
+  "name": "Szoboszlai",
+  "team": "Liverpool",
+  "position": "MID",
+  "xp": 2.3972353363,
+  "xp_capt": 3.9564487076,
+  "price_m": 7.0
+ },
+ {
+  "player_code": 427623,
+  "name": "Richards",
+  "team": "Crystal Palace",
+  "position": "DEF",
+  "xp": 1.6961595417,
+  "xp_capt": 2.4470868605,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 427637,
+  "name": "Aaronson",
+  "team": "Leeds",
+  "position": "MID",
+  "xp": 1.5373760634,
+  "xp_capt": 1.6105077256,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 428580,
+  "name": "Onyeka",
+  "team": "Coventry City",
+  "position": "MID",
+  "xp": 0.8108939968,
+  "xp_capt": 0.9792523212,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 428971,
+  "name": "Benda",
+  "team": "Nott'm Forest",
+  "position": "GK",
+  "xp": 0.1810576903,
+  "xp_capt": 0.3007949685,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 430871,
+  "name": "Cunha",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 2.1390436251,
+  "xp_capt": 3.483287018,
+  "price_m": 8.0
+ },
+ {
+  "player_code": 431639,
+  "name": "Flemming",
+  "team": "Ipswich Town",
+  "position": "FWD",
+  "xp": 0.7663173853,
+  "xp_capt": 1.4467279156,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 432422,
+  "name": "Tonali",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 1.7972939113,
+  "xp_capt": 1.9258879677,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 432714,
+  "name": "McAtee",
+  "team": "Nott'm Forest",
+  "position": "MID",
+  "xp": 1.9483111629,
+  "xp_capt": 2.7695514383,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 432720,
+  "name": "Trafford",
+  "team": "Leeds",
+  "position": "GK",
+  "xp": 2.1344737822,
+  "xp_capt": 2.8717653254,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 432830,
+  "name": "Collins",
+  "team": "Brentford",
+  "position": "DEF",
+  "xp": 1.4068945831,
+  "xp_capt": 2.4483873685,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 432987,
+  "name": "Jaros",
+  "team": "Liverpool",
+  "position": "GK",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 433036,
+  "name": "Reijnders",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 433154,
+  "name": "McNeil",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 1.2068080921,
+  "xp_capt": 1.4324031216,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 433590,
+  "name": "Drameh",
+  "team": "Hull City",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 433969,
+  "name": "Suzuki",
+  "team": "Aston Villa",
+  "position": "GK",
+  "xp": 1.5396560136,
+  "xp_capt": 2.5472290225,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 434399,
+  "name": "Reinildo",
+  "team": "Sunderland",
+  "position": "DEF",
+  "xp": 1.9781321886,
+  "xp_capt": 3.0248025227,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 434752,
+  "name": "Bijol",
+  "team": "Leeds",
+  "position": "DEF",
+  "xp": 0.9569250784,
+  "xp_capt": 1.2083152532,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 435997,
+  "name": "Okafor",
+  "team": "Leeds",
+  "position": "MID",
+  "xp": 1.3562498635,
+  "xp_capt": 1.6067515009,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 436761,
+  "name": "Kitching",
+  "team": "Coventry City",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 436893,
+  "name": "J.Araujo",
+  "team": "Bournemouth",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 437495,
+  "name": "Meslier",
+  "team": "Arsenal",
+  "position": "GK",
+  "xp": 0.0132119393,
+  "xp_capt": 0.0222786268,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 437497,
+  "name": "Bard",
+  "team": "Leeds",
+  "position": "DEF",
+  "xp": 0.3909728076,
+  "xp_capt": 0.5318863089,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 437499,
+  "name": "Lacroix",
+  "team": "Chelsea",
+  "position": "DEF",
+  "xp": 2.0836280634,
+  "xp_capt": 3.2199789404,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 437505,
+  "name": "Isidor",
+  "team": "Sunderland",
+  "position": "FWD",
+  "xp": 1.4632059004,
+  "xp_capt": 2.3969014568,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 437730,
+  "name": "Semenyo",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 2.1151266702,
+  "xp_capt": 3.1786852924,
+  "price_m": 8.5
+ },
+ {
+  "player_code": 437738,
+  "name": "Bornauw",
+  "team": "Leeds",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 438098,
+  "name": "F\u00e1bio Vieira",
+  "team": "Arsenal",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 438234,
+  "name": "Marmoush",
+  "team": "Spurs",
+  "position": "FWD",
+  "xp": 1.581636347,
+  "xp_capt": 3.4774199905,
+  "price_m": 7.0
+ },
+ {
+  "player_code": 438464,
+  "name": "Doucour\u00e9",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 0.2277559615,
+  "xp_capt": 0.3739582582,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 439509,
+  "name": "Tzolis",
+  "team": "Arsenal",
+  "position": "MID",
+  "xp": 1.4615094572,
+  "xp_capt": 2.8444188434,
+  "price_m": 6.5
+ },
+ {
+  "player_code": 439668,
+  "name": "Eccles",
+  "team": "Coventry City",
+  "position": "MID",
+  "xp": 0.3962308832,
+  "xp_capt": 0.6762720483,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 440089,
+  "name": "Damsgaard",
+  "team": "Brentford",
+  "position": "MID",
+  "xp": 1.5216301907,
+  "xp_capt": 1.816903988,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 440993,
+  "name": "Ndiaye",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 1.916628933,
+  "xp_capt": 2.9316542936,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 441164,
+  "name": "Pedro Porro",
+  "team": "Spurs",
+  "position": "DEF",
+  "xp": 0.6270606666,
+  "xp_capt": 1.3613807243,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 441191,
+  "name": "Livramento",
+  "team": "Newcastle",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 441264,
+  "name": "Brobbey",
+  "team": "Sunderland",
+  "position": "FWD",
+  "xp": 1.5516050441,
+  "xp_capt": 2.7957079884,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 441266,
+  "name": "Gravenberch",
+  "team": "Liverpool",
+  "position": "MID",
+  "xp": 1.4693098839,
+  "xp_capt": 1.7677153484,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 441302,
+  "name": "Maatsen",
+  "team": "Aston Villa",
+  "position": "DEF",
+  "xp": 1.4097395614,
+  "xp_capt": 2.0265807332,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 442299,
+  "name": "Affengruber",
+  "team": "Fulham",
+  "position": "DEF",
+  "xp": 0.6065963443,
+  "xp_capt": 0.9517977632,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 442967,
+  "name": "Maeda",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 1.8348482956,
+  "xp_capt": 2.2765658378,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 443261,
+  "name": "Clarke",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 0.8124010212,
+  "xp_capt": 1.9379944598,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 444102,
+  "name": "Evanilson",
+  "team": "Bournemouth",
+  "position": "FWD",
+  "xp": 1.9483149712,
+  "xp_capt": 3.339074336,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 444145,
+  "name": "Martinelli",
+  "team": "Arsenal",
+  "position": "MID",
+  "xp": 0.2307540612,
+  "xp_capt": 0.4664689645,
+  "price_m": 6.3
+ },
+ {
+  "player_code": 444172,
+  "name": "Dennis",
+  "team": "Bournemouth",
+  "position": "GK",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 444180,
+  "name": "Anthony",
+  "team": "Brentford",
+  "position": "MID",
+  "xp": 1.478788063,
+  "xp_capt": 1.8592753336,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 444307,
+  "name": "Lo-Tutala",
+  "team": "Hull City",
+  "position": "GK",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 444463,
+  "name": "Fofana",
+  "team": "Chelsea",
+  "position": "DEF",
+  "xp": 1.1732948314,
+  "xp_capt": 1.8378601387,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 444765,
+  "name": "Van den Berg",
+  "team": "Brentford",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 444884,
+  "name": "Elliott",
+  "team": "Liverpool",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 445028,
+  "name": "Morita",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.7510112366,
+  "xp_capt": 1.2598445623,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 445044,
+  "name": "Kulusevski",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 6.5
+ },
+ {
+  "player_code": 445087,
+  "name": "Araujo",
+  "team": "Liverpool",
+  "position": "DEF",
+  "xp": 0.6372834433,
+  "xp_capt": 1.1320883356,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 445122,
+  "name": "J.Timber",
+  "team": "Arsenal",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 6.5
+ },
+ {
+  "player_code": 446008,
+  "name": "Mbeumo",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 2.3655628829,
+  "xp_capt": 4.4118083171,
+  "price_m": 8.0
+ },
+ {
+  "player_code": 448047,
+  "name": "Enzo",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 0.8419956177,
+  "xp_capt": 1.7544246927,
+  "price_m": 6.9
+ },
+ {
+  "player_code": 448089,
+  "name": "Gomes",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 448104,
+  "name": "Hincapie",
+  "team": "Arsenal",
+  "position": "DEF",
+  "xp": 0.8649865361,
+  "xp_capt": 1.703348378,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 448514,
+  "name": "A\u00eft-Nouri",
+  "team": "Man City",
+  "position": "DEF",
+  "xp": 0.382022605,
+  "xp_capt": 0.7583048396,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 449027,
+  "name": "Mamardashvili",
+  "team": "Liverpool",
+  "position": "GK",
+  "xp": 0.0671891739,
+  "xp_capt": 0.1044401872,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 449428,
+  "name": "Jacob",
+  "team": "Hull City",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 449429,
+  "name": "Greaves",
+  "team": "Ipswich Town",
+  "position": "DEF",
+  "xp": 1.3744593578,
+  "xp_capt": 1.9837381535,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 449434,
+  "name": "Elanga",
+  "team": "Newcastle",
+  "position": "MID",
+  "xp": 2.3790679873,
+  "xp_capt": 3.4797125679,
+  "price_m": 6.1
+ },
+ {
+  "player_code": 449871,
+  "name": "Onana",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 450063,
+  "name": "Timber",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 0.7266512204,
+  "xp_capt": 1.4762280471,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 450542,
+  "name": "J.Rak-Sakyi",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 0.0789273066,
+  "xp_capt": 0.1295927355,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 451284,
+  "name": "van Ewijk",
+  "team": "Coventry City",
+  "position": "DEF",
+  "xp": 1.7250030209,
+  "xp_capt": 2.5197000082,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 451302,
+  "name": "Bayindir",
+  "team": "Man Utd",
+  "position": "GK",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 451340,
+  "name": "Mitoma",
+  "team": "Brighton",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 451490,
+  "name": "Costinha",
+  "team": "Brighton",
+  "position": "DEF",
+  "xp": 0.4513908411,
+  "xp_capt": 0.8749158424,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 454490,
+  "name": "Svoboda",
+  "team": "Brighton",
+  "position": "DEF",
+  "xp": 0.1299706173,
+  "xp_capt": 0.2299201481,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 455084,
+  "name": "Davis",
+  "team": "Ipswich Town",
+  "position": "DEF",
+  "xp": 1.7912562687,
+  "xp_capt": 2.8517534884,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 456512,
+  "name": "Ndoye",
+  "team": "Nott'm Forest",
+  "position": "MID",
+  "xp": 2.1720437291,
+  "xp_capt": 2.5910833475,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 457569,
+  "name": "Petrovi\u0107",
+  "team": "Bournemouth",
+  "position": "GK",
+  "xp": 2.0569335529,
+  "xp_capt": 3.098294376,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 458249,
+  "name": "Zirkzee",
+  "team": "Man Utd",
+  "position": "FWD",
+  "xp": 0.1068535031,
+  "xp_capt": 0.1647054456,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 460028,
+  "name": "Colwill",
+  "team": "Chelsea",
+  "position": "DEF",
+  "xp": 1.1755532226,
+  "xp_capt": 1.7242414009,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 460842,
+  "name": "Kudus",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 0.994145026,
+  "xp_capt": 1.8976269725,
+  "price_m": 6.5
+ },
+ {
+  "player_code": 461102,
+  "name": "Thomas",
+  "team": "Coventry City",
+  "position": "DEF",
+  "xp": 1.8786029528,
+  "xp_capt": 2.8542194756,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 461199,
+  "name": "Mundle",
+  "team": "Sunderland",
+  "position": "MID",
+  "xp": 0.3656897015,
+  "xp_capt": 0.613271988,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 461587,
+  "name": "McAteer",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 0.8187867674,
+  "xp_capt": 1.4274506116,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 462387,
+  "name": "Al-Hamadi",
+  "team": "Ipswich Town",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 462424,
+  "name": "Saliba",
+  "team": "Arsenal",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 462635,
+  "name": "Gelhardt",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 463034,
+  "name": "Delap",
+  "team": "Nott'm Forest",
+  "position": "FWD",
+  "xp": 1.3485755477,
+  "xp_capt": 1.8548146986,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 463067,
+  "name": "Georginio",
+  "team": "Brighton",
+  "position": "FWD",
+  "xp": 1.1661988009,
+  "xp_capt": 1.8938056883,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 463210,
+  "name": "Charles",
+  "team": "Fulham",
+  "position": "MID",
+  "xp": 0.9017792972,
+  "xp_capt": 1.3736443975,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 463726,
+  "name": "Dedi\u0107",
+  "team": "Newcastle",
+  "position": "DEF",
+  "xp": 2.0534144815,
+  "xp_capt": 3.1241190455,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 463936,
+  "name": "Gittens",
+  "team": "Chelsea",
+  "position": "MID",
+  "xp": 0.079966278,
+  "xp_capt": 0.1472135892,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 463981,
+  "name": "Hill",
+  "team": "Bournemouth",
+  "position": "DEF",
+  "xp": 1.289865263,
+  "xp_capt": 2.1507419764,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 464353,
+  "name": "Davies",
+  "team": "Liverpool",
+  "position": "GK",
+  "xp": 0.0114060461,
+  "xp_capt": 0.0168937698,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 465247,
+  "name": "Lammens",
+  "team": "Man Utd",
+  "position": "GK",
+  "xp": 2.0900077148,
+  "xp_capt": 3.5223006065,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 465351,
+  "name": "Matheus N.",
+  "team": "Man City",
+  "position": "DEF",
+  "xp": 0.4737298807,
+  "xp_capt": 1.0288311204,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 465390,
+  "name": "Kesler-Hayden",
+  "team": "Coventry City",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 465525,
+  "name": "Matazo",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 465642,
+  "name": "Thiaw",
+  "team": "Newcastle",
+  "position": "DEF",
+  "xp": 1.970944077,
+  "xp_capt": 3.4851156251,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 465680,
+  "name": "Kalimuendo",
+  "team": "Nott'm Forest",
+  "position": "FWD",
+  "xp": 0.3904262614,
+  "xp_capt": 0.5529530347,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 465694,
+  "name": "N.Gonzalez",
+  "team": "Newcastle",
+  "position": "MID",
+  "xp": 1.6024986454,
+  "xp_capt": 2.1557710757,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 465730,
+  "name": "De Cuyper",
+  "team": "Brighton",
+  "position": "DEF",
+  "xp": 1.9676185218,
+  "xp_capt": 2.46326063,
+  "price_m": 4.7
+ },
+ {
+  "player_code": 465920,
+  "name": "Mudryk",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 0.8638748258,
+  "xp_capt": 1.4715725836,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 466052,
+  "name": "Cherki",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 2.4345082864,
+  "xp_capt": 3.3070833548,
+  "price_m": 7.7
+ },
+ {
+  "player_code": 466075,
+  "name": "Calafiori",
+  "team": "Arsenal",
+  "position": "DEF",
+  "xp": 2.5095724363,
+  "xp_capt": 3.582889004,
+  "price_m": 5.6
+ },
+ {
+  "player_code": 466525,
+  "name": "Stach",
+  "team": "Leeds",
+  "position": "MID",
+  "xp": 1.9321390625,
+  "xp_capt": 2.9787866023,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 467779,
+  "name": "Wieffer",
+  "team": "Brighton",
+  "position": "DEF",
+  "xp": 1.7743337634,
+  "xp_capt": 2.5619519867,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 469142,
+  "name": "Van Hecke",
+  "team": "Spurs",
+  "position": "DEF",
+  "xp": 0.9959908059,
+  "xp_capt": 1.5163149044,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 469247,
+  "name": "Iling Jr",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 469266,
+  "name": "Gourna-Douath",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.4171909265,
+  "xp_capt": 0.7678858118,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 469272,
+  "name": "Tchaouna",
+  "team": "Coventry City",
+  "position": "MID",
+  "xp": 1.240018445,
+  "xp_capt": 1.5643117054,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 470294,
+  "name": "Gyabi",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 470313,
+  "name": "Woltemade",
+  "team": "Newcastle",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 470315,
+  "name": "Netz",
+  "team": "Nott'm Forest",
+  "position": "DEF",
+  "xp": 0.3214456012,
+  "xp_capt": 0.5527749437,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 470551,
+  "name": "Horn\u00ed\u010dek",
+  "team": "Newcastle",
+  "position": "GK",
+  "xp": 2.1818549307,
+  "xp_capt": 3.3579221249,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 472713,
+  "name": "Hickey",
+  "team": "Brentford",
+  "position": "DEF",
+  "xp": 0.4681794808,
+  "xp_capt": 0.7236002614,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 472739,
+  "name": "Rushworth",
+  "team": "Coventry City",
+  "position": "GK",
+  "xp": 1.9636906458,
+  "xp_capt": 3.0823679008,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 472769,
+  "name": "O'Reilly",
+  "team": "Man City",
+  "position": "DEF",
+  "xp": 1.1756105091,
+  "xp_capt": 2.5146766086,
+  "price_m": 6.5
+ },
+ {
+  "player_code": 473284,
+  "name": "Tzolakis",
+  "team": "Hull City",
+  "position": "GK",
+  "xp": 2.2887848189,
+  "xp_capt": 3.0275725319,
+  "price_m": 4.6
+ },
+ {
+  "player_code": 474120,
+  "name": "Enciso",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 2.2763568044,
+  "xp_capt": 3.1332112323,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 475168,
+  "name": "Jo\u00e3o Pedro",
+  "team": "Chelsea",
+  "position": "FWD",
+  "xp": 2.2703708042,
+  "xp_capt": 4.8760222083,
+  "price_m": 7.7
+ },
+ {
+  "player_code": 476887,
+  "name": "Bakwa",
+  "team": "Nott'm Forest",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 477064,
+  "name": "Lewis",
+  "team": "Man City",
+  "position": "DEF",
+  "xp": 0.5629154289,
+  "xp_capt": 0.8677944683,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 477424,
+  "name": "Gvardiol",
+  "team": "Man City",
+  "position": "DEF",
+  "xp": 1.8856586577,
+  "xp_capt": 2.7219719675,
+  "price_m": 5.6
+ },
+ {
+  "player_code": 477547,
+  "name": "Hjelde",
+  "team": "Sunderland",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 477555,
+  "name": "Bobb",
+  "team": "Fulham",
+  "position": "MID",
+  "xp": 1.7589984843,
+  "xp_capt": 2.4246688407,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 480455,
+  "name": "Branthwaite",
+  "team": "Everton",
+  "position": "DEF",
+  "xp": 1.968367874,
+  "xp_capt": 3.1138913533,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 480457,
+  "name": "Rudoni",
+  "team": "Coventry City",
+  "position": "MID",
+  "xp": 1.4439369014,
+  "xp_capt": 2.0326587498,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 481624,
+  "name": "Philogene",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 481655,
+  "name": "Zubimendi",
+  "team": "Arsenal",
+  "position": "MID",
+  "xp": 0.6942365015,
+  "xp_capt": 1.2619619486,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 482442,
+  "name": "P.M.Sarr",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 482609,
+  "name": "Gusto",
+  "team": "Chelsea",
+  "position": "DEF",
+  "xp": 1.4077544017,
+  "xp_capt": 2.1428519745,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 482616,
+  "name": "Barcola",
+  "team": "Liverpool",
+  "position": "MID",
+  "xp": 1.7984639521,
+  "xp_capt": 2.7866976737,
+  "price_m": 8.0
+ },
+ {
+  "player_code": 482973,
+  "name": "Igor Jesus",
+  "team": "Nott'm Forest",
+  "position": "FWD",
+  "xp": 2.0441541558,
+  "xp_capt": 3.205567719,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 483067,
+  "name": "Silva",
+  "team": "Bournemouth",
+  "position": "DEF",
+  "xp": 1.1383247834,
+  "xp_capt": 2.077851526,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 484389,
+  "name": "Dovin",
+  "team": "Coventry City",
+  "position": "GK",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 484420,
+  "name": "E.Le F\u00e9e",
+  "team": "Sunderland",
+  "position": "MID",
+  "xp": 1.833132182,
+  "xp_capt": 2.8949776085,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 485047,
+  "name": "Morato",
+  "team": "Nott'm Forest",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 485055,
+  "name": "Kinsky",
+  "team": "Spurs",
+  "position": "GK",
+  "xp": 1.8091745891,
+  "xp_capt": 3.0146629847,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 485337,
+  "name": "Guessand",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 0.6323751394,
+  "xp_capt": 1.244327779,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 485711,
+  "name": "\u0160e\u0161ko",
+  "team": "Man Utd",
+  "position": "FWD",
+  "xp": 1.1277258027,
+  "xp_capt": 2.273794393,
+  "price_m": 7.0
+ },
+ {
+  "player_code": 486385,
+  "name": "Beto",
+  "team": "Everton",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 486520,
+  "name": "Gruev",
+  "team": "Leeds",
+  "position": "MID",
+  "xp": 0.0197318266,
+  "xp_capt": 0.0308853855,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 486672,
+  "name": "Caicedo",
+  "team": "Chelsea",
+  "position": "MID",
+  "xp": 0.4448441244,
+  "xp_capt": 0.8280895258,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 487053,
+  "name": "Udogie",
+  "team": "Spurs",
+  "position": "DEF",
+  "xp": 0.4722065397,
+  "xp_capt": 0.7451942257,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 487117,
+  "name": "Ferguson",
+  "team": "Brighton",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 487676,
+  "name": "Hume",
+  "team": "Sunderland",
+  "position": "DEF",
+  "xp": 1.7006091895,
+  "xp_capt": 2.8777598372,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 487838,
+  "name": "Hall",
+  "team": "Newcastle",
+  "position": "DEF",
+  "xp": 1.8623701404,
+  "xp_capt": 3.0744402096,
+  "price_m": 5.1
+ },
+ {
+  "player_code": 487992,
+  "name": "Ruggeri",
+  "team": "Aston Villa",
+  "position": "DEF",
+  "xp": 0.3824805782,
+  "xp_capt": 0.7642296184,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 488024,
+  "name": "Yeremy",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 1.9189808163,
+  "xp_capt": 2.6256687316,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 489580,
+  "name": "Ramsay",
+  "team": "Liverpool",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 489639,
+  "name": "Verbruggen",
+  "team": "Brighton",
+  "position": "GK",
+  "xp": 2.1538186282,
+  "xp_capt": 3.4287587619,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 489706,
+  "name": "Devenny",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 489888,
+  "name": "Adli",
+  "team": "Bournemouth",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 490094,
+  "name": "Iroegbunam",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.5833749189,
+  "xp_capt": 0.9578579946,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 490145,
+  "name": "Scarlett",
+  "team": "Spurs",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 490161,
+  "name": "Kamara",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 490881,
+  "name": "Collyer",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 490884,
+  "name": "Cho",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.9126517273,
+  "xp_capt": 1.5322093607,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 491007,
+  "name": "D.Essugo",
+  "team": "Chelsea",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 491279,
+  "name": "Van de Ven",
+  "team": "Spurs",
+  "position": "DEF",
+  "xp": 0.670570538,
+  "xp_capt": 1.0390896229,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 491501,
+  "name": "McConnell",
+  "team": "Liverpool",
+  "position": "MID",
+  "xp": 0.0789154336,
+  "xp_capt": 0.1207195039,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 492498,
+  "name": "Borges Rodrigues",
+  "team": "Coventry City",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 492777,
+  "name": "Bradley",
+  "team": "Liverpool",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 492859,
+  "name": "Gnonto",
+  "team": "Leeds",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 493105,
+  "name": "Garnacho",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 0.4650801666,
+  "xp_capt": 0.8822458805,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 493250,
+  "name": "Amad",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.8
+ },
+ {
+  "player_code": 493362,
+  "name": "Xavi",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 494307,
+  "name": "Alleyne",
+  "team": "Man City",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 494521,
+  "name": "Truffert",
+  "team": "Bournemouth",
+  "position": "DEF",
+  "xp": 1.4883310769,
+  "xp_capt": 2.3761908723,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 494595,
+  "name": "Wirtz",
+  "team": "Liverpool",
+  "position": "MID",
+  "xp": 1.9545020311,
+  "xp_capt": 3.1421939773,
+  "price_m": 7.5
+ },
+ {
+  "player_code": 494928,
+  "name": "Sanchez",
+  "team": "Bournemouth",
+  "position": "DEF",
+  "xp": 0.2482869448,
+  "xp_capt": 0.3643797631,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 494950,
+  "name": "Cartwright",
+  "team": "Hull City",
+  "position": "GK",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 496181,
+  "name": "Norton-Cuffy",
+  "team": "Hull City",
+  "position": "DEF",
+  "xp": 0.3450106732,
+  "xp_capt": 0.4988773551,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 496208,
+  "name": "Gannon-Doak",
+  "team": "Bournemouth",
+  "position": "MID",
+  "xp": 0.4590375571,
+  "xp_capt": 0.7439941366,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 496221,
+  "name": "Wharton",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 1.9093569902,
+  "xp_capt": 2.6245312661,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 496661,
+  "name": "Dibling",
+  "team": "Everton",
+  "position": "MID",
+  "xp": 0.079966278,
+  "xp_capt": 0.1344627299,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 498016,
+  "name": "Roefs",
+  "team": "Sunderland",
+  "position": "GK",
+  "xp": 2.5850797728,
+  "xp_capt": 3.6671911004,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 498444,
+  "name": "Chavarria",
+  "team": "Chelsea",
+  "position": "DEF",
+  "xp": 0.4570497193,
+  "xp_capt": 1.0427265047,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 499169,
+  "name": "Lewis-Skelly",
+  "team": "Arsenal",
+  "position": "MID",
+  "xp": 1.5082335999,
+  "xp_capt": 2.033834641,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 499175,
+  "name": "Nwaneri",
+  "team": "Arsenal",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 499300,
+  "name": "Aznou",
+  "team": "Everton",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 499309,
+  "name": "Marc Guiu",
+  "team": "Chelsea",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 499604,
+  "name": "Rayan",
+  "team": "Bournemouth",
+  "position": "MID",
+  "xp": 1.9718138348,
+  "xp_capt": 2.5644387647,
+  "price_m": 6.5
+ },
+ {
+  "player_code": 499716,
+  "name": "Rowswell",
+  "team": "Spurs",
+  "position": "DEF",
+  "xp": 0.0298498688,
+  "xp_capt": 0.0430519543,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 499721,
+  "name": "Moore",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 1.5701551423,
+  "xp_capt": 1.9238116337,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 499726,
+  "name": "Olusesi",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 0.085682521,
+  "xp_capt": 0.1294407129,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 500033,
+  "name": "\u00c1ngel",
+  "team": "Fulham",
+  "position": "MID",
+  "xp": 0.5005696698,
+  "xp_capt": 1.0140123091,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 500040,
+  "name": "Mosquera",
+  "team": "Arsenal",
+  "position": "DEF",
+  "xp": 1.6908909214,
+  "xp_capt": 2.4306758073,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 500058,
+  "name": "Danns",
+  "team": "Liverpool",
+  "position": "FWD",
+  "xp": 0.0470720278,
+  "xp_capt": 0.0673549161,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 500151,
+  "name": "Savona",
+  "team": "Nott'm Forest",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 500957,
+  "name": "Destan",
+  "team": "Hull City",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 501390,
+  "name": "N\u00fa\u00f1ez",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 1.8216676706,
+  "xp_capt": 2.3062452245,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 501459,
+  "name": "Sakamoto",
+  "team": "Coventry City",
+  "position": "MID",
+  "xp": 0.4847014417,
+  "xp_capt": 0.8046794775,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 501902,
+  "name": "Hughes",
+  "team": "Hull City",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 502500,
+  "name": "Thiago",
+  "team": "Brentford",
+  "position": "FWD",
+  "xp": 1.9305874731,
+  "xp_capt": 3.1878677243,
+  "price_m": 8.0
+ },
+ {
+  "player_code": 502697,
+  "name": "Alcaraz",
+  "team": "Everton",
+  "position": "MID",
+  "xp": 0.5823391155,
+  "xp_capt": 1.0382974599,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 503037,
+  "name": "Emegha",
+  "team": "Chelsea",
+  "position": "FWD",
+  "xp": 0.0470720278,
+  "xp_capt": 0.0686150853,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 503139,
+  "name": "Scott",
+  "team": "Bournemouth",
+  "position": "MID",
+  "xp": 1.7900649809,
+  "xp_capt": 2.5561088823,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 503301,
+  "name": "Hutchinson",
+  "team": "Nott'm Forest",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 505079,
+  "name": "McNally",
+  "team": "Fulham",
+  "position": "GK",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 507433,
+  "name": "Valdimarsson",
+  "team": "Brentford",
+  "position": "GK",
+  "xp": 0.0112600349,
+  "xp_capt": 0.0169027376,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 508395,
+  "name": "Yarmoliuk",
+  "team": "Brentford",
+  "position": "MID",
+  "xp": 0.9092706378,
+  "xp_capt": 1.6697318023,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 508479,
+  "name": "J\u00f6rgensen",
+  "team": "Chelsea",
+  "position": "GK",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 509416,
+  "name": "Ayari",
+  "team": "Brighton",
+  "position": "MID",
+  "xp": 0.8729829217,
+  "xp_capt": 1.1938610458,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 510281,
+  "name": "S\u00e1vio",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 0.2028369768,
+  "xp_capt": 0.4074700597,
+  "price_m": 6.5
+ },
+ {
+  "player_code": 510663,
+  "name": "Ekitik\u00e9",
+  "team": "Liverpool",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 7.5
+ },
+ {
+  "player_code": 511499,
+  "name": "Tel",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 1.6457156209,
+  "xp_capt": 1.8985634046,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 512123,
+  "name": "Hadjam",
+  "team": "Brighton",
+  "position": "DEF",
+  "xp": 0.4564930941,
+  "xp_capt": 0.8027127484,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 512462,
+  "name": "O'Brien",
+  "team": "Everton",
+  "position": "DEF",
+  "xp": 0.3378728,
+  "xp_capt": 0.6225770576,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 513086,
+  "name": "Schuster",
+  "team": "Brentford",
+  "position": "DEF",
+  "xp": 0.2482869448,
+  "xp_capt": 0.3690050221,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 513418,
+  "name": "Schade",
+  "team": "Brentford",
+  "position": "MID",
+  "xp": 2.2817027452,
+  "xp_capt": 3.4873411075,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 513466,
+  "name": "R\u00f6hl",
+  "team": "Everton",
+  "position": "MID",
+  "xp": 1.9065028264,
+  "xp_capt": 2.065552866,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 513545,
+  "name": "M.Sangar\u00e9",
+  "team": "Brentford",
+  "position": "MID",
+  "xp": 1.9501122447,
+  "xp_capt": 2.5372212037,
+  "price_m": 5.7
+ },
+ {
+  "player_code": 514254,
+  "name": "Gomez",
+  "team": "Brighton",
+  "position": "MID",
+  "xp": 2.1991296738,
+  "xp_capt": 3.0086758612,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 514356,
+  "name": "Lavia",
+  "team": "Chelsea",
+  "position": "MID",
+  "xp": 1.9498240641,
+  "xp_capt": 2.9121793843,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 514514,
+  "name": "Koumas",
+  "team": "Liverpool",
+  "position": "MID",
+  "xp": 0.459032329,
+  "xp_capt": 0.7595517549,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 515046,
+  "name": "Ellborg",
+  "team": "Sunderland",
+  "position": "GK",
+  "xp": 0.0125929608,
+  "xp_capt": 0.021211476,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 515597,
+  "name": "Bogarde",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 0.5834185496,
+  "xp_capt": 0.9611632457,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 515621,
+  "name": "Chadi Riad",
+  "team": "Crystal Palace",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.4
+ },
+ {
+  "player_code": 516895,
+  "name": "Mainoo",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 1.87945032,
+  "xp_capt": 2.4691878597,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 517052,
+  "name": "N.Jackson",
+  "team": "Aston Villa",
+  "position": "FWD",
+  "xp": 1.2933181672,
+  "xp_capt": 2.0379739136,
+  "price_m": 6.5
+ },
+ {
+  "player_code": 519324,
+  "name": "Cozier-Duberry",
+  "team": "Brighton",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 519440,
+  "name": "Lucky",
+  "team": "Liverpool",
+  "position": "DEF",
+  "xp": 0.0298282279,
+  "xp_capt": 0.0487123121,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 519634,
+  "name": "Seelt",
+  "team": "Sunderland",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 519913,
+  "name": "Fletcher",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 0.0789154336,
+  "xp_capt": 0.1212881504,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 522047,
+  "name": "Muharemovi\u0107",
+  "team": "Leeds",
+  "position": "DEF",
+  "xp": 1.1510595056,
+  "xp_capt": 1.4364258068,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 523700,
+  "name": "Jebbison",
+  "team": "Bournemouth",
+  "position": "FWD",
+  "xp": 1.0068734014,
+  "xp_capt": 1.5646988604,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 524180,
+  "name": "Humphreys",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 531442,
+  "name": "Fatawu",
+  "team": "Ipswich Town",
+  "position": "MID",
+  "xp": 2.1743435097,
+  "xp_capt": 2.635015287,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 532529,
+  "name": "Hinshelwood",
+  "team": "Brighton",
+  "position": "MID",
+  "xp": 0.3538997111,
+  "xp_capt": 0.4480270614,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 532605,
+  "name": "Andrey Santos",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 1.4619889304,
+  "xp_capt": 1.7789453975,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 533463,
+  "name": "O.Dango",
+  "team": "Brentford",
+  "position": "MID",
+  "xp": 1.7411921672,
+  "xp_capt": 2.5297982139,
+  "price_m": 6.5
+ },
+ {
+  "player_code": 533646,
+  "name": "Osorio",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 0.7503094292,
+  "xp_capt": 1.5812322399,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 534392,
+  "name": "Burstow",
+  "team": "Hull City",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 535301,
+  "name": "Baleba",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 535818,
+  "name": "Adingra",
+  "team": "Sunderland",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 535928,
+  "name": "Bajcetic",
+  "team": "Liverpool",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 536661,
+  "name": "N.Angulo",
+  "team": "Sunderland",
+  "position": "MID",
+  "xp": 1.8884069659,
+  "xp_capt": 2.4847158812,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 536694,
+  "name": "M.Fran\u00e7a",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 0.2669354575,
+  "xp_capt": 0.4382880609,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 536916,
+  "name": "Buonanotte",
+  "team": "Brighton",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 538007,
+  "name": "David",
+  "team": "Brighton",
+  "position": "FWD",
+  "xp": 0.980632056,
+  "xp_capt": 1.6497561256,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 538207,
+  "name": "Osula",
+  "team": "Newcastle",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 538638,
+  "name": "Bindon",
+  "team": "Nott'm Forest",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 539142,
+  "name": "Amenda",
+  "team": "Coventry City",
+  "position": "DEF",
+  "xp": 1.4516933968,
+  "xp_capt": 2.1074581827,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 540324,
+  "name": "Belloumi",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 1.926934965,
+  "xp_capt": 2.2974548452,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 543158,
+  "name": "Barco",
+  "team": "Chelsea",
+  "position": "MID",
+  "xp": 0.4534547907,
+  "xp_capt": 0.7844680723,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 543295,
+  "name": "Milambo",
+  "team": "Brentford",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 543968,
+  "name": "Emersonn",
+  "team": "Ipswich Town",
+  "position": "FWD",
+  "xp": 1.2150303035,
+  "xp_capt": 1.9096451291,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 544877,
+  "name": "Kerkez",
+  "team": "Liverpool",
+  "position": "DEF",
+  "xp": 1.4122556489,
+  "xp_capt": 2.6021271398,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 545477,
+  "name": "A.Murphy",
+  "team": "Newcastle",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 546600,
+  "name": "Van Oevelen",
+  "team": "Ipswich Town",
+  "position": "GK",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 547027,
+  "name": "Diarra",
+  "team": "Sunderland",
+  "position": "MID",
+  "xp": 0.5495620694,
+  "xp_capt": 1.0441296488,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 547037,
+  "name": "J.Fletcher",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 0.0789273066,
+  "xp_capt": 0.1295927355,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 547676,
+  "name": "Fredricson",
+  "team": "Man Utd",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 547686,
+  "name": "De Fougerolles",
+  "team": "Fulham",
+  "position": "DEF",
+  "xp": 0.0547388948,
+  "xp_capt": 0.0943109961,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 547701,
+  "name": "Gray",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 1.5912030457,
+  "xp_capt": 1.7118328971,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 547719,
+  "name": "L.Miley",
+  "team": "Newcastle",
+  "position": "MID",
+  "xp": 1.8794854148,
+  "xp_capt": 2.4460030452,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 548308,
+  "name": "Phillips",
+  "team": "Spurs",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 549067,
+  "name": "Abbott",
+  "team": "Nott'm Forest",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 549074,
+  "name": "Watson",
+  "team": "Brighton",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 549653,
+  "name": "Bassette",
+  "team": "Coventry City",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 549912,
+  "name": "Talbi",
+  "team": "Sunderland",
+  "position": "MID",
+  "xp": 0.5017129107,
+  "xp_capt": 0.8761211931,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 549939,
+  "name": "Penders",
+  "team": "Chelsea",
+  "position": "GK",
+  "xp": 0.0231189286,
+  "xp_capt": 0.03810166,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 549940,
+  "name": "Fofana",
+  "team": "Sunderland",
+  "position": "MID",
+  "xp": 0.8042862731,
+  "xp_capt": 1.8003663045,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 550090,
+  "name": "Coppola",
+  "team": "Brighton",
+  "position": "DEF",
+  "xp": 0.0971420732,
+  "xp_capt": 0.1501629324,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 550615,
+  "name": "George",
+  "team": "Everton",
+  "position": "MID",
+  "xp": 1.8769082237,
+  "xp_capt": 2.6783395523,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 550839,
+  "name": "Odobert",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 550864,
+  "name": "Yoro",
+  "team": "Man Utd",
+  "position": "DEF",
+  "xp": 0.471296214,
+  "xp_capt": 0.9723347659,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 551050,
+  "name": "Larsson",
+  "team": "Fulham",
+  "position": "MID",
+  "xp": 0.7110919042,
+  "xp_capt": 1.4550591389,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 551210,
+  "name": "Hato",
+  "team": "Chelsea",
+  "position": "DEF",
+  "xp": 1.8221878265,
+  "xp_capt": 2.8057956688,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 551226,
+  "name": "Fernandes",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 1.5969817817,
+  "xp_capt": 2.112035987,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 551262,
+  "name": "Markelo",
+  "team": "Coventry City",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 551466,
+  "name": "Gonzalo",
+  "team": "Fulham",
+  "position": "FWD",
+  "xp": 2.0199114478,
+  "xp_capt": 4.8250342799,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 551499,
+  "name": "Munoz",
+  "team": "Liverpool",
+  "position": "MID",
+  "xp": 1.9327598016,
+  "xp_capt": 2.8832467827,
+  "price_m": 6.5
+ },
+ {
+  "player_code": 552946,
+  "name": "Hjert\u00f8-Dahl",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.2277559615,
+  "xp_capt": 0.3739582582,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 553746,
+  "name": "Shahar",
+  "team": "Newcastle",
+  "position": "DEF",
+  "xp": 0.0971420732,
+  "xp_capt": 0.2293690621,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 553783,
+  "name": "Zambrano",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 554054,
+  "name": "Braithwaite",
+  "team": "Man City",
+  "position": "DEF",
+  "xp": 0.3444709753,
+  "xp_capt": 0.5628632386,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 554197,
+  "name": "Rigg",
+  "team": "Sunderland",
+  "position": "MID",
+  "xp": 0.5834142979,
+  "xp_capt": 0.9711815541,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 554578,
+  "name": "Jaouen",
+  "team": "Newcastle",
+  "position": "GK",
+  "xp": 0.0116896945,
+  "xp_capt": 0.020099256,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 556637,
+  "name": "Oriola",
+  "team": "Brighton",
+  "position": "MID",
+  "xp": 0.0789154336,
+  "xp_capt": 0.1192789719,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 557012,
+  "name": "Walle Egeli",
+  "team": "Ipswich Town",
+  "position": "FWD",
+  "xp": 0.4615219382,
+  "xp_capt": 0.724476021,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 559152,
+  "name": "Gozo",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 0.3955203202,
+  "xp_capt": 0.6668482689,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 560262,
+  "name": "Kroupi.Jr",
+  "team": "Bournemouth",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 7.4
+ },
+ {
+  "player_code": 560552,
+  "name": "Kevin",
+  "team": "Fulham",
+  "position": "MID",
+  "xp": 0.6902493101,
+  "xp_capt": 1.2199781037,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 561245,
+  "name": "Rodr\u00edguez",
+  "team": "Bournemouth",
+  "position": "FWD",
+  "xp": 0.7143083129,
+  "xp_capt": 1.0112777287,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 565297,
+  "name": "Mateo Joseph",
+  "team": "Leeds",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 567119,
+  "name": "Mheuka",
+  "team": "Chelsea",
+  "position": "FWD",
+  "xp": 0.0470508017,
+  "xp_capt": 0.074067087,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 568420,
+  "name": "Diomande",
+  "team": "Nott'm Forest",
+  "position": "DEF",
+  "xp": 0.3930816847,
+  "xp_capt": 0.8557492739,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 569577,
+  "name": "Rowe",
+  "team": "Aston Villa",
+  "position": "DEF",
+  "xp": 0.0729851939,
+  "xp_capt": 0.1558044604,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 570241,
+  "name": "Ji-soo",
+  "team": "Brentford",
+  "position": "DEF",
+  "xp": 0.0967351733,
+  "xp_capt": 0.1404108791,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 570526,
+  "name": "Bergvall",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 0.5851274214,
+  "xp_capt": 0.9151695794,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 570794,
+  "name": "Khalaili",
+  "team": "Crystal Palace",
+  "position": "DEF",
+  "xp": 1.7587129881,
+  "xp_capt": 2.7271701283,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 571380,
+  "name": "Lynch",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 0.1157695223,
+  "xp_capt": 0.1836981995,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 571779,
+  "name": "Palacios",
+  "team": "Fulham",
+  "position": "MID",
+  "xp": 1.6399572959,
+  "xp_capt": 1.9512656879,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 572584,
+  "name": "Ouattara",
+  "team": "Ipswich Town",
+  "position": "DEF",
+  "xp": 0.3822492671,
+  "xp_capt": 0.8129680322,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 574458,
+  "name": "M.Sarr",
+  "team": "Chelsea",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 575204,
+  "name": "Echeverri",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 0.0789273066,
+  "xp_capt": 0.1279229823,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 575458,
+  "name": "Jair Cunha",
+  "team": "Nott'm Forest",
+  "position": "DEF",
+  "xp": 1.6575826504,
+  "xp_capt": 2.0777321533,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 575476,
+  "name": "Murillo",
+  "team": "Nott'm Forest",
+  "position": "DEF",
+  "xp": 1.6644261287,
+  "xp_capt": 2.7692512492,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 575901,
+  "name": "Soler",
+  "team": "Bournemouth",
+  "position": "DEF",
+  "xp": 0.0854626424,
+  "xp_capt": 0.132316876,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 576620,
+  "name": "Bendito Mantato",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 0.0789154336,
+  "xp_capt": 0.120884895,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 576628,
+  "name": "Lacey",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 0.5034605511,
+  "xp_capt": 0.8266445707,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 577016,
+  "name": "Acheampong",
+  "team": "Chelsea",
+  "position": "DEF",
+  "xp": 1.1672625038,
+  "xp_capt": 1.9289748143,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 577285,
+  "name": "George Hemmings",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 1.5377754238,
+  "xp_capt": 1.7385596349,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 577411,
+  "name": "Brau",
+  "team": "Coventry City",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 577669,
+  "name": "Sadiki",
+  "team": "Sunderland",
+  "position": "MID",
+  "xp": 1.97034854,
+  "xp_capt": 2.851729798,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 577725,
+  "name": "King",
+  "team": "Fulham",
+  "position": "MID",
+  "xp": 2.0224316349,
+  "xp_capt": 3.1677236382,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 577974,
+  "name": "Amass",
+  "team": "Man Utd",
+  "position": "DEF",
+  "xp": 0.0299754276,
+  "xp_capt": 0.0533406101,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 578153,
+  "name": "Khusanov",
+  "team": "Man City",
+  "position": "DEF",
+  "xp": 1.5662007736,
+  "xp_capt": 2.4102093292,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 578545,
+  "name": "Nedeljkovic",
+  "team": "Aston Villa",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 586268,
+  "name": "Pecsi",
+  "team": "Liverpool",
+  "position": "GK",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 586309,
+  "name": "Barry",
+  "team": "Everton",
+  "position": "FWD",
+  "xp": 1.9250624731,
+  "xp_capt": 4.0388543444,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 587982,
+  "name": "Bahoya",
+  "team": "Leeds",
+  "position": "MID",
+  "xp": 0.8064001327,
+  "xp_capt": 1.4480065261,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 590014,
+  "name": "Cardines",
+  "team": "Crystal Palace",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 590039,
+  "name": "Mukasa",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 591386,
+  "name": "Nyoni",
+  "team": "Liverpool",
+  "position": "MID",
+  "xp": 0.3961161093,
+  "xp_capt": 0.6518072607,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 592031,
+  "name": "Minteh",
+  "team": "Brighton",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 592740,
+  "name": "Cresswell",
+  "team": "Leeds",
+  "position": "MID",
+  "xp": 0.1697282323,
+  "xp_capt": 0.257036041,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 592984,
+  "name": "Andr\u00e9s",
+  "team": "Brighton",
+  "position": "MID",
+  "xp": 0.6339126417,
+  "xp_capt": 1.3422030866,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 593117,
+  "name": "Quenda",
+  "team": "Chelsea",
+  "position": "MID",
+  "xp": 0.4013304393,
+  "xp_capt": 0.6771138673,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 593174,
+  "name": "Furo",
+  "team": "Brentford",
+  "position": "FWD",
+  "xp": 0.048076362,
+  "xp_capt": 0.0795638954,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 596047,
+  "name": "Obi",
+  "team": "Man Utd",
+  "position": "FWD",
+  "xp": 0.0470508017,
+  "xp_capt": 0.0763082046,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 596777,
+  "name": "Dorgu",
+  "team": "Man Utd",
+  "position": "MID",
+  "xp": 0.8848069147,
+  "xp_capt": 1.2904170565,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 597320,
+  "name": "Howell",
+  "team": "Brighton",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 597462,
+  "name": "Herrington",
+  "team": "Hull City",
+  "position": "DEF",
+  "xp": 0.5008207688,
+  "xp_capt": 0.935569603,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 599303,
+  "name": "Neave",
+  "team": "Newcastle",
+  "position": "FWD",
+  "xp": 0.0470508017,
+  "xp_capt": 0.0768273715,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 605972,
+  "name": "Ahanor",
+  "team": "Crystal Palace",
+  "position": "DEF",
+  "xp": 0.4408068335,
+  "xp_capt": 0.8024539183,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 606702,
+  "name": "Jacquet",
+  "team": "Liverpool",
+  "position": "DEF",
+  "xp": 1.5094553491,
+  "xp_capt": 2.3542794688,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 606745,
+  "name": "Heaven",
+  "team": "Man Utd",
+  "position": "DEF",
+  "xp": 0.5846373726,
+  "xp_capt": 1.0126996555,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 606798,
+  "name": "A.Garc\u00eda",
+  "team": "Aston Villa",
+  "position": "DEF",
+  "xp": 0.0877745753,
+  "xp_capt": 0.1625598011,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 606921,
+  "name": "Esse",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 606930,
+  "name": "Mendy",
+  "team": "Hull City",
+  "position": "DEF",
+  "xp": 1.6848794812,
+  "xp_capt": 2.0526694722,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 607464,
+  "name": "Kayode",
+  "team": "Brentford",
+  "position": "DEF",
+  "xp": 1.1949576487,
+  "xp_capt": 2.1323415731,
+  "price_m": 4.6
+ },
+ {
+  "player_code": 608181,
+  "name": "Tzimas",
+  "team": "Brighton",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 608227,
+  "name": "Stroud",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 1.6265265437,
+  "xp_capt": 1.8011250626,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 609873,
+  "name": "Armstrong",
+  "team": "Everton",
+  "position": "MID",
+  "xp": 2.0071247596,
+  "xp_capt": 2.3596911085,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 610799,
+  "name": "Vuskovic",
+  "team": "Brighton",
+  "position": "DEF",
+  "xp": 1.745900975,
+  "xp_capt": 2.3525448157,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 611665,
+  "name": "Tour\u00e9",
+  "team": "Newcastle",
+  "position": "MID",
+  "xp": 0.4013304393,
+  "xp_capt": 0.7547406627,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 611695,
+  "name": "Yalcouy\u00e9",
+  "team": "Brighton",
+  "position": "MID",
+  "xp": 1.5075412561,
+  "xp_capt": 1.7127136734,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 611917,
+  "name": "Williams-Barnett",
+  "team": "Spurs",
+  "position": "MID",
+  "xp": 0.16742054,
+  "xp_capt": 0.2607762518,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 611922,
+  "name": "Ngumoha",
+  "team": "Liverpool",
+  "position": "MID",
+  "xp": 1.1244339934,
+  "xp_capt": 1.4613731238,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 612855,
+  "name": "Osman",
+  "team": "Brighton",
+  "position": "MID",
+  "xp": 0.7399210803,
+  "xp_capt": 1.3704664771,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 613221,
+  "name": "Fernandez-Pardo",
+  "team": "Newcastle",
+  "position": "FWD",
+  "xp": 1.001182189,
+  "xp_capt": 1.7536390537,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 613804,
+  "name": "Diouf",
+  "team": "Brentford",
+  "position": "DEF",
+  "xp": 0.4538619623,
+  "xp_capt": 0.7814919137,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 614071,
+  "name": "Manzambi",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.9
+ },
+ {
+  "player_code": 614574,
+  "name": "T\u00f3th.A",
+  "team": "Bournemouth",
+  "position": "MID",
+  "xp": 0.459037575,
+  "xp_capt": 0.7465949245,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 616069,
+  "name": "Zepa",
+  "team": "Fulham",
+  "position": "MID",
+  "xp": 0.2495409129,
+  "xp_capt": 0.3895342172,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 616077,
+  "name": "Dowman",
+  "team": "Arsenal",
+  "position": "MID",
+  "xp": 0.2307540612,
+  "xp_capt": 0.3932332711,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 616221,
+  "name": "Souza",
+  "team": "Spurs",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 616222,
+  "name": "Vitor Reis",
+  "team": "Man City",
+  "position": "DEF",
+  "xp": 0.281825322,
+  "xp_capt": 0.4414227079,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 616288,
+  "name": "McAidoo",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 0.5116420915,
+  "xp_capt": 0.6815707464,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 620109,
+  "name": "Palestra",
+  "team": "Chelsea",
+  "position": "DEF",
+  "xp": 0.2540151154,
+  "xp_capt": 0.5198373497,
+  "price_m": 5.4
+ },
+ {
+  "player_code": 620487,
+  "name": "Milosavljevi\u0107",
+  "team": "Bournemouth",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 622758,
+  "name": "Anselmino",
+  "team": "Chelsea",
+  "position": "DEF",
+  "xp": 0.0971420744,
+  "xp_capt": 0.1811773103,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 624773,
+  "name": "Est\u00eav\u00e3o",
+  "team": "Chelsea",
+  "position": "MID",
+  "xp": 0.6809486721,
+  "xp_capt": 1.3974293301,
+  "price_m": 6.4
+ },
+ {
+  "player_code": 624777,
+  "name": "Allan",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 0.6331097107,
+  "xp_capt": 1.3432972901,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 626751,
+  "name": "Ansah",
+  "team": "Hull City",
+  "position": "FWD",
+  "xp": 0.7512687426,
+  "xp_capt": 1.4005586065,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 627221,
+  "name": "Cherif",
+  "team": "Coventry City",
+  "position": "FWD",
+  "xp": 0.1068535031,
+  "xp_capt": 0.1572605053,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 629397,
+  "name": "Andrews",
+  "team": "Coventry City",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 631000,
+  "name": "Vaz",
+  "team": "Hull City",
+  "position": "FWD",
+  "xp": 0.7512687426,
+  "xp_capt": 1.4005586065,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 631786,
+  "name": "Kusi-Asare",
+  "team": "Fulham",
+  "position": "FWD",
+  "xp": 0.0470720278,
+  "xp_capt": 0.0841225534,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 632794,
+  "name": "Bamba",
+  "team": "Newcastle",
+  "position": "MID",
+  "xp": 0.4698987651,
+  "xp_capt": 0.7714930743,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 636852,
+  "name": "Steur",
+  "team": "Newcastle",
+  "position": "MID",
+  "xp": 0.9517116565,
+  "xp_capt": 1.1635977019,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 637238,
+  "name": "Bouaddi",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 1.4182258396,
+  "xp_capt": 1.6148902552,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 638411,
+  "name": "Methalie",
+  "team": "Sunderland",
+  "position": "DEF",
+  "xp": 0.2832161087,
+  "xp_capt": 0.621018763,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 638987,
+  "name": "Mbaye",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 0.7503094292,
+  "xp_capt": 1.7507668461,
+  "price_m": 6.0
+ },
+ {
+  "player_code": 640419,
+  "name": "Byfield",
+  "team": "Spurs",
+  "position": "DEF",
+  "xp": 0.0298498688,
+  "xp_capt": 0.0430519543,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 643970,
+  "name": "Lienou",
+  "team": "Leeds",
+  "position": "DEF",
+  "xp": 0.0728274185,
+  "xp_capt": 0.0826018719,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 645618,
+  "name": "Burrowes",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 0.1548876342,
+  "xp_capt": 0.2399917531,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 647681,
+  "name": "Leoni",
+  "team": "Liverpool",
+  "position": "DEF",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 647839,
+  "name": "Mouzakitis",
+  "team": "Hull City",
+  "position": "MID",
+  "xp": 0.7266512204,
+  "xp_capt": 1.4536659933,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 647850,
+  "name": "Kostoulas",
+  "team": "Brighton",
+  "position": "FWD",
+  "xp": 1.6761468696,
+  "xp_capt": 2.7894091849,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 649208,
+  "name": "Monga",
+  "team": "Man City",
+  "position": "MID",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 651426,
+  "name": "Canvot",
+  "team": "Crystal Palace",
+  "position": "DEF",
+  "xp": 1.5551801691,
+  "xp_capt": 2.3628610452,
+  "price_m": 4.9
+ },
+ {
+  "player_code": 653481,
+  "name": "Alysson",
+  "team": "Aston Villa",
+  "position": "MID",
+  "xp": 0.4701131466,
+  "xp_capt": 0.7718906336,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 660392,
+  "name": "Uche",
+  "team": "Crystal Palace",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 661313,
+  "name": "J.Angulo",
+  "team": "Sunderland",
+  "position": "FWD",
+  "xp": 0.9406482571,
+  "xp_capt": 1.6594710352,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 661800,
+  "name": "McCarthy",
+  "team": "Hull City",
+  "position": "DEF",
+  "xp": 0.0346844052,
+  "xp_capt": 0.0624496055,
+  "price_m": 4.0
+ },
+ {
+  "player_code": 661888,
+  "name": "Yirenkyi",
+  "team": "Coventry City",
+  "position": "MID",
+  "xp": 1.3177371499,
+  "xp_capt": 1.5206427492,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 672492,
+  "name": "Drakes-Thomas",
+  "team": "Crystal Palace",
+  "position": "MID",
+  "xp": 0.0789154336,
+  "xp_capt": 0.1206743297,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 684268,
+  "name": "Shepherd",
+  "team": "Coventry City",
+  "position": "MID",
+  "xp": 0.0789154336,
+  "xp_capt": 0.123148665,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 690838,
+  "name": "Madjo",
+  "team": "Aston Villa",
+  "position": "FWD",
+  "xp": 0.0,
+  "xp_capt": 0.0,
+  "price_m": 5.5
+ },
+ {
+  "player_code": 696104,
+  "name": "Ahoka",
+  "team": "Sunderland",
+  "position": "MID",
+  "xp": 0.2495409129,
+  "xp_capt": 0.3970598495,
+  "price_m": 4.5
+ },
+ {
+  "player_code": 699989,
+  "name": "Jocelin.T",
+  "team": "Sunderland",
+  "position": "MID",
+  "xp": 0.0789273066,
+  "xp_capt": 0.1309481557,
+  "price_m": 5.0
+ },
+ {
+  "player_code": 700308,
+  "name": "Yohanna",
+  "team": "Brighton",
+  "position": "MID",
+  "xp": 0.5995495129,
+  "xp_capt": 0.9652734426,
+  "price_m": 5.0
+ }
+]

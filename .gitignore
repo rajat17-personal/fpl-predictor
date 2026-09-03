@@ -23,6 +23,11 @@ downloaded_files/
 google-chrome-stable_current_amd64.deb
 *.deb
 
+# --- Playwright E2E run output ---------------------------------------------
+e2e/test-results/
+e2e/playwright-report/
+e2e/blob-report/
+
 # --- Secrets --------------------------------------------------------------
 .env
 .env.*
@@ -39,3 +44,4 @@ google-chrome-stable_current_amd64.deb
 # .github/workflows/   - SEC-04 requires CI workflow definitions tracked
 # requirements.txt, pytest.ini, README.md, PLAN.md, ROADMAP.md, IMPROVEMENTS.md,
 # PROJECT_INDEX.json, PROJECT_INDEX.md
+# e2e/fixtures/        - the immutable v1 E2E fixture set is committed on purpose (D-08)

@@ -1,0 +1,1382 @@
+[
+ {
+  "team": "Crystal Palace",
+  "short": "CRY",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "FUL",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "IPS",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "LEE",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "NFO",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "BHA",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "NEW",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   }
+  ],
+  "ease": 3.33,
+  "xg_next": 1.45,
+  "xgc_next": 1.62
+ },
+ {
+  "team": "Liverpool",
+  "short": "LIV",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "IPS",
+      "home": false,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "FUL",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "BOU",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "MCI",
+      "home": true,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "BRE",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "BHA",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   }
+  ],
+  "ease": 3.33,
+  "xg_next": 2.05,
+  "xgc_next": 2.02
+ },
+ {
+  "team": "Newcastle",
+  "short": "NEW",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "BOU",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "LEE",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "HUL",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "COV",
+      "home": false,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "AVL",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "CRY",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   }
+  ],
+  "ease": 3.33,
+  "xg_next": 1.72,
+  "xgc_next": 1.52
+ },
+ {
+  "team": "Coventry City",
+  "short": "COV",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "MCI",
+      "home": false,
+      "fdr": 5
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "BHA",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "NFO",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "NEW",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "TOT",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "FUL",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   }
+  ],
+  "ease": 3.17,
+  "xg_next": 0.94,
+  "xgc_next": 1.91
+ },
+ {
+  "team": "Fulham",
+  "short": "FUL",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "CRY",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "LIV",
+      "home": false,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "MUN",
+      "home": true,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "IPS",
+      "home": false,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "HUL",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "COV",
+      "home": false,
+      "fdr": 2
+     }
+    ]
+   }
+  ],
+  "ease": 3.17,
+  "xg_next": 1.6,
+  "xgc_next": 1.47
+ },
+ {
+  "team": "Arsenal",
+  "short": "ARS",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "CHE",
+      "home": true,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "SUN",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "BHA",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "LEE",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "NFO",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "EVE",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   }
+  ],
+  "ease": 3.0,
+  "xg_next": 1.43,
+  "xgc_next": 1.2
+ },
+ {
+  "team": "Aston Villa",
+  "short": "AVL",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "HUL",
+      "home": false,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "NFO",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "TOT",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "BRE",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "NEW",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "MCI",
+      "home": true,
+      "fdr": 4
+     }
+    ]
+   }
+  ],
+  "ease": 3.0,
+  "xg_next": 0.99,
+  "xgc_next": 1.6
+ },
+ {
+  "team": "Brighton",
+  "short": "BHA",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "LEE",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "COV",
+      "home": false,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "ARS",
+      "home": true,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "SUN",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "CRY",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "LIV",
+      "home": false,
+      "fdr": 4
+     }
+    ]
+   }
+  ],
+  "ease": 3.0,
+  "xg_next": 1.92,
+  "xgc_next": 1.26
+ },
+ {
+  "team": "Man City",
+  "short": "MCI",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "COV",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "MUN",
+      "home": false,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "SUN",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "LIV",
+      "home": false,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "IPS",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "AVL",
+      "home": false,
+      "fdr": 4
+     }
+    ]
+   }
+  ],
+  "ease": 3.0,
+  "xg_next": 1.89,
+  "xgc_next": 0.95
+ },
+ {
+  "team": "Nott'm Forest",
+  "short": "NFO",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "TOT",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "AVL",
+      "home": false,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "COV",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "CRY",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "ARS",
+      "home": true,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "IPS",
+      "home": false,
+      "fdr": 2
+     }
+    ]
+   }
+  ],
+  "ease": 3.0,
+  "xg_next": 2.0,
+  "xgc_next": 1.09
+ },
+ {
+  "team": "Brentford",
+  "short": "BRE",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "SUN",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "BOU",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "CHE",
+      "home": true,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "AVL",
+      "home": false,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "LIV",
+      "home": true,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "HUL",
+      "home": false,
+      "fdr": 2
+     }
+    ]
+   }
+  ],
+  "ease": 2.83,
+  "xg_next": 2.08,
+  "xgc_next": 1.2
+ },
+ {
+  "team": "Chelsea",
+  "short": "CHE",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "ARS",
+      "home": false,
+      "fdr": 5
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "HUL",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "BRE",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "BOU",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "EVE",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "TOT",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   }
+  ],
+  "ease": 2.83,
+  "xg_next": 1.19,
+  "xgc_next": 1.45
+ },
+ {
+  "team": "Hull City",
+  "short": "HUL",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "AVL",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "CHE",
+      "home": false,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "NEW",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "EVE",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "FUL",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "BRE",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   }
+  ],
+  "ease": 2.83,
+  "xg_next": 1.58,
+  "xgc_next": 1.0
+ },
+ {
+  "team": "Man Utd",
+  "short": "MUN",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "EVE",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "MCI",
+      "home": true,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "FUL",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "TOT",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "LEE",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "BOU",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   }
+  ],
+  "ease": 2.83,
+  "xg_next": 2.18,
+  "xgc_next": 1.65
+ },
+ {
+  "team": "Spurs",
+  "short": "TOT",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "NFO",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "EVE",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "AVL",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "MUN",
+      "home": false,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "COV",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "CHE",
+      "home": false,
+      "fdr": 4
+     }
+    ]
+   }
+  ],
+  "ease": 2.83,
+  "xg_next": 1.08,
+  "xgc_next": 2.02
+ },
+ {
+  "team": "Sunderland",
+  "short": "SUN",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "BRE",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "ARS",
+      "home": true,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "MCI",
+      "home": false,
+      "fdr": 5
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "BHA",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "BOU",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "LEE",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   }
+  ],
+  "ease": 2.83,
+  "xg_next": 1.19,
+  "xgc_next": 2.1
+ },
+ {
+  "team": "Bournemouth",
+  "short": "BOU",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "NEW",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "BRE",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "LIV",
+      "home": true,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "CHE",
+      "home": false,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "SUN",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "MUN",
+      "home": false,
+      "fdr": 4
+     }
+    ]
+   }
+  ],
+  "ease": 2.67,
+  "xg_next": 1.51,
+  "xgc_next": 1.74
+ },
+ {
+  "team": "Everton",
+  "short": "EVE",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "MUN",
+      "home": true,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "TOT",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "IPS",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "HUL",
+      "home": false,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "CHE",
+      "home": true,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "ARS",
+      "home": false,
+      "fdr": 5
+     }
+    ]
+   }
+  ],
+  "ease": 2.67,
+  "xg_next": 1.63,
+  "xgc_next": 2.2
+ },
+ {
+  "team": "Ipswich Town",
+  "short": "IPS",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "LIV",
+      "home": true,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "CRY",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "EVE",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "FUL",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "MCI",
+      "home": false,
+      "fdr": 5
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "NFO",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   }
+  ],
+  "ease": 2.67,
+  "xg_next": 2.0,
+  "xgc_next": 2.07
+ },
+ {
+  "team": "Leeds",
+  "short": "LEE",
+  "gws": [
+   {
+    "gw": 3,
+    "fixtures": [
+     {
+      "opp": "BHA",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 4,
+    "fixtures": [
+     {
+      "opp": "NEW",
+      "home": true,
+      "fdr": 2
+     }
+    ]
+   },
+   {
+    "gw": 5,
+    "fixtures": [
+     {
+      "opp": "CRY",
+      "home": true,
+      "fdr": 3
+     }
+    ]
+   },
+   {
+    "gw": 6,
+    "fixtures": [
+     {
+      "opp": "ARS",
+      "home": false,
+      "fdr": 5
+     }
+    ]
+   },
+   {
+    "gw": 7,
+    "fixtures": [
+     {
+      "opp": "MUN",
+      "home": true,
+      "fdr": 4
+     }
+    ]
+   },
+   {
+    "gw": 8,
+    "fixtures": [
+     {
+      "opp": "SUN",
+      "home": false,
+      "fdr": 3
+     }
+    ]
+   }
+  ],
+  "ease": 2.67,
+  "xg_next": 1.24,
+  "xgc_next": 1.94
+ }
+]
