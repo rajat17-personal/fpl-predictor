@@ -25,8 +25,10 @@ import json
 import os
 import threading
 import time
+from pathlib import Path
 
 import joblib
+import pandas as pd
 import requests
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,6 +36,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 import config
+import predict.live as live
 from models import intervals
 from optimize.multi_period import solve_multi_period
 from optimize.squad_ilp import pick_squad
@@ -43,6 +46,32 @@ from predict.live import (_gw_pool, _load_live, _next_gw, build_horizon_pool,
 
 POOL_TTL_S = 3600
 _HEADERS = {"User-Agent": "fpl-ml-project/0.1"}
+
+# --- E2E fixture-mode seam (Phase 4, E2E-01) --------------------------------
+# FPL_FIXTURE_DIR points at a captured fixture set (see e2e/fixtures/v1/MANIFEST.md).
+# When set, every outbound-network / model-artifact call site below branches to
+# read committed JSON from disk instead — no call to fantasy.premierleague.com,
+# no joblib.load. FPL_FIXTURE_DATA_DIR independently overrides where the site's
+# /data mount reads from, so a blank/DGW variant server can reuse this same
+# api-side capture while serving a different /data set. Production (the unset
+# default) is untouched by any of this — see the mount split at the bottom of
+# this file and tests/test_fixture_mode.py's unset-env assertion.
+_FIXTURE_ROOT = (Path(os.environ["FPL_FIXTURE_DIR"]).resolve()
+                if os.environ.get("FPL_FIXTURE_DIR") else None)
+_FIXTURE_API = _FIXTURE_ROOT / "api" if _FIXTURE_ROOT else None
+_FIXTURE_DATA = (Path(os.environ["FPL_FIXTURE_DATA_DIR"]).resolve()
+                if os.environ.get("FPL_FIXTURE_DATA_DIR")
+                else (_FIXTURE_ROOT / "web-data" if _FIXTURE_ROOT else None))
+if _FIXTURE_ROOT:
+    print(f"[fixture-mode] FPL_FIXTURE_DIR={_FIXTURE_API} "
+          f"FPL_FIXTURE_DATA_DIR={_FIXTURE_DATA} -- serving frozen fixtures, "
+          "no live FPL API calls, no model artifact load. This must never be "
+          "set in a production/deploy configuration.")
+
+
+def _fixture_json(*parts: str):
+    return json.load(open(_FIXTURE_API.joinpath(*parts)))
+
 
 app = FastAPI(title="FPL ML API", version="0.1")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
@@ -62,14 +91,56 @@ _state: dict = _initial_state()
 _solve_cache: dict = {}
 
 
+def _load_live_fixture(force: bool = True):
+    """Fixture-mode replacement for predict.live._load_live: reads the
+    committed, trimmed bootstrap-static.json/fixtures.json from disk instead
+    of predict.live._load_live's unconditional fetch_fpl_live download."""
+    return _fixture_json("bootstrap-static.json"), _fixture_json("fixtures.json")
+
+
+def _gw_pool_fixture(boot: dict, fixtures: list, gw: int, artifact) -> pd.DataFrame:
+    """Fixture-mode replacement for predict.live._gw_pool: the single
+    model-inference leaf. Reads the frozen per-gameweek pool captured at
+    e2e/scripts/capture_fixtures.py time instead of running LightGBM inference
+    (D-10) — build_pool/build_horizon_pool's own aggregation and decay math
+    still run for real over this frozen input."""
+    path = _FIXTURE_API / "pools" / f"gw{gw}.json"
+    if not path.exists():
+        raise HTTPException(503, f"no frozen pool for gw{gw} in fixture set "
+                                 f"{_FIXTURE_API}")
+    return pd.DataFrame(json.load(open(path)))
+
+
+if _FIXTURE_ROOT:
+    _load_live = _load_live_fixture
+    # build_pool/build_horizon_pool resolve `_gw_pool` from predict.live's own
+    # module globals at call time, so rebinding only api.main's imported name
+    # would not affect them — both bindings must be rebound (RESEARCH.md
+    # Pattern 1, Pitfall 1).
+    _gw_pool = _gw_pool_fixture
+    live._gw_pool = _gw_pool_fixture
+
+
+def _intervals_artifact() -> dict | None:
+    """intervals.load_artifact() in production; the committed intervals.json
+    copy in fixture mode. Without this branch, p10/p90 bands would appear on a
+    developer machine (where models/artifacts/intervals.json exists) and
+    vanish in CI (where it does not) — a machine-dependent response body."""
+    if _FIXTURE_ROOT:
+        return _fixture_json("intervals.json")
+    return intervals.load_artifact()
+
+
 def _refresh(force: bool = False) -> None:
     with _lock:
         stale = time.time() - _state["loaded_at"] > POOL_TTL_S
         if not (force or stale or _state["boot"] is None):
             return
         if _state["artifact"] is None:
-            _state["artifact"] = joblib.load(
-                config.ROOT / "models" / "artifacts" / "xp_model.joblib")
+            # Fixture mode: a non-None sentinel, never the real (gitignored,
+            # absent-on-clean-checkout) joblib artifact (D-10, Pitfall 3).
+            _state["artifact"] = ("fixture-mode" if _FIXTURE_ROOT else joblib.load(
+                config.ROOT / "models" / "artifacts" / "xp_model.joblib"))
         boot, fixtures = _load_live()
         _state.update(boot=boot, fixtures=fixtures, gw=_next_gw(boot),
                       pools={}, loaded_at=time.time())
@@ -78,7 +149,7 @@ def _refresh(force: bool = False) -> None:
 
 def _with_bands(pool):
     """Attach p10/p90 interval columns when the artifact exists."""
-    art = intervals.load_artifact()
+    art = _intervals_artifact()
     return pool if art is None else intervals.apply_intervals(pool, art)
 
 
@@ -153,15 +224,27 @@ def ft_from_history(history: dict, next_gw: int) -> int:
     return ft
 
 
-def _free_transfers(entry: int, next_gw: int) -> int | None:
+def _fetch_entry_history(entry: int) -> dict | None:
+    """The one requests.get call site for GET /entry/{entry}/history/.
+
+    Fixture mode reads entries/{entry}/history.json; a missing file degrades to
+    the same None/best-effort behaviour as a live requests.RequestException, so
+    an unknown entry id exercises the same error path in both modes.
+    """
+    if _FIXTURE_ROOT:
+        path = _FIXTURE_API / "entries" / str(entry) / "history.json"
+        return json.load(open(path)) if path.exists() else None
     try:
         r = requests.get(f"{config.FPL_API}/entry/{entry}/history/",
                          headers=_HEADERS, timeout=15)
-        if r.status_code != 200:
-            return None
-        return ft_from_history(r.json(), next_gw)
+        return r.json() if r.status_code == 200 else None
     except requests.RequestException:
         return None
+
+
+def _free_transfers(entry: int, next_gw: int) -> int | None:
+    history = _fetch_entry_history(entry)
+    return None if history is None else ft_from_history(history, next_gw)
 
 
 def require_key(x_api_key: str | None = Header(default=None)) -> None:
@@ -171,29 +254,57 @@ def require_key(x_api_key: str | None = Header(default=None)) -> None:
         raise HTTPException(401, "missing or invalid API key")
 
 
-def _fetch_team(entry: int, gw: int, boot: dict) -> dict:
+def _fetch_entry_picks(entry: int, gw: int) -> dict:
+    """The one requests.get call site for GET /entry/{entry}/event/{gw}/picks/.
+
+    Fixture mode reads entries/{entry}/picks_event{gw-1}.json; a missing file
+    raises the identical HTTPException(404, ...) the live 404 path raises, so a
+    bad entry id exercises the same error path in both modes.
+    """
+    if _FIXTURE_ROOT:
+        path = _FIXTURE_API / "entries" / str(entry) / f"picks_event{gw - 1}.json"
+        if not path.exists():
+            raise HTTPException(404, f"entry {entry}: no picks for GW{gw - 1} "
+                                     "(bad id, or the season hasn't started)")
+        return json.load(open(path))
     r = requests.get(f"{config.FPL_API}/entry/{entry}/event/{gw - 1}/picks/",
                      headers=_HEADERS, timeout=30)
     if r.status_code == 404:
         raise HTTPException(404, f"entry {entry}: no picks for GW{gw - 1} "
                                  "(bad id, or the season hasn't started)")
     r.raise_for_status()
-    data = r.json()
-    # Manager summary (team name, overall points/rank) — best-effort.
-    manager = {}
+    return r.json()
+
+
+def _fetch_entry_summary(entry: int) -> dict | None:
+    """The one requests.get call site for GET /entry/{entry}/.
+
+    Fixture mode reads entries/{entry}/summary.json; a missing file degrades to
+    the same best-effort None as a live requests.RequestException/non-200.
+    """
+    if _FIXTURE_ROOT:
+        path = _FIXTURE_API / "entries" / str(entry) / "summary.json"
+        return json.load(open(path)) if path.exists() else None
     try:
         s = requests.get(f"{config.FPL_API}/entry/{entry}/",
                          headers=_HEADERS, timeout=15)
-        if s.status_code == 200:
-            sj = s.json()
-            manager = {"team_name": sj.get("name"),
-                       "manager": f"{sj.get('player_first_name', '')} "
-                                  f"{sj.get('player_last_name', '')}".strip(),
-                       "overall_points": sj.get("summary_overall_points"),
-                       "overall_rank": sj.get("summary_overall_rank"),
-                       "gw_points": sj.get("summary_event_points")}
+        return s.json() if s.status_code == 200 else None
     except requests.RequestException:
-        pass
+        return None
+
+
+def _fetch_team(entry: int, gw: int, boot: dict) -> dict:
+    data = _fetch_entry_picks(entry, gw)
+    # Manager summary (team name, overall points/rank) — best-effort.
+    manager = {}
+    sj = _fetch_entry_summary(entry)
+    if sj is not None:
+        manager = {"team_name": sj.get("name"),
+                   "manager": f"{sj.get('player_first_name', '')} "
+                              f"{sj.get('player_last_name', '')}".strip(),
+                   "overall_points": sj.get("summary_overall_points"),
+                   "overall_rank": sj.get("summary_overall_rank"),
+                   "gw_points": sj.get("summary_event_points")}
     meta = {el["id"]: el for el in boot["elements"]}
     teams = {t["id"]: t["short_name"] for t in boot["teams"]}
     picks = [{
@@ -403,8 +514,21 @@ def rate(entry: int):
                               hold["captain_code"])}
 
 
-# Serve the static site from the same process, so a single
-#   uvicorn api.main:app --port 8000
-# runs everything at http://localhost:8000/ . API routes above win over the
-# mount; deploys that host web/ elsewhere (Cloudflare Pages) just ignore this.
-app.mount("/", StaticFiles(directory=config.ROOT / "web", html=True), name="site")
+# Fixture mode (E2E-01): serve the built React app + the frozen /data set
+# instead of vanilla web/. check_dir=False lets this server boot before the
+# frontend build has finished (plan 04-03's extra blank/DGW servers start in
+# parallel with the one that owns the build). /data MUST be registered before
+# the catch-all "/" mount below — Starlette matches mounts in registration
+# order, and the more general "/" mount would otherwise swallow JSON requests
+# and answer them with 404.html.
+if _FIXTURE_ROOT:
+    app.mount("/data", StaticFiles(directory=_FIXTURE_DATA, check_dir=False),
+              name="fixture-data")
+    app.mount("/", StaticFiles(directory=config.ROOT / "frontend" / "dist",
+                               html=True, check_dir=False), name="site")
+else:
+    # Serve the static site from the same process, so a single
+    #   uvicorn api.main:app --port 8000
+    # runs everything at http://localhost:8000/ . API routes above win over the
+    # mount; deploys that host web/ elsewhere (Cloudflare Pages) just ignore this.
+    app.mount("/", StaticFiles(directory=config.ROOT / "web", html=True), name="site")
