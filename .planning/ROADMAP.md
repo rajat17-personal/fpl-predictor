@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Test Base Layer & App Skeleton** - API integration tests plus a React/Vite scaffold that proves the dev-proxy seam (completed 2026-09-01)
 - [x] **Phase 2: Data Layer & Non-Pitch Pages** - Seven pages rebuilt at verified parity from the JSON export contract (completed 2026-09-02)
-- [ ] **Phase 3: Pitch Renderer & Squad Views** - FPL-style pitch, team page solving, and rate-my-team
+- [x] **Phase 3: Pitch Renderer & Squad Views** - FPL-style pitch, team page solving, and rate-my-team (completed 2026-09-03)
 - [ ] **Phase 4: E2E Regression Suite** - Deterministic Playwright coverage of the critical flows on frozen fixtures
 - [ ] **Phase 5: Container Build & CI Pipeline** - Locked deps, multi-stage Docker image, GitHub Actions verification and publish
 - [ ] **Phase 6: Security, Reliability & Observability Hardening** - Close the CONCERNS.md production-readiness gaps
@@ -205,7 +205,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Test Base Layer & App Skeleton | 6/6 | Complete    | 2026-09-01 |
 | 2. Data Layer & Non-Pitch Pages | 8/8 | Complete    | 2026-09-02 |
-| 3. Pitch Renderer & Squad Views | 5/5 | In Progress|  |
+| 3. Pitch Renderer & Squad Views | 5/5 | Complete    | 2026-09-03 |
 | 4. E2E Regression Suite | 0/TBD | Not started | - |
 | 5. Container Build & CI Pipeline | 0/TBD | Not started | - |
 | 6. Security, Reliability & Observability Hardening | 0/TBD | Not started | - |

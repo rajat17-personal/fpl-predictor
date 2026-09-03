@@ -28,11 +28,11 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 - ✓ FastAPI integration test suite (TestClient): /solve, /rate, /team, /health, /meta against a `responses`-mocked FPL API; three-mode auth stub coverage; concurrent solve + pool-refresh race test — Phase 1
 - ✓ React/Vite app skeleton with proven dev-proxy runtime seam: all 8 routes resolve, per-route error boundaries, loading/error/empty/404 states, Vitest harness, no pipeline data bundled — Phase 1
 - ✓ Seven non-pitch pages (xP table, fixtures, prices, league, scoreboard, differentials, methodology) rebuilt at verified vanilla parity from the unchanged JSON contract, with GW deadline banner, persistent dark mode, self-hosted fonts, and a PARITY-DEVIATIONS.md ledger of every intentional delta — Phase 2
+- ✓ FPL-style pitch renderer + team page: green-gradient pitch with neutral generated SVG kits, formation rows with continuous flex centering (any row size incl. 6-card ghost rows), Squad/Rate/Plan tabs, solver flow with numeric-code locks/excludes and stale-response guard — all 8 pages now rebuilt; UAT 4/4, 21 threats closed — Phase 3
+- ✓ Trademark posture for pitch visuals: neutral generated kits (no crests/sponsors/CDN imagery), sitewide disclaimer, committed decision doc (docs/decisions/pitch-kit-sourcing.md) signed off in UAT — Phase 3
 
 ### Active
 
-- [ ] React (Vite) rebuild of the web UI — full parity with all 8 existing pages; skeleton + routing shipped in Phase 1, seven non-pitch pages shipped in Phase 2, team/pitch page lands in Phase 3
-- [ ] FPL-style pitch renderer: squad/XI laid out on a pitch with shirts/team visuals, used by team + solver views
 - [ ] Playwright E2E regression suite covering: team/pitch + solver flow, xP table + captains, rate-my-team, fixtures & prices pages
 - [ ] Hardened CI/CD on GitHub Actions: lint, pytest, API tests, Playwright, Docker image build + publish for the API (deploy step stubbed — no live hosting yet)
 - [ ] Security & config hardening: CORS restriction, pinned/locked dependencies, secrets via .env pattern, repo hygiene (remove 134MB Chrome .deb, proper .gitignore)
@@ -56,7 +56,7 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 - Git repo initialized 2026-08-31 (single commit); `.github/workflows/` (daily/weekly) untracked and dormant until pushed to GitHub.
 - **Time-critical, independent of this milestone**: the daily snapshot cron must run every day — price-model history cannot be backfilled (first snapshot 2026-08-31; model unlocks at 14 days).
 - User's own FPL team id: 6980093 — use for rate-my-team / solver E2E fixtures instead of entry 1.
-- FPL club crests/kits are trademarked assets; the pitch renderer should use FPL's own shirt image CDN (as the official app does) or neutral generated kit graphics — resolve during UI design.
+- FPL club crests/kits are trademarked assets — **resolved Phase 3**: neutral generated kit graphics (inline SVG, no CDN/crest/sponsor imagery), documented in docs/decisions/pitch-kit-sourcing.md; feeds the eventual payment-gateway legal review.
 - pytest note: run with `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` or keep `pytest.ini` plugin disables (`-p no:playwright -p no:seleniumbase` collide on `--browser`) — Playwright's pytest plugin will need config care if Python-based, or use the Node Playwright runner.
 
 ## Constraints
@@ -82,6 +82,9 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 | All three hardening areas in scope (security, reliability, observability) | These are the "production ready" bar the user asked for pre-monetization | — Pending |
 | PARITY-DEVIATIONS.md ledger records every intentional vanilla→React delta | Phase 7 cutover must distinguish approved changes from regressions without relying on memory | ✓ Good — Phase 2 seeded all 8 known deviations |
 | Lockstep palette edits (React + vanilla in one commit) until CUT-01; fonts self-hosted via @fontsource, CDN removed | Vanilla stays authoritative pre-cutover; no third-party font requests leaking visitor IPs | ✓ Good — Phase 2, guarded by check-tokens.mjs on every test run |
+| Neutral generated SVG kits, not FPL CDN shirt imagery | Trademark/passing-off exposure; no third-party origin dependency; posture documented in a committed decision doc | ✓ Good — Phase 3, UAT-signed-off; revisit at payment-gateway legal review |
+| Continuous flex centering for pitch rows (fixed basis over max(5, n) parts) | Integer grid-column placement is exact only when row size and track count share parity — 2/4-card rows drifted half a column (G-03-1) | ✓ Good — Phase 3, symmetry-tested n∈{1..6}, visually confirmed |
+| Client sends numeric player_code locks/excludes, never free-text names | Server's substring name-resolver never exercised by the rebuilt client; request-body test asserts no display names | ✓ Good — Phase 3 |
 
 ## Evolution
 
@@ -101,4 +104,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-02 after Phase 2*
+*Last updated: 2026-09-03 after Phase 3*
