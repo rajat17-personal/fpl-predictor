@@ -7,12 +7,14 @@ import squadFixture from "../test/fixtures/squad.json";
 import xpFixture from "../test/fixtures/xp_table_squad.json";
 import metaFixture from "../test/fixtures/meta.json";
 import teamResponseFixture from "../test/fixtures/team_response.json";
+import chipsFixture from "../test/fixtures/chips.json";
 
 const FIXTURES: Record<string, unknown> = {
   "/data/squad.json": squadFixture,
   "/data/xp_table.json": xpFixture,
   "/data/meta.json": metaFixture,
   "/api/team/6980093": teamResponseFixture,
+  "/data/chips.json": chipsFixture,
 };
 
 function mockFetchByUrl(overrides: Record<string, unknown> = {}) {
@@ -68,6 +70,14 @@ describe("Team (03-02 Task 1: three-tab shell + URL state + load flow)", () => {
     renderTeam();
 
     await screen.findByText("Virgil");
+    expect(calls.some((url) => url.includes("/api/"))).toBe(false);
+  });
+
+  it("fires zero requests to /api/rate/ or /api/team/ when the Chips tab is open", async () => {
+    const calls = mockFetchByUrl();
+    renderTeam("/team?tab=chips");
+
+    await screen.findByTestId("chip-timeline");
     expect(calls.some((url) => url.includes("/api/"))).toBe(false);
   });
 
