@@ -89,7 +89,7 @@ describe("Team (03-01 Task 1: end-to-end model squad pitch)", () => {
     mockFetchByUrl();
     renderTeam();
     await screen.findByText("Virgil");
-    expect(document.title).toBe("Rate my team — FPL ML");
+    expect(document.title).toBe("My team — FPL ML");
   });
 
   it("renders the EmptyState rather than throwing for a zero-row squad payload", async () => {

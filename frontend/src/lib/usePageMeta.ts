@@ -11,8 +11,9 @@ export const PAGE_META = Object.freeze({
       "Machine-learned FPL expected points with uncertainty bands, an optimal squad, and a public accuracy scoreboard.",
   },
   "/team": {
-    title: "Rate my team — FPL ML",
-    description: "Score your FPL squad against the model's optimum and get your best move.",
+    title: "My team — FPL ML",
+    description:
+      "Score your FPL squad against the model's optimum, get your best move, and see chip timing.",
   },
   "/fixtures": {
     title: "Fixture ticker — FPL ML",

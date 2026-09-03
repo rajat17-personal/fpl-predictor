@@ -9,7 +9,7 @@ import { fetchJson, type MetaResponse } from "../lib/api";
  * table order. Labels reuse web/index.html's existing nav copy for parity. */
 export const NAV_LINKS: { to: string; label: string }[] = [
   { to: "/", label: "xP table" },
-  { to: "/team", label: "Rate my team" },
+  { to: "/team", label: "My team" },
   { to: "/fixtures", label: "Fixtures" },
   { to: "/prices", label: "Prices" },
   { to: "/league", label: "League" },
@@ -76,7 +76,8 @@ export default function PageShell() {
         <p className="mx-auto w-full max-w-[68rem] px-4">
           Predictions are statistics, not certainties. This site hosts no contests and
           takes no stakes. Not affiliated with the Premier League or the official
-          Fantasy Premier League game.
+          Fantasy Premier League game. Player kit colors shown are generic illustrations,
+          not licensed team imagery.
         </p>
       </footer>
     </div>

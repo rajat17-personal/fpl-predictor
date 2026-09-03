@@ -120,3 +120,36 @@ describe("PageShell — GW banner and theme toggle wiring (Task 3)", () => {
     expect(screen.getByRole("button", { name: "System theme" })).toBeInTheDocument();
   });
 });
+
+describe("PageShell — PITCH-01 footer disclaimer and nav rename (03-01 Task 3)", () => {
+  beforeEach(() => {
+    mockFetchOnce();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("renders the nav link for /team labeled 'My team', not the vanilla 'Rate my team'", () => {
+    renderShell();
+    expect(screen.getByRole("link", { name: "My team" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Rate my team" })).not.toBeInTheDocument();
+  });
+
+  it("renders the full four-sentence footer disclaimer, including the generic-kit-imagery sentence, on every route", () => {
+    const { container } = renderShell();
+    const footerParagraph = container.querySelector("footer p");
+    expect(footerParagraph?.textContent).toContain(
+      "Predictions are statistics, not certainties.",
+    );
+    expect(footerParagraph?.textContent).toContain(
+      "This site hosts no contests and takes no stakes.",
+    );
+    expect(footerParagraph?.textContent).toContain(
+      "Not affiliated with the Premier League or the official Fantasy Premier League game.",
+    );
+    expect(footerParagraph?.textContent).toContain(
+      "Player kit colors shown are generic illustrations, not licensed team imagery.",
+    );
+  });
+});

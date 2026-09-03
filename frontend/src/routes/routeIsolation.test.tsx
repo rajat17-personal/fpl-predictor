@@ -6,7 +6,7 @@ import { routes } from "./../router";
 
 const NAV_LABELS = [
   "xP table",
-  "Rate my team",
+  "My team",
   "Fixtures",
   "Prices",
   "League",
