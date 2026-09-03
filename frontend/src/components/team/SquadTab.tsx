@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchApi,
   fetchJson,
   type MetaResponse,
+  type SolveRequest,
+  type SolveResult,
+  type SolveTransfersResult,
   type SquadResponse,
   type SquadRow,
   type TeamPick,
@@ -15,6 +18,7 @@ import { ErrorState } from "../ErrorState";
 import { EmptyState } from "../EmptyState";
 import { Pitch } from "../pitch/Pitch";
 import type { PlayerMark } from "../pitch/PlayerCard";
+import { SolveControls, type SolveControlValues } from "../SolveControls";
 import { deriveFormation } from "../../lib/formation";
 import { deriveViceCaptain, joinSquad } from "../../lib/squadJoin";
 
@@ -48,6 +52,117 @@ export function excludedCodes(marks: MarkRecord): number[] {
   return Object.entries(marks)
     .filter(([, mark]) => mark === "excluded")
     .map(([code]) => Number(code));
+}
+
+/* Builds /api/solve's request body (D-15, Pitfall 3): locks/excludes always
+ * come from the tested lockedCodes/excludedCodes derivations above — numeric
+ * player_code, never a card's displayed name. max_transfers is omitted
+ * entirely (not sent as null) when SolveControls' matching input was left
+ * empty, so an unset control never becomes a round-trip validation quirk.
+ * mode/budget are never included — D-14 limits the exposed surface to the
+ * three knobs SolveControls collects. */
+export function buildSolveRequest(
+  entry: number,
+  values: SolveControlValues,
+  marks: MarkRecord,
+): SolveRequest {
+  const body: SolveRequest = {
+    entry,
+    free_transfers: values.freeTransfers,
+    horizon: values.horizon,
+    locks: lockedCodes(marks),
+    excludes: excludedCodes(marks),
+  };
+  if (values.maxTransfers != null) {
+    body.max_transfers = values.maxTransfers;
+  }
+  return body;
+}
+
+/* Custom fetch (not lib/api.ts's fetchApi) — same precedent as RateTab.tsx's
+ * fetchRate and PlanTransfers.tsx's postPlan: fetchApi discards the response
+ * body on a non-ok response, which cannot reproduce the exact "Couldn't
+ * solve: {message}." copy (D-15) that needs the response's own `detail`
+ * field when present, falling back to the status code otherwise. */
+async function postSolve(body: SolveRequest): Promise<SolveResult> {
+  const res = await fetch("/api/solve", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    let detail: string | undefined;
+    try {
+      const parsed = (await res.json()) as { detail?: string };
+      detail = parsed?.detail;
+    } catch {
+      // Response body wasn't JSON — fall back to the status code below.
+    }
+    throw new Error(detail || String(res.status));
+  }
+  return (await res.json()) as SolveResult;
+}
+
+export interface SolveState {
+  status: "idle" | "pending" | "error" | "success";
+  data?: SolveTransfersResult;
+  error?: string;
+}
+
+/* Solve request lifecycle (D-15), extracted as its own hook so the
+ * ordering-safety guard (T-03-16 — "a superseded solve response overwriting
+ * the displayed squad") is directly unit-testable via renderHook, calling
+ * solveNow() twice back-to-back without going through a real disabled-button
+ * click. (D-15's button-disable is a separate, UI-level brake against
+ * *starting* a second solve — T-03-15 — that this hook does not enforce
+ * itself; SolveControls' own `disabled` prop is what stops a real user from
+ * ever reaching this path through the rendered button. This hook's guard is
+ * the independent safety net for whenever two solves land in flight anyway.)
+ *
+ * solveSeqRef captures the sequence number current when a solve starts, and
+ * only applies that solve's result if the number is still current when the
+ * response arrives — a later solve bumps the ref, so an earlier response
+ * that arrives after is recognised as stale and dropped. Local useState, not
+ * TanStack Query's useMutation — no existing precedent for useMutation in
+ * this codebase (03-03-PLAN.md's SUMMARY records the same choice for
+ * PlanTransfers.tsx). */
+export function useSolveController(entry: number | null, marks: MarkRecord) {
+  const [solve, setSolve] = useState<SolveState>({ status: "idle" });
+  const solveSeqRef = useRef(0);
+
+  async function solveNow(values: SolveControlValues) {
+    if (entry == null) {
+      return;
+    }
+    const seq = ++solveSeqRef.current;
+    setSolve({ status: "pending" });
+    const body = buildSolveRequest(entry, values, marks);
+    try {
+      const result = await postSolve(body);
+      if (seq !== solveSeqRef.current) {
+        return; // A newer solve has started — this response is stale.
+      }
+      if (result.kind === "transfers") {
+        setSolve({ status: "success", data: result });
+      }
+    } catch (e) {
+      if (seq !== solveSeqRef.current) {
+        return;
+      }
+      const message = e instanceof Error ? e.message : String(e);
+      setSolve({ status: "error", error: message });
+    }
+  }
+
+  /* Reset to loaded squad (D-17): discards the current solve result and
+   * invalidates any in-flight solve (bumping solveSeqRef so a response that
+   * arrives afterward is treated as superseded). No network request. */
+  function resetSolve() {
+    solveSeqRef.current += 1;
+    setSolve({ status: "idle" });
+  }
+
+  return { solve, solveNow, resetSolve };
 }
 
 /* DEF/MID/FWD starter-count bounds, mirrored from optimize/squad_ilp.py's
@@ -231,6 +346,8 @@ export function SquadTab({ entry, onLoadEntry, onClearEntry }: SquadTabProps) {
     });
   }
 
+  const { solve, solveNow } = useSolveController(entry, marks);
+
   const metaQuery = useQuery({
     queryKey: ["meta"],
     queryFn: () => fetchJson<MetaResponse>("/data/meta.json"),
@@ -316,13 +433,22 @@ export function SquadTab({ entry, onLoadEntry, onClearEntry }: SquadTabProps) {
       return <EmptyState />;
     }
 
+    /* The as-loaded squad — recomputed deterministically from teamQuery.data
+     * (unchanged by a solve) every render, so it always reflects the team
+     * exactly as it was loaded without needing separate state (D-17's
+     * Reset target, and Task 3's IN-badge diff base). */
     const squadRows = selectLoadedSquad(teamQuery.data.picks, xpTable);
-    const players = joinSquad(squadRows, xpTable);
-    const formation = deriveFormation(squadRows);
-    const captainCode = squadRows.find((r) => r.captain)?.player_code ?? null;
+    /* D-16: a completed solve re-renders the same pitch in place with the
+     * solve's own squad — never a second pitch. Diffing against squadRows
+     * (not the previous solve) is Task 3's job. */
+    const displayedRows =
+      solve.status === "success" && solve.data ? solve.data.squad : squadRows;
+    const players = joinSquad(displayedRows, xpTable);
+    const formation = deriveFormation(displayedRows);
+    const captainCode = displayedRows.find((r) => r.captain)?.player_code ?? null;
     const xpByCode = new Map(xpTable.map((row) => [row.player_code, row]));
     const viceCode = deriveViceCaptain(
-      squadRows
+      displayedRows
         .filter((r) => r.starting)
         .map((r) => ({ player_code: r.player_code, captain: r.captain })),
       xpByCode,
@@ -354,6 +480,25 @@ export function SquadTab({ entry, onLoadEntry, onClearEntry }: SquadTabProps) {
             onMark={handleMark}
           />
         </div>
+
+        {/* freeTransfersEstimate is null here: the only endpoint that returns
+         * that estimate is /api/rate/{entry} (see api/main.py's _free_transfers),
+         * and D-20 forbids the Squad tab firing a rate/plan-cost fetch just to
+         * prefill this input. SolveControls falls back to 1 — /api/solve's own
+         * server-side default and _free_transfers' own fallback when a
+         * manager's transfer history is unavailable — so the field is still
+         * never blank, and it stays editable per D-14. */}
+        <SolveControls
+          freeTransfersEstimate={null}
+          pending={solve.status === "pending"}
+          onSolve={(values) => void solveNow(values)}
+        />
+
+        {solve.status === "error" && (
+          <p className="mt-2 font-body text-body text-ink-2">
+            Couldn't solve: {solve.error}. Check your inputs and try again.
+          </p>
+        )}
       </div>
     );
   }

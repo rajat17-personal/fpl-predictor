@@ -1,11 +1,21 @@
 import { describe, expect, it, afterEach, vi } from "vitest";
-import { render, screen, within, fireEvent } from "@testing-library/react";
+import { render, screen, within, fireEvent, renderHook, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { SquadTab, selectLoadedSquad, lockedCodes, excludedCodes, type MarkRecord } from "./SquadTab";
+import {
+  SquadTab,
+  selectLoadedSquad,
+  lockedCodes,
+  excludedCodes,
+  buildSolveRequest,
+  useSolveController,
+  type MarkRecord,
+} from "./SquadTab";
 import squadFixture from "../../test/fixtures/squad.json";
 import xpFixture from "../../test/fixtures/xp_table_squad.json";
 import metaFixture from "../../test/fixtures/meta.json";
 import teamResponseFixture from "../../test/fixtures/team_response.json";
+import solveFixture from "../../test/fixtures/solve_transfers_response.json";
+import type { SolveRequest } from "../../lib/api";
 
 const FIXTURES: Record<string, unknown> = {
   "/data/squad.json": squadFixture,
@@ -13,6 +23,43 @@ const FIXTURES: Record<string, unknown> = {
   "/data/meta.json": metaFixture,
   "/api/team/6980093": teamResponseFixture,
 };
+
+interface FetchResponseLike {
+  ok: boolean;
+  status: number;
+  json: () => Promise<unknown>;
+}
+
+/** Handles the fixture GETs above plus POST /api/solve, delegated to
+ * `solveImpl` so each test controls timing/outcome. Returns the parsed
+ * request bodies sent to /api/solve, in call order. */
+function mockFetchWithSolve(solveImpl: (body: SolveRequest) => Promise<FetchResponseLike>) {
+  const solveCalls: SolveRequest[] = [];
+  globalThis.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+    const url = typeof input === "string" ? input : input.toString();
+    if (url.endsWith("/api/solve")) {
+      const body = JSON.parse(init?.body as string) as SolveRequest;
+      solveCalls.push(body);
+      return solveImpl(body);
+    }
+    const path = Object.keys(FIXTURES).find((key) => url.endsWith(key));
+    if (!path) {
+      return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) });
+    }
+    return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(FIXTURES[path]) });
+  }) as unknown as typeof fetch;
+  return solveCalls;
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
 
 function mockFetchByUrl(overrides: Record<string, unknown> = {}) {
   const body = { ...FIXTURES, ...overrides };
@@ -217,5 +264,161 @@ describe("SquadTab lock/exclude marks (03-04 Task 1)", () => {
     await screen.findByText("The Testers · GW3");
     expect(screen.getAllByLabelText("Locked — always included in solve")).toHaveLength(1);
     expect(screen.getAllByLabelText("Excluded from solve")).toHaveLength(1);
+  });
+});
+
+describe("buildSolveRequest (03-04 Task 2)", () => {
+  it("carries numeric locked/excluded player_code arrays and no marked player's display name anywhere in the body", () => {
+    const marks: MarkRecord = { 97032: "locked", 108416: "excluded" };
+    const body = buildSolveRequest(
+      6980093,
+      { freeTransfers: 1, maxTransfers: null, horizon: 1 },
+      marks,
+    );
+    expect(body.locks).toEqual([97032]);
+    expect(body.excludes).toEqual([108416]);
+    expect(body.locks.every((c) => typeof c === "number")).toBe(true);
+    expect(body.excludes.every((c) => typeof c === "number")).toBe(true);
+    expect(JSON.stringify(body)).not.toContain("Virgil");
+    expect(JSON.stringify(body)).not.toContain("Egan");
+  });
+
+  it("omits max_transfers entirely when the value is null", () => {
+    const body = buildSolveRequest(6980093, { freeTransfers: 1, maxTransfers: null, horizon: 1 }, {});
+    expect(body).not.toHaveProperty("max_transfers");
+  });
+
+  it("includes max_transfers when a numeric value is supplied", () => {
+    const body = buildSolveRequest(6980093, { freeTransfers: 1, maxTransfers: 4, horizon: 2 }, {});
+    expect(body.max_transfers).toBe(4);
+    expect(body.horizon).toBe(2);
+  });
+});
+
+describe("SquadTab solve flow (03-04 Task 2)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("sends locks/excludes as numeric player_code arrays, with no marked display name in the request body", async () => {
+    const { promise } = deferred<FetchResponseLike>();
+    const solveCalls = mockFetchWithSolve(() => promise);
+    renderSquadTab({ entry: 6980093 });
+
+    await screen.findByText("The Testers · GW3");
+    fireEvent.click(screen.getByRole("button", { name: "Virgil actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Lock in squad" }));
+    fireEvent.click(screen.getByRole("button", { name: "Egan actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Exclude from squad" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Solve transfers" }));
+
+    await vi.waitFor(() => expect(solveCalls).toHaveLength(1));
+    expect(solveCalls[0].locks).toEqual([97032]);
+    expect(solveCalls[0].excludes).toEqual([108416]);
+    expect(JSON.stringify(solveCalls[0])).not.toContain("Virgil");
+    expect(JSON.stringify(solveCalls[0])).not.toContain("Egan");
+  });
+
+  it("omits max_transfers from the request body when the input is left empty", async () => {
+    const { promise } = deferred<FetchResponseLike>();
+    const solveCalls = mockFetchWithSolve(() => promise);
+    renderSquadTab({ entry: 6980093 });
+
+    await screen.findByText("The Testers · GW3");
+    fireEvent.click(screen.getByRole("button", { name: "Solve transfers" }));
+
+    await vi.waitFor(() => expect(solveCalls).toHaveLength(1));
+    expect(solveCalls[0]).not.toHaveProperty("max_transfers");
+  });
+
+  it("renders exactly 'Solving your transfers…', disables the solve button, and keeps the pitch's cards in the document", async () => {
+    const { promise } = deferred<FetchResponseLike>();
+    mockFetchWithSolve(() => promise);
+    renderSquadTab({ entry: 6980093 });
+
+    await screen.findByText("The Testers · GW3");
+    fireEvent.click(screen.getByRole("button", { name: "Solve transfers" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Solving your transfers…");
+    expect(screen.getByRole("button", { name: "Solve transfers" })).toBeDisabled();
+    expect(screen.getByText("Virgil")).toBeInTheDocument();
+  });
+
+  it("renders 'Couldn't solve:' and 'Check your inputs and try again.' on a rejected solve", async () => {
+    mockFetchWithSolve(() =>
+      Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({ detail: "no solution" }) }),
+    );
+    renderSquadTab({ entry: 6980093 });
+
+    await screen.findByText("The Testers · GW3");
+    fireEvent.click(screen.getByRole("button", { name: "Solve transfers" }));
+
+    expect(await screen.findByText(/Couldn't solve:/)).toBeInTheDocument();
+    expect(screen.getByText(/no solution/)).toBeInTheDocument();
+    expect(screen.getByText(/Check your inputs and try again\./)).toBeInTheDocument();
+  });
+
+  it("renders the solved squad in place after a successful solve", async () => {
+    mockFetchWithSolve(() =>
+      Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(solveFixture) }),
+    );
+    renderSquadTab({ entry: 6980093 });
+
+    await screen.findByText("The Testers · GW3");
+    fireEvent.click(screen.getByRole("button", { name: "Solve transfers" }));
+
+    expect(await screen.findByText("Haaland")).toBeInTheDocument();
+    expect(screen.getByText("Palmer")).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+});
+
+/* useSolveController's ordering-safety guard (T-03-16), tested directly via
+ * renderHook rather than through two real button clicks: SolveControls'
+ * `disabled` prop (D-15/T-03-15) is what stops a real user from ever
+ * dispatching a second solve through the rendered UI, and browsers (jsdom
+ * included) suppress click dispatch to a genuinely disabled form control
+ * regardless of how the test tries to force it — so simulating "two
+ * overlapping user clicks" through fireEvent cannot reliably exercise this
+ * path. Calling solveNow() twice back-to-back exercises the exact same
+ * production code the button would call, without fighting that browser
+ * behaviour. */
+describe("useSolveController ordering safety (03-04 Task 2, T-03-16)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("never lets a superseded solve response overwrite a newer one", async () => {
+    const first = deferred<FetchResponseLike>();
+    const second = deferred<FetchResponseLike>();
+    const responses = [first.promise, second.promise];
+    const solveCalls = mockFetchWithSolve(() => responses.shift()!);
+
+    const { result } = renderHook(() => useSolveController(6980093, {}));
+
+    act(() => {
+      void result.current.solveNow({ freeTransfers: 1, maxTransfers: null, horizon: 1 });
+    });
+    expect(result.current.solve.status).toBe("pending");
+
+    act(() => {
+      void result.current.solveNow({ freeTransfers: 1, maxTransfers: null, horizon: 1 });
+    });
+    expect(solveCalls).toHaveLength(2);
+
+    const staleFirstResponse = { ...solveFixture, captain: "StaleCaptain" };
+
+    // The newer (second) solve resolves first.
+    second.resolve({ ok: true, status: 200, json: () => Promise.resolve(solveFixture) });
+    await vi.waitFor(() => expect(result.current.solve.status).toBe("success"));
+    expect(result.current.solve.data?.captain).toBe("Haaland");
+
+    // The first (now-superseded) solve resolves afterward — must not change
+    // the applied result at all.
+    first.resolve({ ok: true, status: 200, json: () => Promise.resolve(staleFirstResponse) });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(result.current.solve.status).toBe("success");
+    expect(result.current.solve.data?.captain).toBe("Haaland");
   });
 });
