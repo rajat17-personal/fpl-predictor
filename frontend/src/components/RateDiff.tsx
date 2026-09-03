@@ -10,6 +10,8 @@ export interface RateOverlay {
   ghost: PitchGhost | null;
 }
 
+const VALID_PITCH_ROWS = new Set<string>(["GK", "DEF", "MID", "FWD"]);
+
 /* Resolves best_move (0-or-1 sell, 0-or-1 buy by construction — see
  * <hard_bound> in 03-03-PLAN.md) into Pitch's diffs/ghost props. Exported as
  * a pure function so both the exact-match success path and the zero/
@@ -61,11 +63,17 @@ export function resolveRateOverlay(
         news: row.news,
         ownership: row.ownership,
       };
-      ghost = {
-        row: row.position as PitchGhost["row"],
-        afterCode: outCode,
-        player: ghostPlayer,
-      };
+      if (VALID_PITCH_ROWS.has(row.position)) {
+        ghost = {
+          row: row.position as PitchGhost["row"],
+          afterCode: outCode,
+          player: ghostPlayer,
+        };
+      } else if (import.meta.env.DEV) {
+        console.warn(
+          `resolveRateOverlay: unexpected position "${row.position}" for ghost buy`,
+        );
+      }
     }
   }
 
