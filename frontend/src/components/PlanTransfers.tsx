@@ -1,5 +1,9 @@
+import type { ReactNode } from "react";
 import { useState } from "react";
-import type { PlanResponse, XpRow } from "../lib/api";
+import type { PlanResponse, PlanWeek, XpRow } from "../lib/api";
+import { pairMoves } from "../lib/pairMoves";
+import { deriveViceCaptain, joinSquad } from "../lib/squadJoin";
+import { Pitch } from "./pitch/Pitch";
 
 export interface PlanTransfersProps {
   entryId: number;
@@ -138,17 +142,112 @@ export function PlanTransfers({ entryId, freeTransfersEstimate, xpTable }: PlanT
       )}
 
       {state.status === "success" && state.data && (
-        <PlanOutput weeks={state.data.weeks} xpTable={xpTable} />
+        <div>
+          {state.data.weeks.map((week, i) => (
+            <PlanWeekBlock key={week.gw} week={week} index={i} xpTable={xpTable} />
+          ))}
+          <p className="mt-6 font-body text-body text-ink-2">
+            Week one is the decision to act on; later weeks are the current plan and will
+            re-optimise as prices, injuries and form move.
+          </p>
+        </div>
       )}
     </div>
   );
 }
 
-/* Placeholder until Task 3 lands the full per-week block (moves tile,
- * projected-XI tile, collapsible squad pitch, closing note). Left minimal
- * rather than duplicated logic that Task 3 immediately replaces. */
-function PlanOutput({ weeks }: { weeks: PlanResponse["weeks"]; xpTable: XpRow[] }) {
-  return <div data-testid="plan-output">{weeks.length} week(s) planned</div>;
+interface TileProps {
+  heading: string;
+  value: ReactNode;
+  detail: ReactNode;
+}
+
+function Tile({ heading, value, detail }: TileProps) {
+  return (
+    <div className="rounded border border-line bg-surface p-4">
+      <p className="font-label text-label font-bold uppercase tracking-[0.08em] text-ink-2">
+        {heading}
+      </p>
+      <p className="mt-1 font-display text-display font-bold text-ink">{value}</p>
+      <p className="mt-1 font-label text-label text-ink-2">{detail}</p>
+    </div>
+  );
+}
+
+/* One planned gameweek (Task 3, D-19/D-15): moves + projected-XI tiles,
+ * a collapsible squad pitch (open only for week one), reproducing
+ * web/team.html:166-181's exact structure and conditional copy — the hit-
+ * cost clause is entirely omitted (not "0 pts") when a week takes no hits,
+ * and the 8/10 GWs clause is entirely omitted when that week's interval is
+ * null (Pitfall 2). The squad list substitution for the shared <Pitch>
+ * component is PARITY-DEVIATIONS ledger row 11 — already authorised, no new
+ * ledger row needed. */
+function PlanWeekBlock({
+  week,
+  index,
+  xpTable,
+}: {
+  week: PlanWeek;
+  index: number;
+  xpTable: XpRow[];
+}) {
+  const heading = `GW${week.gw} ${index === 0 ? "— do this now" : "— planned"}`;
+  const pairs = pairMoves(week.sells, week.buys);
+  const movesValue =
+    week.buys.length > 0 ? (
+      <>
+        {pairs.map((pair, i) => (
+          <span key={`${pair.sellName}-${pair.buyName}-${i}`} className="block">
+            {pair.sellName} → {pair.buyName}{" "}
+            <span className="font-label text-[11px] uppercase text-ink-2">{pair.position}</span>
+          </span>
+        ))}
+      </>
+    ) : (
+      "Hold"
+    );
+  const movesDetail = `${week.buys.length} transfer(s)${
+    week.hits ? `, −${4 * week.hits} pts in hits` : ""
+  } · ${week.free_transfers_after} FT carried to next GW`;
+  const xiDetail = `${
+    week.xi_p10 != null ? `${week.xi_p10}–${week.xi_p90} in 8/10 GWs · ` : ""
+  }captain ${week.captain} · bank £${week.bank.toFixed(1)}m`;
+
+  const players = joinSquad(week.squad, xpTable);
+  const captainCode = week.squad.find((r) => r.captain)?.player_code ?? null;
+  const xpByCode = new Map(xpTable.map((row) => [row.player_code, row]));
+  const viceCode = deriveViceCaptain(
+    week.squad
+      .filter((r) => r.starting)
+      .map((r) => ({ player_code: r.player_code, captain: r.captain })),
+    xpByCode,
+  );
+
+  return (
+    <div className="mt-6">
+      <h2 className="font-heading text-heading font-bold text-ink">{heading}</h2>
+      <div className="mt-2 grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
+        <Tile heading="Moves" value={movesValue} detail={movesDetail} />
+        <Tile
+          heading="Projected XI"
+          value={
+            <>
+              {week.xi_xp} <span className="font-label text-label">xP</span>
+            </>
+          }
+          detail={xiDetail}
+        />
+      </div>
+      <details open={index === 0} className="mt-3">
+        <summary className="cursor-pointer font-label text-label font-bold text-ink-2">
+          Squad for GW{week.gw}
+        </summary>
+        <div className="mt-2">
+          <Pitch players={players} captainCode={captainCode} viceCode={viceCode} />
+        </div>
+      </details>
+    </div>
+  );
 }
 
 export default PlanTransfers;

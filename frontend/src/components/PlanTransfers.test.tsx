@@ -90,7 +90,7 @@ describe("PlanTransfers — controls (03-03 Task 2, D-19)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Plan my transfers" }));
 
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     const body = JSON.parse(init.body as string);
     expect(body).not.toHaveProperty("free_transfers");
     expect(body.entry).toBe(6980093);
@@ -107,7 +107,7 @@ describe("PlanTransfers — controls (03-03 Task 2, D-19)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Plan my transfers" }));
 
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     const body = JSON.parse(init.body as string);
     expect(body.free_transfers).toBe(2);
   });
@@ -137,15 +137,85 @@ describe("PlanTransfers — controls (03-03 Task 2, D-19)", () => {
     expect(screen.getByText(/solve timed out/)).toBeInTheDocument();
   });
 
-  it("does not error on a successful plan request", async () => {
+});
+
+describe("PlanTransfers — per-week output (03-03 Task 3, D-19/D-15)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  async function renderAndSubmit(response: unknown = planFixture) {
     globalThis.fetch = vi.fn(() =>
-      Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(planFixture) }),
+      Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(response) }),
     ) as unknown as typeof fetch;
-    renderPlanTransfers();
-
+    const utils = renderPlanTransfers();
     fireEvent.click(screen.getByRole("button", { name: "Plan my transfers" }));
+    await screen.findByText(/do this now/);
+    return utils;
+  }
 
-    expect(await screen.findByTestId("plan-output")).toBeInTheDocument();
-    expect(screen.queryByText(/^Planning failed:/)).not.toBeInTheDocument();
+  it("gives the first week's heading '— do this now' and the second week's '— planned'", async () => {
+    await renderAndSubmit();
+    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    expect(headings.some((t) => t?.includes("GW3") && t.includes("— do this now"))).toBe(true);
+    expect(headings.some((t) => t?.includes("GW4") && t.includes("— planned"))).toBe(true);
+  });
+
+  it("shows the hit-cost clause for a week with hits and omits it for a week with zero hits", async () => {
+    await renderAndSubmit();
+    expect(screen.getByText(/, −8 pts in hits/)).toBeInTheDocument();
+
+    const movesHeadings = screen.getAllByText("Moves");
+    const week2Detail = movesHeadings[1].closest("div")!.textContent;
+    expect(week2Detail).not.toMatch(/pts in hits/);
+  });
+
+  it("renders 'Hold' for a week with no buys", async () => {
+    await renderAndSubmit();
+    const movesHeadings = screen.getAllByText("Moves");
+    const week2Tile = movesHeadings[1].closest("div") as HTMLElement;
+    expect(within(week2Tile).getByText("Hold")).toBeInTheDocument();
+  });
+
+  it("renders 'captain' but no '8/10 GWs' in the Projected XI detail for a week with a null interval", async () => {
+    await renderAndSubmit();
+    const xiHeadings = screen.getAllByText("Projected XI");
+    const week3Detail = xiHeadings[2].closest("div")!.textContent;
+    expect(week3Detail).toMatch(/captain/);
+    expect(week3Detail).not.toMatch(/8\/10 GWs/);
+  });
+
+  it("has exactly one disclosure open on first render, and it is week one's", async () => {
+    await renderAndSubmit();
+    const summaries = screen.getAllByText(/^Squad for GW/);
+    const details = summaries.map((s) => s.closest("details") as HTMLDetailsElement);
+    const openDetails = details.filter((d) => d.open);
+    expect(openDetails).toHaveLength(1);
+    expect(openDetails[0].textContent).toMatch(/Squad for GW3/);
+  });
+
+  it("renders each week's disclosure with a pitch showing that week's 15 squad rows", async () => {
+    await renderAndSubmit();
+    const benches = screen.getAllByTestId("bench");
+    expect(benches).toHaveLength(3);
+    expect(screen.getAllByText("Virgil")).toHaveLength(3);
+  });
+
+  it("renders the closing paragraph's verbatim text exactly once", async () => {
+    await renderAndSubmit();
+    expect(
+      screen.getAllByText(
+        "Week one is the decision to act on; later weeks are the current plan and will re-optimise as prices, injuries and form move.",
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("renders a single-week plan as one block with '— do this now' and no '— planned' heading", async () => {
+    const oneWeek = { ...planFixture, weeks: planFixture.weeks.slice(0, 1) };
+    await renderAndSubmit(oneWeek);
+    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    expect(headings.filter((t) => t?.startsWith("GW"))).toHaveLength(1);
+    expect(headings.some((t) => t?.includes("— do this now"))).toBe(true);
+    expect(headings.some((t) => t?.includes("— planned"))).toBe(false);
   });
 });
