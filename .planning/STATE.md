@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 05
 current_phase_name: Container Build & CI Pipeline
 status: executing
-stopped_at: Completed 05-04-PLAN.md
-last_updated: "2026-09-04T13:48:04.649Z"
+stopped_at: Completed 05-03-PLAN.md
+last_updated: "2026-09-04T13:55:12.966Z"
 last_activity: 2026-09-04
 last_activity_desc: Phase 05 execution started
-state_head: ac0857f109d93b1793ac6d33833649aefc864d77
+state_head: 0d3ba9ecf2636976451a82d9bbb24572db52d2fd
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 32
-  completed_plans: 30
+  completed_plans: 31
   percent: 57
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 ## Current Position
 
 Phase: 05 (Container Build & CI Pipeline) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-09-04 — Phase 05 execution started
 
@@ -91,6 +91,7 @@ Progress: [██████░░░░] 57% (4/7 phases, 27 plans complete)
 | Phase 05 P01 | 10min | 3 tasks | 12 files |
 | Phase 05 P02 | 5min | 2 tasks | 3 files |
 | Phase 05 P04 | 12min | 2 tasks | 3 files |
+| Phase 05 P03 | 18min | 3 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -159,6 +160,8 @@ Recent decisions affecting current work:
 - [Phase 05]: Kept PuLP's bundled PULP_CBC_CMD rather than switching to pulp[cbc]/COIN_CMD; only apt-get install libstdc++6 was needed in the runtime stage
 - [Phase 05]: [Phase 05-04] Personal-email scan found s.rajat1702@gmail.com quoted twice in 05-PATTERNS.md (planning doc, out of task scope) -- documented as a finding per the plan's own design, not auto-redacted; recorded to WINDOWS.md for the 05-05 push checkpoint. — Plan explicitly designates a hit outside weekly.yml as a developer decision, not an executor cleanup.
 - [Phase 05]: [Phase 05-04] github-actions[bot] identity (41898282+github-actions[bot]@users.noreply.github.com) adopted for both daily.yml and weekly.yml commit-outputs steps, replacing fpl-bot placeholder and a hardcoded personal identity baked into HEAD by commit 6b54d5a. — D-11 modernization requirement.
+- [Phase 05]: [Phase 05-03] Re-resolved all 12 distinct actions (26 uses: lines) live against the GitHub API at execution time; every SHA matched 05-RESEARCH.md's published table exactly, zero drift. — Plan mandates re-resolving every SHA, not trusting prior research, since a tag can be repointed between research and execution.
+- [Phase 05]: [Phase 05-03] Built ci.yml in three additive stages (lint-build+test, then +e2e, then +image+publish) with a commit after each task's own <verify> block passed, rather than one commit for the whole 257-line file. — Preserves per-task atomic-commit discipline even though all three tasks share the same single files_modified entry.
 
 ### Pending Todos
 
@@ -187,6 +190,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-04T13:48:04.540Z
-Stopped at: Completed 05-04-PLAN.md
+Last session: 2026-09-04T13:55:04.180Z
+Stopped at: Completed 05-03-PLAN.md
 Resume file: None
