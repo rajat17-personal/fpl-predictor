@@ -1,34 +1,34 @@
-# --- Python caches ----------------------------------------------------------
+# Python artifacts
 __pycache__/
 *.py[cod]
 .pytest_cache/
 
-# --- Node ---------------------------------------------------------------
+# Node artifacts
 node_modules/
 frontend/node_modules/
 frontend/dist/
 dist/
 *.tsbuildinfo
 
-# --- Regenerable pipeline data (rebuilt by data/ingest.py, data/build_table.py) ---
+# Pipeline data (rebuilt by data/ingest.py, data/build_table.py)
 data/raw/
 data/processed/
 data/cron.log
 
-# --- Regenerable model output (rebuilt by models/train.py, models/price.py) ---
+# model output (rebuilt by models/train.py, models/price.py)
 models/artifacts/
 
-# --- Scratch and installers --------------------------------------------
+# miscellaneous
 downloaded_files/
 google-chrome-stable_current_amd64.deb
 *.deb
 
-# --- Playwright E2E run output ---------------------------------------------
+# Playwright E2E run output 
 e2e/test-results/
 e2e/playwright-report/
 e2e/blob-report/
 
-# --- Secrets --------------------------------------------------------------
+# Secrets 
 .env
 .env.*
 !.env.example
