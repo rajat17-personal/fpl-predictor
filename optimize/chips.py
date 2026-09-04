@@ -111,19 +111,23 @@ def default_schedule(preds: pd.DataFrame, xp_col: str = "xp_med") -> dict[int, s
 
         # Bench Boost -> biggest double only.
         if dgw:
-            gw = int(dgw.pop(0)); schedule[gw] = "bb"; used.add(gw)
+            gw = int(dgw.pop(0))
+            schedule[gw] = "bb"
+            used.add(gw)
 
         # Triple Captain -> next double, else best single-fixture captain.
         gw = int(dgw.pop(0)) if dgw else top_gw(best_capt, half_gws, used)
         if gw is not None:
-            schedule[gw] = "tc"; used.add(gw)
+            schedule[gw] = "tc"
+            used.add(gw)
 
         # Free Hit -> biggest blank only.
         bgw = s[s.bgw_clubs > 0].sort_values("bgw_clubs", ascending=False)
         if len(bgw):
             gw = int(bgw.iloc[0].name)
             if gw not in used:
-                schedule[gw] = "fh"; used.add(gw)
+                schedule[gw] = "fh"
+                used.add(gw)
 
         # Wildcard -> fixed slot (nudge off any collision).
         gw = WC_SLOT[half]

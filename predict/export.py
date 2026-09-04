@@ -211,11 +211,21 @@ def build_standings(boot: dict, fixtures: list) -> list[dict]:
         if hs is None or as_ is None:
             continue
         h, a = teams[f["team_h"]], teams[f["team_a"]]
-        h["played"] += 1; a["played"] += 1
-        h["gf"] += hs; h["ga"] += as_; a["gf"] += as_; a["ga"] += hs
-        if hs > as_:   h["won"] += 1; a["lost"] += 1
-        elif hs < as_: a["won"] += 1; h["lost"] += 1
-        else:          h["drawn"] += 1; a["drawn"] += 1
+        h["played"] += 1
+        a["played"] += 1
+        h["gf"] += hs
+        h["ga"] += as_
+        a["gf"] += as_
+        a["ga"] += hs
+        if hs > as_:
+            h["won"] += 1
+            a["lost"] += 1
+        elif hs < as_:
+            a["won"] += 1
+            h["lost"] += 1
+        else:
+            h["drawn"] += 1
+            a["drawn"] += 1
     rows = []
     for t in teams.values():
         t["gd"] = t["gf"] - t["ga"]

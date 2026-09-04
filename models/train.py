@@ -341,7 +341,7 @@ def main() -> int:
             "xp_med", "xp_mean", "xp_form", "xp_fpl"]
     te[keep].to_parquet(config.PROCESSED_DIR / "test_predictions.parquet", index=False)
     print(f"\nsaved model -> {(ARTIFACTS/'xp_model.joblib').relative_to(config.ROOT)}")
-    print(f"saved preds -> data/processed/test_predictions.parquet")
+    print("saved preds -> data/processed/test_predictions.parquet")
     print("Next: Phase 4 optimizer (optimize/squad_ilp.py)")
     return 0
 

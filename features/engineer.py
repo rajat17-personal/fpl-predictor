@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import sys
 
-import numpy as np
 import pandas as pd
 
 import config
@@ -91,7 +90,7 @@ def summarise(feat: pd.DataFrame) -> None:
     print(f"columns   : {feat.shape[1]}")
     feat_cols = [c for c in feat.columns if c not in ID_COLS and not c.startswith("y_")]
     print(f"features  : {len(feat_cols)}  (context + rolling + experience)")
-    print(f"targets   : y_points, y_minutes, y_played, y_started")
+    print("targets   : y_points, y_minutes, y_played, y_started")
 
     # Early-season rows have NaN rolling form by design; report how much.
     ex = ["minutes_r5", "total_points_r5", "ict_index_rall", "days_rest"]

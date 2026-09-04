@@ -50,7 +50,8 @@ def _autosub(starters: list[int], squad: list[int], pos, mins, xp) -> list[int]:
     if not any(pos[c] == "GK" for c in final):
         for c in bench:
             if pos[c] == "GK" and mins[c] > 0:
-                final.append(c); break
+                final.append(c)
+                break
 
     blanks = [c for c in starters if mins[c] == 0 and pos[c] != "GK"]
     avail = sorted((c for c in bench if pos[c] != "GK" and mins[c] > 0),
@@ -66,7 +67,9 @@ def _autosub(starters: list[int], squad: list[int], pos, mins, xp) -> list[int]:
             same_pos = pos[b] == pos[blank]
             frees_min = cnt[pos[blank]] >= _POS_MIN[pos[blank]]
             if (same_pos or frees_min) and cnt[pos[b]] + 1 <= _POS_MAX[pos[b]]:
-                final.append(b); cnt[pos[b]] += 1; avail.remove(b)
+                final.append(b)
+                cnt[pos[b]] += 1
+                avail.remove(b)
                 break
     return final
 

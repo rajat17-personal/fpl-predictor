@@ -7,7 +7,6 @@ import json
 
 import numpy as np
 import pandas as pd
-import pytest
 
 # ---------------------------------------------------------------- fixtures
 
@@ -185,7 +184,10 @@ def test_api_solve_and_resolve(monkeypatch):
 
 def test_free_transfer_accrual():
     from api.main import ft_from_history
-    ev = lambda g, t: {"event": g, "event_transfers": t}
+
+    def ev(g, t):
+        return {"event": g, "event_transfers": t}
+
     # untouched: +1 per week, capped at 5
     h = {"current": [ev(g, 0) for g in range(1, 9)], "chips": []}
     assert ft_from_history(h, 3) == 2
