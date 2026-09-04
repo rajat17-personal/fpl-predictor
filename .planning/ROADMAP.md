@@ -143,7 +143,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The rate-my-team flow is covered end to end
   5. The fixtures and prices pages are covered
 
-**Plans**: 1/6 plans executed (3 waves)
+**Plans**: 2/6 plans executed (3 waves)
 
 **Wave 1**
 
@@ -151,7 +151,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 04-02-PLAN.md — Playwright harness and the phase tracer: package gate, `playwright.config.ts` with the three fixture-fed servers, the pinned-clock helper, one end-to-end smoke spec, and the G-01-3 / pitch-symmetry geometry spec
+- [x] 04-02-PLAN.md — Playwright harness and the phase tracer: package gate, `playwright.config.ts` with the three fixture-fed servers, the pinned-clock helper, one end-to-end smoke spec, and the G-01-3 / pitch-symmetry geometry spec
 
 **Wave 3** *(blocked on Wave 2; the four run in parallel — zero file overlap)*
 
@@ -221,7 +221,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Test Base Layer & App Skeleton | 6/6 | Complete    | 2026-09-01 |
 | 2. Data Layer & Non-Pitch Pages | 8/8 | Complete    | 2026-09-02 |
 | 3. Pitch Renderer & Squad Views | 5/5 | Complete    | 2026-09-03 |
-| 4. E2E Regression Suite | 1/6 | In Progress|  |
+| 4. E2E Regression Suite | 2/6 | In Progress|  |
 | 5. Container Build & CI Pipeline | 0/TBD | Not started | - |
 | 6. Security, Reliability & Observability Hardening | 0/TBD | Not started | - |
 | 7. Parity Validation & Cutover | 0/TBD | Not started | - |

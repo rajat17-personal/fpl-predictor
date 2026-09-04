@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 04
 current_phase_name: E2E Regression Suite
 status: executing
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-09-03T16:12:13.259Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-09-04T01:25:04.648Z"
 last_activity: 2026-09-03
 last_activity_desc: Phase 04 execution started
-state_head: f080e035eddb9a228061189dfc36b8ccdc0cd6cc
+state_head: b72421fb30a5a40aa6d541e33428ec7b1301c6f3
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 25
-  completed_plans: 20
+  completed_plans: 21
   percent: 43
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-03)
 ## Current Position
 
 Phase: 04 (E2E Regression Suite) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-09-03 — Phase 04 execution started
 
@@ -80,6 +80,7 @@ Progress: [████░░░░░░] 43% (3/7 phases, 19 plans complete)
 | Phase 03 P04 | 42min | 3 tasks | 7 files |
 | Phase 03 P05 | 7min | 2 tasks | 4 files |
 | Phase 04 P01 | 55min | 3 tasks | 28 files |
+| Phase 04 P02 | 75min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -128,6 +129,9 @@ Recent decisions affecting current work:
 - [Phase 03]: [Phase 03 Plan 05]: Deferred Task 1's human visual re-check of UAT test 1 to the next verify-work/UAT pass -- HUMAN_VERIFY_MODE is end-of-phase project-wide and no Playwright/screenshot tooling exists yet in this milestone; all 6 automated verify gates passed and the dev server (localhost:5173/team) plus API (localhost:8000) remain live for that check
 - [Phase 04]: [Phase 04-01] Task 1 checkpoint:decision (gate=blocking-human) -- manager-field capture policy: scrub-names. entries/6980093/summary.json blanks player_first_name/player_last_name; team name and all numeric season figures (overall points/rank, gw points) captured verbatim. Applied to summary.json only; picks_event2.json/history.json carry no name fields. — tests/test_api.py's adjacent convention is synthetic-identity-only for committed fixtures (a permanent public record); scrub-names keeps a recognisable team name for debuggability while never committing the two genuinely personal free-text name fields.
 - [Phase 04]: [Phase 04-01] Rebound predict.live._gw_pool (the single model-inference leaf), not _pool/_gw_pools, so build_pool/build_horizon_pool's real aggregation and horizon-decay math still run over the frozen per-gameweek inputs in fixture mode. — build_pool/build_horizon_pool resolve _gw_pool from predict.live's own module globals at call time, so rebinding only api.main's imported name would not affect them -- both api.main._gw_pool and live._gw_pool must be rebound.
+- [Phase 04]: [Phase 04-02] Task 1 checkpoint:decision (gate=blocking-human) -- approve-with-deps for @playwright/test@1.62.1 (registry re-verified, zero drift); Chromium ultimately installed browser-binary-only (no sudo) after root's PATH resolved system Node 18 under sudo, verified via in-process launch that WSL2 already has every required shared library.
+- [Phase 04]: [Phase 04-02] Two unplanned package-legitimacy checkpoints beyond Task 1's single-package surface: @types/node@26.4.1 (tsconfig types/process/path support) and typescript@6.0.3 (matching frontend's pin) -- both human-approved individually. Discovered via a concrete near-miss: npx tsc without a local typescript install silently resolves an unrelated deprecated registry package literally named 'tsc', not the real compiler.
+- [Phase 04]: [Phase 04-02] Corrected verify-command form for later plans: (cd e2e && npx tsc --noEmit -p tsconfig.json), not npx tsc --noEmit -p e2e/tsconfig.json from repo root -- typescript is installed only in e2e/node_modules, isolated from frontend/ (a sibling, not an ancestor, directory).
 
 ### Pending Todos
 
@@ -155,6 +159,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-03T16:12:13.181Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-09-04T01:25:04.568Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
