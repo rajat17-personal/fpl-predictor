@@ -57,7 +57,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **SEC-01**: CORS restricted from `["*"]` to configured origins
 - [x] **SEC-02**: Dependencies pinned/locked (uv lock or equivalent), verified installable in a fresh environment with cp314 wheels
 - [ ] **SEC-03**: Secrets via `.env` pattern (mode 600), never in code, logs, or workflows
-- [ ] **SEC-04**: Repo hygiene — Chrome .deb removed, proper `.gitignore`, workflows tracked in git
+- [x] **SEC-04**: Repo hygiene — Chrome .deb removed, proper `.gitignore`, workflows tracked in git
 
 ### Reliability
 
@@ -142,7 +142,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CI-04 | Phase 5 | Pending |
 | CI-05 | Phase 5 | Pending |
 | SEC-02 | Phase 5 | Complete |
-| SEC-04 | Phase 5 | Pending |
+| SEC-04 | Phase 5 | Complete |
 | SEC-01 | Phase 6 | Pending |
 | SEC-03 | Phase 6 | Pending |
 | REL-01 | Phase 6 | Pending |

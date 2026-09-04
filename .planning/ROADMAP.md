@@ -183,7 +183,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. A multi-stage `python:3.14-slim` image builds, passes a smoke test proving the CBC solver is available and `/health` responds, and publishes to GHCR with SHA-pinned actions and a scoped `GITHUB_TOKEN` (deploy step stubbed)
   5. A Trivy vulnerability scan reports on the image on every build
 
-**Plans**: 2/5 plans executed (4 waves)
+**Plans**: 3/5 plans executed (4 waves)
 
 **Wave 1**
 
@@ -192,7 +192,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Wave 2** *(blocked on Wave 1; the two run in parallel — zero file overlap)*
 
 - [x] 05-02-PLAN.md — Multi-stage `python:3.14-slim` image with the CBC runtime library, a non-root user and no model artifact, plus the smoke test that runs a real ILP solve inside the container
-- [ ] 05-04-PLAN.md — SEC-04 hygiene: modernize and disarm `daily.yml`/`weekly.yml` (py3.14, hashed installs, SHA pins, bot identity), delete the 140MB Chrome installer, reconcile `.gitignore`, and prove no tracked file carries a personal email or credential literal
+- [x] 05-04-PLAN.md — SEC-04 hygiene: modernize and disarm `daily.yml`/`weekly.yml` (py3.14, hashed installs, SHA pins, bot identity), delete the 140MB Chrome installer, reconcile `.gitignore`, and prove no tracked file carries a personal email or credential literal
 
 **Wave 3** *(blocked on Wave 2 — the docker job needs the Dockerfile)*
 
@@ -247,7 +247,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 2. Data Layer & Non-Pitch Pages | 8/8 | Complete    | 2026-09-02 |
 | 3. Pitch Renderer & Squad Views | 5/5 | Complete    | 2026-09-03 |
 | 4. E2E Regression Suite | 8/8 | Complete    | 2026-09-04 |
-| 5. Container Build & CI Pipeline | 2/5 | In Progress|  |
+| 5. Container Build & CI Pipeline | 3/5 | In Progress|  |
 | 6. Security, Reliability & Observability Hardening | 0/TBD | Not started | - |
 | 7. Parity Validation & Cutover | 0/TBD | Not started | - |
 
