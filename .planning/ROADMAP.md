@@ -143,7 +143,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The rate-my-team flow is covered end to end
   5. The fixtures and prices pages are covered
 
-**Plans**: 7/8 plans executed (6/8 executed; 2 gap-closure plans added after verification found 2 gaps — 5 waves)
+**Plans**: 8/8 plans executed (6/8 executed; 2 gap-closure plans added after verification found 2 gaps — 5 waves)
 
 **Wave 1**
 
@@ -166,7 +166,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 5** *(blocked on Wave 4 — its gate boots the `api.main` module Wave 4 edits)*
 
-- [ ] 04-08-PLAN.md — Ghost-row fix: key the rate-diff ghost card off the sell target's actual row (bench included), update the E2E and Vitest assertions to the corrected same-row behaviour, and close WINDOWS.md id=2
+- [x] 04-08-PLAN.md — Ghost-row fix: key the rate-diff ghost card off the sell target's actual row (bench included), update the E2E and Vitest assertions to the corrected same-row behaviour, and close WINDOWS.md id=2
 
 **Research flags**: use the Node `@playwright/test` runner, not `pytest-playwright` — the repo's `pytest.ini` disables both plugins over the `--browser` flag collision. Design the fixture strategy (E2E-01) before writing the first test. Gap `G-01-3` handoff: at a 1720px viewport, assert the header's inner content wrapper is ≤1088px wide, horizontally centered, and shares the `<main>` element's content x-range (see `.planning/phases/01-test-base-layer-app-skeleton/deferred-items.md`).
 
@@ -229,7 +229,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Test Base Layer & App Skeleton | 6/6 | Complete    | 2026-09-01 |
 | 2. Data Layer & Non-Pitch Pages | 8/8 | Complete    | 2026-09-02 |
 | 3. Pitch Renderer & Squad Views | 5/5 | Complete    | 2026-09-03 |
-| 4. E2E Regression Suite | 7/8 | In Progress|  |
+| 4. E2E Regression Suite | 8/8 | In Progress|  |
 | 5. Container Build & CI Pipeline | 0/TBD | Not started | - |
 | 6. Security, Reliability & Observability Hardening | 0/TBD | Not started | - |
 | 7. Parity Validation & Cutover | 0/TBD | Not started | - |

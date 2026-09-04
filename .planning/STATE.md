@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 04
 current_phase_name: E2E Regression Suite
 status: executing
-stopped_at: Completed 04-07-PLAN.md
-last_updated: "2026-09-04T05:45:14.563Z"
+stopped_at: Completed 04-08-PLAN.md
+last_updated: "2026-09-04T05:58:25.401Z"
 last_activity: 2026-09-04
 last_activity_desc: Phase 04 execution started
-state_head: 09c924d274e5ca53e3c3c299e0436af67d8e4336
+state_head: f984c093c0220ae03329a4183476aecd2b825120
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 27
-  completed_plans: 26
+  completed_plans: 27
   percent: 43
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-03)
 ## Current Position
 
 Phase: 04 (E2E Regression Suite) — EXECUTING
-Plan: 2 of 8
+Plan: 3 of 8
 Status: Ready to execute
 Last activity: 2026-09-04 — Phase 04 execution started
 
@@ -86,6 +86,7 @@ Progress: [████░░░░░░] 43% (3/7 phases, 19 plans complete)
 | Phase 04 P05 | 45min | 3 tasks | 3 files |
 | Phase 04 P06 | 25min | 2 tasks | 3 files |
 | Phase 04 P07 | 12min | 2 tasks | 2 files |
+| Phase 04 P08 | 12min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -146,6 +147,8 @@ Recent decisions affecting current work:
 - [Phase 04]: [Phase 04] [Phase 04-06] Ghost card and outgoing label land in different pitch rows when the rating's best_move sells a benched (not starting) player -- Pitch.tsx keys the ghost's row off the buy's position only, never the sell target's actual row; discovered against the real immutable v1 fixture, logged to deferred-items.md and WINDOWS.md rather than fixed (out of this plan's file scope) or worked around by mutating the frozen fixture (D-08).
 - [Phase 04]: [Phase 04-07] Restored all three fixture-mode bindings (api.main._gw_pool, predict.live._gw_pool, api.main._load_live) in an explicit else-branch rather than relying on api.main's own re-import to self-correct, since that re-import reads predict.live's already-polluted module global on a second reload -- closes CR-01.
 - [Phase 04]: [Phase 04-07] Test's captured original _gw_pool reference is discriminated by __module__ ('predict.live' vs 'api.main'), not compared against live._gw_pool_production, so the regression proof stays independent of the attribute the production fix itself writes.
+- [Phase 04]: Kept BENCH out of VALID_PITCH_ROWS; reachable only via the resolved sell row's starting field, never an API-supplied position string. — T-04-08-01 mitigation: an attacker-controlled position string can never produce a BENCH ghost.
+- [Phase 04]: Re-pinned rate-my-team.spec.ts's Forwards/Bench row counts (2/5) from a real Playwright run, per D-15, rather than trusting the plan's derived arithmetic outright. — The live run confirmed the derived numbers were correct.
 
 ### Pending Todos
 
@@ -173,6 +176,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-04T05:45:14.477Z
-Stopped at: Completed 04-07-PLAN.md
+Last session: 2026-09-04T05:58:25.322Z
+Stopped at: Completed 04-08-PLAN.md
 Resume file: None
