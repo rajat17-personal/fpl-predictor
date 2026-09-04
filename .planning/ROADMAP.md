@@ -143,7 +143,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The rate-my-team flow is covered end to end
   5. The fixtures and prices pages are covered
 
-**Plans**: 8 plans (6/8 executed; 2 gap-closure plans added after verification found 2 gaps — 5 waves)
+**Plans**: 7/8 plans executed (6/8 executed; 2 gap-closure plans added after verification found 2 gaps — 5 waves)
 
 **Wave 1**
 
@@ -162,7 +162,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 4** *(gap closure — 04-VERIFICATION.md, status gaps_found)*
 
-- [ ] 04-07-PLAN.md — CR-01: capture the production `predict.live._gw_pool` once and restore it in an explicit else-branch when `FPL_FIXTURE_DIR` is unset, with the regression assertion `tests/test_fixture_mode.py` was missing
+- [x] 04-07-PLAN.md — CR-01: capture the production `predict.live._gw_pool` once and restore it in an explicit else-branch when `FPL_FIXTURE_DIR` is unset, with the regression assertion `tests/test_fixture_mode.py` was missing
 
 **Wave 5** *(blocked on Wave 4 — its gate boots the `api.main` module Wave 4 edits)*
 
@@ -229,7 +229,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Test Base Layer & App Skeleton | 6/6 | Complete    | 2026-09-01 |
 | 2. Data Layer & Non-Pitch Pages | 8/8 | Complete    | 2026-09-02 |
 | 3. Pitch Renderer & Squad Views | 5/5 | Complete    | 2026-09-03 |
-| 4. E2E Regression Suite | 6/6 | In Progress|  |
+| 4. E2E Regression Suite | 7/8 | In Progress|  |
 | 5. Container Build & CI Pipeline | 0/TBD | Not started | - |
 | 6. Security, Reliability & Observability Hardening | 0/TBD | Not started | - |
 | 7. Parity Validation & Cutover | 0/TBD | Not started | - |

@@ -38,7 +38,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Playwright E2E
 
-- [ ] **E2E-01**: Fixture strategy — frozen versioned JSON snapshots (normal, blank, double GW) and mocked FPL API; no live-data dependence
+- [x] **E2E-01**: Fixture strategy — frozen versioned JSON snapshots (normal, blank, double GW) and mocked FPL API; no live-data dependence
 - [ ] **E2E-02**: Team/pitch + solver flow regression test
 - [ ] **E2E-03**: xP table + captains rendering/sorting regression test
 - [ ] **E2E-04**: Rate-my-team flow regression test
@@ -131,7 +131,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-07 | Phase 3 | Complete |
 | UIX-01 | Phase 3 | Complete |
 | UIX-03 | Phase 3 | Complete |
-| E2E-01 | Phase 4 | Gaps Found |
+| E2E-01 | Phase 4 | Complete |
 | E2E-02 | Phase 4 | Gaps Found |
 | E2E-03 | Phase 4 | Gaps Found |
 | E2E-04 | Phase 4 | Gaps Found |
