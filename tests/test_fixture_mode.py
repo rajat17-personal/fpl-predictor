@@ -11,11 +11,20 @@ import json
 import pytest
 
 import config
+import predict.live as live
 
 FIXTURE_DIR = config.ROOT / "e2e" / "fixtures" / "v1" / "normal"
 CAPTURE = json.load(open(FIXTURE_DIR / "api" / "capture.json"))
 GW = CAPTURE["gw"]
 ENTRY = CAPTURE["entry"]
+
+# Captured at import, before any fixture-mode reload in this module or any
+# other test module runs (CR-01 / 04-VERIFICATION.md Gap 1). The __module__
+# check keeps this proof independent of live._gw_pool_production -- the very
+# attribute api.main's own restore code writes -- so a broken restore can
+# never be masked by comparing the captured reference against itself.
+_ORIGINAL_GW_POOL = live._gw_pool
+assert _ORIGINAL_GW_POOL.__module__ == "predict.live"
 
 
 def _raise_if_called(*args, **kwargs):
@@ -25,9 +34,14 @@ def _raise_if_called(*args, **kwargs):
 @pytest.fixture
 def fixture_app(monkeypatch):
     """Reload api.main with FPL_FIXTURE_DIR set, requests.get and joblib.load
-    poisoned to raise for the duration of the test, and reload back to the
-    unset-env module at teardown so the rest of the suite (and its own
-    conftest autouse fixture) never sees the fixture-mode module."""
+    poisoned to raise for the duration of the test. At teardown, delenv and
+    reload again -- but the reload alone never restores production state: it
+    only re-executes api.main, and predict.live is never itself reloaded. It
+    is api.main's own env-unset else-branch, restoring from the
+    capture-once-guarded predict.live._gw_pool_production reference, that
+    actually puts predict.live._gw_pool back (CR-01 / 04-VERIFICATION.md
+    Gap 1). The identity assertion below proves that restore ran, on every
+    fixture-mode test in this file, rather than assuming it."""
     import api.main as m
 
     monkeypatch.setenv("FPL_FIXTURE_DIR", str(FIXTURE_DIR))
@@ -37,6 +51,7 @@ def fixture_app(monkeypatch):
     yield reloaded
     monkeypatch.delenv("FPL_FIXTURE_DIR", raising=False)
     importlib.reload(reloaded)
+    assert live._gw_pool is _ORIGINAL_GW_POOL
 
 
 def test_health_and_meta_answer_with_fixture_gw_and_season(fixture_app):
@@ -147,3 +162,25 @@ def test_unset_env_leaves_a_single_root_mount(monkeypatch):
     assert len(mounts) == 1
     assert mounts[0].name == "site"
     importlib.reload(reloaded)
+
+
+def test_unset_env_restores_the_production_gw_pool(monkeypatch):
+    """Regression guard for CR-01 (04-VERIFICATION.md Gap 1): a fixture-mode
+    reload followed by an env-unset reload must leave predict.live._gw_pool,
+    api.main._gw_pool, and api.main._load_live pointing at the original
+    production objects -- object identity, not equality. Drives both halves
+    of the cycle directly (does not use the fixture_app fixture) so the
+    assertions are legible as a single before/after/after proof, mirroring
+    test_unset_env_leaves_a_single_root_mount's monkeypatch + reload shape."""
+    import api.main as m
+
+    monkeypatch.setenv("FPL_FIXTURE_DIR", str(FIXTURE_DIR))
+    reloaded = importlib.reload(m)
+    assert live._gw_pool is not _ORIGINAL_GW_POOL
+    assert live._gw_pool.__module__ == "api.main"
+
+    monkeypatch.delenv("FPL_FIXTURE_DIR", raising=False)
+    reloaded = importlib.reload(reloaded)
+    assert live._gw_pool is _ORIGINAL_GW_POOL
+    assert reloaded._gw_pool is _ORIGINAL_GW_POOL
+    assert reloaded._load_live is live._load_live
