@@ -31,7 +31,11 @@ FROM python:3.14-slim AS runtime
 # CPython never links libstdc++ -- so it is absent by default and every ILP
 # solve would fail at subprocess launch without this line. Do not "optimize"
 # this away.
-RUN apt-get update && apt-get install -y --no-install-recommends libstdc++6 \
+# libgomp1 is equally load-bearing: LightGBM's lib_lightgbm.so dlopens the
+# GNU OpenMP runtime at import time, so `import lightgbm` (reached via
+# api/main.py -> predict.live -> models.train) crashes the server at boot
+# without it.
+RUN apt-get update && apt-get install -y --no-install-recommends libstdc++6 libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /install /usr/local
