@@ -111,6 +111,18 @@ def _gw_pool_fixture(boot: dict, fixtures: list, gw: int, artifact) -> pd.DataFr
     return pd.DataFrame(json.load(open(path)))
 
 
+# CR-01 fix (04-VERIFICATION.md Gap 1): capture the production `_gw_pool`
+# reference exactly once per process, before the fixture-mode branch below
+# ever runs, so a later env-unset reload can restore it. The `hasattr` guard
+# is load-bearing: on a second+ `importlib.reload(api.main)` of a process that
+# has already been in fixture mode, `live._gw_pool` is the fixture
+# replacement, so an unguarded re-capture would freeze the polluted value in
+# as "production" and the restore below would be a no-op. Placement ahead of
+# the `if _FIXTURE_ROOT:` branch is equally load-bearing: run after it, the
+# first fixture-mode import would capture the replacement it just installed.
+if not hasattr(live, "_gw_pool_production"):
+    live._gw_pool_production = live._gw_pool
+
 if _FIXTURE_ROOT:
     _load_live = _load_live_fixture
     # build_pool/build_horizon_pool resolve `_gw_pool` from predict.live's own
@@ -119,6 +131,16 @@ if _FIXTURE_ROOT:
     # Pattern 1, Pitfall 1).
     _gw_pool = _gw_pool_fixture
     live._gw_pool = _gw_pool_fixture
+else:
+    # Restore all three bindings from the captured production reference
+    # (CR-01). Without this, `predict.live._gw_pool` stays permanently
+    # rebound to `_gw_pool_fixture` for the rest of the process once fixture
+    # mode has ever been entered, since `predict.live` is never itself
+    # reloaded and api.main's own re-import at module top pulls the already-
+    # polluted value back in on the next reload.
+    _gw_pool = live._gw_pool_production
+    live._gw_pool = live._gw_pool_production
+    _load_live = live._load_live
 
 
 def _intervals_artifact() -> dict | None:
