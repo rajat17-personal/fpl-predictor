@@ -1,0 +1,70 @@
+# Build-context exclusion list for Dockerfile. Mirrors .gitignore's exclusion
+# categories where the same repo layout applies, plus everything .gitignore
+# deliberately keeps tracked (workflows, docs, tests, planning) that has no
+# business inside a stateless runtime image (D-05/T-05-02-01/T-05-02-06).
+#
+# Note: .dockerignore uses Go path-match semantics, not gitignore semantics --
+# a leading-`*` pattern like `*.md` matches root-level files only, so it does
+# NOT reach frontend/src/content/methodology.md or any future web/ markdown.
+# A bare directory name (e.g. `tests`) DOES exclude its whole subtree.
+
+# --- Version control / GSD planning / editor metadata ------------------------
+.git
+.github
+.planning
+.claude
+.gsd
+
+# --- Test suites, dev tooling and docs (not part of the shipped runtime) -----
+tests
+e2e
+scripts
+docs
+
+# --- Python artifacts ---------------------------------------------------------
+__pycache__
+.pytest_cache
+
+# --- Node artifacts (frontend/ handled separately below, see the frontend/**
+# block -- listed here too so the exact-match exclusion is unambiguous) -------
+node_modules
+frontend/node_modules
+
+# --- Pipeline data (rebuilt by data/ingest.py, data/build_table.py) ----------
+data/raw
+data/processed
+data/cron.log
+
+# --- model output (rebuilt by models/train.py, models/price.py) --------------
+# D-05: no model artifact is ever baked into the image -- it arrives at
+# deploy time next milestone.
+models/artifacts
+
+# --- Irreplaceable daily price-snapshot history -------------------------------
+# Deliberate divergence from .gitignore: .gitignore re-includes this directory
+# (!data/snapshots/) because the history cannot be backfilled once lost.
+# .dockerignore must NOT re-include it -- snapshot history has no business
+# inside a stateless image, so it stays excluded here.
+data/snapshots
+
+# --- miscellaneous -------------------------------------------------------
+downloaded_files
+*.deb
+
+# --- Secrets --------------------------------------------------------------
+.env
+.env.*
+
+# --- Build metadata / docs -------------------------------------------------
+*.tsbuildinfo
+*.md
+
+# --- frontend/: unlike .gitignore (which excludes frontend/dist from VERSION
+# CONTROL only), .dockerignore must NOT exclude frontend/dist from the BUILD
+# CONTEXT -- D-06 requires the CI-built bundle inside the image, and CI builds
+# it before `docker build` runs. Exclude everything else under frontend/
+# (source, configs, node_modules already covered above) and re-include only
+# the built output.
+frontend/**
+!frontend/dist
+!frontend/dist/**
