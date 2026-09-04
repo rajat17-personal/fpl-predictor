@@ -94,9 +94,9 @@ jobs:
             echo "FAILED: frontend/dist/404.html is missing -- the frontend-dist artifact from lint-build did not download correctly"
             exit 1
           fi
-      # Bare -- pytest.ini's plugin disables and testpaths are picked up
-      # automatically from the repo root, no extra flags needed.
-      - run: pytest
+      # python -m pytest, not bare pytest: -m prepends the repo root to
+      # sys.path, which top-level imports (config, backtest, ...) rely on.
+      - run: python -m pytest
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020   # v7.0.0
         with:
           node-version: "24"
