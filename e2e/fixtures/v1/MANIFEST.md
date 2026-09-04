@@ -110,5 +110,72 @@ be.
 
 ## Synthesis rules
 
-_(Reserved for the plan that derives the `blank`/`dgw` variant fixture sets from
-this `normal` capture by scripted transformation — not yet written.)_
+The `blank/` and `dgw/` variant sets are derived from `normal/web-data/` by a single
+deterministic transform script — never hand-authored, never edited in place, and never
+written to `normal/` (D-06: one shared transform keeps all three scenarios from silently
+drifting apart the way three hand-authored sets would).
+
+**Script:** `e2e/scripts/synthesize-variants.mjs`, a plain Node script using only
+`node:fs`/`node:path`/`node:url` (zero npm dependencies, matching
+`frontend/scripts/check-tokens.mjs`'s convention). Invocation:
+
+```
+node e2e/scripts/synthesize-variants.mjs
+```
+
+It reads `normal/web-data/` and `normal/api/capture.json` and writes only into
+`blank/web-data/` and `dgw/web-data/`. Both variants need only a `web-data/` directory —
+`e2e/playwright.config.ts`'s blank/dgw servers point `FPL_FIXTURE_DATA_DIR` at these
+directories while still reading `normal/api/` for everything API-side, because every
+surface these scenarios exercise (fixtures ticker, chip timeline, xP table) is a pure
+`/data` renderer that never calls the API.
+
+**Selection rule:** sort `normal/web-data/fixtures.json`'s ticker rows ascending by their
+`short` club code (plain lexicographic string sort — deterministic, no locale
+dependence). The first six are the **BLANK clubs**; the first four are the **DOUBLE
+clubs**. For this GW3 capture:
+
+| List | Codes |
+|---|---|
+| BLANK clubs (6) | `ARS`, `AVL`, `BHA`, `BOU`, `BRE`, `CHE` |
+| DOUBLE clubs (4) | `ARS`, `AVL`, `BHA`, `BOU` |
+
+**Blank set transform** — every file is copied verbatim from `normal/web-data/`, then
+four are rewritten:
+
+- `fixtures.json` — for each blank club's row, the current-gameweek (`gw` = 3) entry's
+  `fixtures` array is replaced with `[]`. `xg_next`, `xgc_next` and `ease` are left
+  untouched.
+- `chips.json` — the current gameweek's `bgw_clubs` becomes `6`; `dgw_clubs` stays at its
+  captured value (`0`). `note` becomes `predict/live.py`'s `_chip_note` blank-week
+  wording verbatim: `"GW3 has 6 blank clubs — consider Free Hit."`
+- `xp_table.json` — every row whose `team_short` is one of the six blank clubs is
+  dropped (mirrors `_gw_pool` skipping a club with no fixture entirely — a real blank
+  week never emits a zero-xP placeholder row for it).
+- `captains.json` — same drop rule, preserving the surviving rows' order.
+
+**Double set transform** — every file is copied verbatim, then two are rewritten:
+
+- `fixtures.json` — for each double club's row, a second entry is appended to the
+  current gameweek's `fixtures` array: a copy of the existing entry with `home` inverted
+  and `opp` set to the next club in the double list (`ARS`→`AVL`→`BHA`→`BOU`→wraps to
+  `ARS`), keeping the original `fdr`. Every doubled cell ends up with exactly two chips
+  of the same difficulty and opposite venue.
+- `chips.json` — the current gameweek's `dgw_clubs` becomes `4`; `bgw_clubs` stays at
+  its captured value (`0`). `note` becomes `_chip_note`'s double-week wording verbatim:
+  `"GW3 is a DOUBLE for 4 clubs — consider Bench Boost / Triple Captain."`
+
+**Deliberately left untransformed, and why:**
+
+- Blank set's `ease`, `xg_next`, `xgc_next` on blanked rows — a real blank week would
+  recompute these; no spec in this suite asserts those values on a blanked row.
+- Double set's `xp_table.json` and `captains.json` — untouched (copied verbatim). A real
+  double week would raise a doubled club's players' xP, but the double-set specs assert
+  only the fixtures ticker and the chip timeline, never xP, so no synthetic xP inflation
+  is introduced.
+
+**Determinism guarantee:** the script is a pure function of `normal/web-data/` — no
+object/iteration-order dependence, no randomness, no wall-clock read. Re-running it after
+its output is already committed reproduces byte-identical files (`git status --porcelain
+e2e/fixtures/v1` stays empty), which is how the committed `blank/`/`dgw/` sets stay
+verifiable without ever being hand-editable.

@@ -1,0 +1,102 @@
+[
+ {
+  "name": "Haaland",
+  "team": "Man City",
+  "team_short": "MCI",
+  "position": "FWD",
+  "price_m": 15.5,
+  "xp": 3.14,
+  "xp_capt": 6.82,
+  "ownership": 71.1
+ },
+ {
+  "name": "Isak",
+  "team": "Liverpool",
+  "team_short": "LIV",
+  "position": "FWD",
+  "price_m": 9.0,
+  "xp": 2.42,
+  "xp_capt": 6.41,
+  "ownership": 16.6
+ },
+ {
+  "name": "B.Fernandes",
+  "team": "Man Utd",
+  "team_short": "MUN",
+  "position": "MID",
+  "price_m": 12.0,
+  "xp": 3.72,
+  "xp_capt": 5.9,
+  "ownership": 48.6
+ },
+ {
+  "name": "Gonzalo",
+  "team": "Fulham",
+  "team_short": "FUL",
+  "position": "FWD",
+  "price_m": 6.0,
+  "xp": 2.2,
+  "xp_capt": 5.32,
+  "ownership": 4.6
+ },
+ {
+  "name": "Foden",
+  "team": "Man City",
+  "team_short": "MCI",
+  "position": "MID",
+  "price_m": 7.0,
+  "xp": 2.6,
+  "xp_capt": 5.03,
+  "ownership": 5.2
+ },
+ {
+  "name": "Szoboszlai",
+  "team": "Liverpool",
+  "team_short": "LIV",
+  "position": "MID",
+  "price_m": 7.0,
+  "xp": 2.53,
+  "xp_capt": 4.79,
+  "ownership": 41.4
+ },
+ {
+  "name": "Semenyo",
+  "team": "Man City",
+  "team_short": "MCI",
+  "position": "MID",
+  "price_m": 8.5,
+  "xp": 2.63,
+  "xp_capt": 4.55,
+  "ownership": 20.5
+ },
+ {
+  "name": "Cherki",
+  "team": "Man City",
+  "team_short": "MCI",
+  "position": "MID",
+  "price_m": 7.7,
+  "xp": 2.77,
+  "xp_capt": 4.48,
+  "ownership": 26.5
+ },
+ {
+  "name": "Gakpo",
+  "team": "Liverpool",
+  "team_short": "LIV",
+  "position": "MID",
+  "price_m": 7.0,
+  "xp": 2.27,
+  "xp_capt": 4.36,
+  "ownership": 8.2
+ },
+ {
+  "name": "McBurnie",
+  "team": "Hull City",
+  "team_short": "HUL",
+  "position": "FWD",
+  "price_m": 5.5,
+  "xp": 2.13,
+  "xp_capt": 4.25,
+  "ownership": 2.1
+ }
+]
