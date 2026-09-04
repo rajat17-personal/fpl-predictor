@@ -48,7 +48,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 - [x] **CI-01**: GitHub Actions workflow — lint, typecheck, pytest + API tests on every push/PR
 - [ ] **CI-02**: Frontend build + Playwright E2E job with cached browsers, run against uvicorn serving the built frontend + fixture data
-- [ ] **CI-03**: Multi-stage Dockerfile on `python:3.14-slim` with locked deps, CBC solver installed, and a container smoke test (solver available + health check passes)
+- [x] **CI-03**: Multi-stage Dockerfile on `python:3.14-slim` with locked deps, CBC solver installed, and a container smoke test (solver available + health check passes)
 - [ ] **CI-04**: Image published to GHCR with SHA-pinned actions and scoped `GITHUB_TOKEN`; deploy step stubbed
 - [ ] **CI-05**: Trivy image vulnerability scan job
 
@@ -138,7 +138,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | E2E-05 | Phase 4 | Complete |
 | CI-01 | Phase 5 | Complete |
 | CI-02 | Phase 5 | Pending |
-| CI-03 | Phase 5 | Pending |
+| CI-03 | Phase 5 | Complete |
 | CI-04 | Phase 5 | Pending |
 | CI-05 | Phase 5 | Pending |
 | SEC-02 | Phase 5 | Complete |

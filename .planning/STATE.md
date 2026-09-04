@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 05
 current_phase_name: Container Build & CI Pipeline
 status: executing
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-09-04T13:33:56.006Z"
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-09-04T13:40:26.355Z"
 last_activity: 2026-09-04
 last_activity_desc: Phase 05 execution started
-state_head: 82177e7ab2137430168e0bb3a70092d4afb0c696
+state_head: bca411fda15521536b227261ac466eabe1e7245c
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 32
-  completed_plans: 28
+  completed_plans: 29
   percent: 57
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 ## Current Position
 
 Phase: 05 (Container Build & CI Pipeline) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-09-04 — Phase 05 execution started
 
@@ -89,6 +89,7 @@ Progress: [██████░░░░] 57% (4/7 phases, 27 plans complete)
 | Phase 04 P07 | 12min | 2 tasks | 2 files |
 | Phase 04 P08 | 12min | 3 tasks | 7 files |
 | Phase 05 P01 | 10min | 3 tasks | 12 files |
+| Phase 05 P02 | 5min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -153,6 +154,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Re-pinned rate-my-team.spec.ts's Forwards/Bench row counts (2/5) from a real Playwright run, per D-15, rather than trusting the plan's derived arithmetic outright. — The live run confirmed the derived numbers were correct.
 - [Phase 05]: [Phase 05]: [Phase 05-01]: Human approved installing both [SUS]-verdict tools (uv==0.12.9, ruff==0.16.6) via the Task 1 blocking-human package-legitimacy checkpoint — verbatim answer: approve-both. Both pins re-verified against the live PyPI registry immediately before install with zero drift; uv is dev-only per D-01 and never enters either .in file.
 - [Phase 05]: [Phase 05]: [Phase 05-01]: -c requirements.txt alongside --generate-hashes worked without needing the plan's documented same-session-resolution fallback — shared-pin parity (pandas==3.0.5 identical in both locks) confirmed on the first attempt.
+- [Phase 05]: No compiler added to Docker builder stage — plan 05-01 confirmed a clean-wheel install with zero source compilation across the whole lock, so D-03's from-source fallback stays dormant
+- [Phase 05]: Kept PuLP's bundled PULP_CBC_CMD rather than switching to pulp[cbc]/COIN_CMD; only apt-get install libstdc++6 was needed in the runtime stage
 
 ### Pending Todos
 
@@ -181,6 +184,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-04T13:33:55.897Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-09-04T13:40:26.253Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None
