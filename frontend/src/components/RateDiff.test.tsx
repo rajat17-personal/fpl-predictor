@@ -58,6 +58,24 @@ describe("resolveRateOverlay (backstop, PITCH-04)", () => {
     expect(result.diffs).toEqual({ [soldCode]: "out" });
     expect(result.ghost).toBeNull();
   });
+
+  it("keys the ghost row off the sell target's own row: BENCH for a benched sell (04-08)", () => {
+    const mcBurnie = fixture.xi.find((r) => r.name === "McBurnie")!;
+    const move: RateBestMove = { sell: ["McBurnie"], buy: ["Haaland"], xp_gain: 0.9 };
+    const result = resolveRateOverlay(fixture.xi, xpTable, move);
+    expect(result.diffs).toEqual({ [mcBurnie.player_code]: "out" });
+    expect(result.ghost).not.toBeNull();
+    expect(result.ghost!.row).toBe("BENCH");
+    expect(result.ghost!.afterCode).toBe(mcBurnie.player_code);
+  });
+
+  it("falls back to the buy's position row, afterCode null, when the sell name is unresolvable", () => {
+    const move: RateBestMove = { sell: ["Nobody"], buy: ["Haaland"], xp_gain: 0.9 };
+    const result = resolveRateOverlay(fixture.xi, xpTable, move);
+    expect(result.ghost).not.toBeNull();
+    expect(result.ghost!.row).toBe("FWD");
+    expect(result.ghost!.afterCode).toBeNull();
+  });
 });
 
 describe("RateDiff — one pitch (D-18)", () => {
@@ -83,6 +101,16 @@ describe("RateDiff — one pitch (D-18)", () => {
     const fwdRow = screen.getByRole("group", { name: "Forwards" });
     expect(within(fwdRow).getByLabelText("Suggested incoming player")).toBeInTheDocument();
     expect(within(fwdRow).getByText("Suggested transfer out")).toBeInTheDocument();
+  });
+
+  it("places the ghost card in the Bench group (not Forwards) for a benched sell target (04-08)", () => {
+    const bestMove: RateBestMove = { sell: ["McBurnie"], buy: ["Haaland"], xp_gain: 0.9 };
+    render(<RateDiff xi={fixture.xi} bestMove={bestMove} xpTable={xpTable} gw={fixture.gw} />);
+    const benchGroup = screen.getByRole("group", { name: "Bench" });
+    expect(within(benchGroup).getByLabelText("Suggested incoming player")).toBeInTheDocument();
+    expect(within(benchGroup).getByText("Suggested transfer out")).toBeInTheDocument();
+    const fwdGroup = screen.getByRole("group", { name: "Forwards" });
+    expect(within(fwdGroup).queryAllByLabelText("Suggested incoming player")).toHaveLength(0);
   });
 
   it("renders no out treatment, no ghost card, and no swap line for the Hold fixture", () => {

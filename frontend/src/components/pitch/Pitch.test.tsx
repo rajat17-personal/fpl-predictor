@@ -97,6 +97,31 @@ describe("Pitch — ghost card (D-16, D-18)", () => {
     render(<Pitch players={players} captainCode={captainCode} viceCode={null} ghost={null} />);
     expect(screen.queryAllByLabelText("Suggested incoming player")).toHaveLength(0);
   });
+
+  it("renders in the Bench group immediately after the named bench player when row is BENCH (04-08)", () => {
+    const benchPlayer = squad.find((r) => !r.starting)!;
+    render(
+      <Pitch
+        players={players}
+        captainCode={captainCode}
+        viceCode={null}
+        ghost={{ row: "BENCH", afterCode: benchPlayer.player_code, player: GHOST_PLAYER }}
+      />,
+    );
+    const ghostCards = screen.getAllByLabelText("Suggested incoming player");
+    expect(ghostCards).toHaveLength(1);
+    expect(within(ghostCards[0]).getByText("Ghost Player")).toBeInTheDocument();
+
+    const benchGroup = screen.getByRole("group", { name: "Bench" });
+    const cells = Array.from(benchGroup.children);
+    const benchPlayerCellIdx = cells.findIndex((c) =>
+      within(c as HTMLElement).queryByText(benchPlayer.name),
+    );
+    const ghostCellIdx = cells.findIndex((c) =>
+      within(c as HTMLElement).queryByText("Ghost Player"),
+    );
+    expect(ghostCellIdx).toBe(benchPlayerCellIdx + 1);
+  });
 });
 
 describe("Pitch — onMark threading", () => {
@@ -199,5 +224,19 @@ describe("Pitch — row centering (G-03-1)", () => {
     );
     const midRow = screen.getByRole("group", { name: "Midfielders" });
     assertRowIsExactlyCentered(midRow, 6);
+  });
+
+  it("keeps the ghost-holding Bench row (4 real + 1 ghost = 5) exactly centered (04-08)", () => {
+    const benchPlayer = squad.find((r) => !r.starting)!;
+    render(
+      <Pitch
+        players={players}
+        captainCode={captainCode}
+        viceCode={null}
+        ghost={{ row: "BENCH", afterCode: benchPlayer.player_code, player: GHOST_PLAYER }}
+      />,
+    );
+    const benchRow = screen.getByRole("group", { name: "Bench" });
+    assertRowIsExactlyCentered(benchRow, 5);
   });
 });
