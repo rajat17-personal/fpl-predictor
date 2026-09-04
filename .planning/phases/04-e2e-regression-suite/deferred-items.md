@@ -47,3 +47,19 @@ Items observed during execution that are out of scope for the plan that found th
   array — so the same-row guarantee holds regardless of which row the outgoing player
   currently occupies. Logged to `.planning/WINDOWS.md` (kind: deviation) so `/gsd-ship`
   surfaces it before this milestone ships.
+
+## Resolution
+
+Fixed in plan `04-08` (04-VERIFICATION.md Gap 2 was the source of truth that required the
+fix). `Pitch.tsx`'s `PitchGhost["row"]` union was widened to accept `"BENCH"` and the Bench
+`PitchRow` was wired into the existing `rowGhost` mechanism; `RateDiff.tsx`'s
+`resolveRateOverlay` now derives the ghost's row from the matched sell row itself (bench sell
+-> `"BENCH"`, starter sell -> the sell row's own position, unresolved sell -> the buy's
+position fallback, unchanged) instead of unconditionally using the buy's position. Files
+changed: `frontend/src/components/pitch/Pitch.tsx`, `frontend/src/components/RateDiff.tsx`.
+
+`e2e/specs/rate-my-team.spec.ts` now asserts the corrected same-row-plus-adjacency behavior
+against the same unmodified `e2e/fixtures/v1` capture (D-08): the ghost card and the outgoing
+player's dimmed card both render inside the `role="group"` container labelled Bench, with the
+ghost immediately after the outgoing card (Forwards 2 / Bench 5 replacing the old Forwards 3 /
+Bench 4 counts). `.planning/WINDOWS.md` id=2 is marked `fixed`.
