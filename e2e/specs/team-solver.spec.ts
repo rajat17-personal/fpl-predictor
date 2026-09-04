@@ -414,3 +414,52 @@ test.describe("Squad tab: solve flow", () => {
     ).toBeVisible();
   });
 });
+
+test.describe("Squad tab: pinned golden solve (D-11)", () => {
+  test("REPIN POINT: the canonical zero-marks solve pins its exact XI, captain, moves, bank and XI xP", async ({
+    page,
+  }) => {
+    // Hand-derived ONCE by running this exact request (entry 6980093, free_transfers=1,
+    // horizon=1, no locks/excludes — SolveControls.tsx's own defaults) against the
+    // committed e2e/fixtures/v1/normal fixture set during planning (see 04-05-SUMMARY.md
+    // for the full response and the PuLP/CBC version observed at pin time). THIS IS THE
+    // SINGLE RE-PIN POINT for the whole suite: if a future CBC/solver version bump ever
+    // flips this particular optimal tie, only this one test needs re-deriving and
+    // updating — every other solve assertion in this file is deliberately structural
+    // (Task 2), not literal, and is unaffected by which optimum the solver happens to
+    // land on.
+    await gotoReady(page, `/team?entry=${ENTRY}`);
+
+    const responsePromise = page.waitForResponse((r) => r.url().includes("/api/solve"));
+    await page.getByRole("button", { name: "Solve transfers" }).click();
+    await responsePromise;
+
+    // Starting XI in rendered row order (GK, then DEF/MID/FWD each ascending by
+    // player_code, per Pitch.tsx's splitPitchRows / PitchRow), then the bench in the
+    // same ascending-player_code order.
+    const XI_IN_ORDER = [
+      "Roefs",
+      "Shaw",
+      "Calafiori",
+      "O'Reilly",
+      "B.Fernandes",
+      "Szoboszlai",
+      "Tzolis",
+      "Mbeumo",
+      "Calvert-Lewin",
+      "Wissa",
+      "Haaland",
+    ];
+    const BENCH_IN_ORDER = ["Hughes", "Diop", "Davis", "Kinsky"];
+    const cardNames = await cardActionsNames(page);
+    expect(cardNames).toEqual([...XI_IN_ORDER, ...BENCH_IN_ORDER]);
+
+    const bar = page.getByTestId("solve-results-bar");
+    await expect(bar.locator("ul > li")).toHaveText(["Mateta → Wissa FWD"]);
+    await expect(bar.getByText("Hold", { exact: true })).toHaveCount(0);
+    await expect(bar.getByText(/pts in hits/)).toHaveCount(0);
+    await expect(bar.getByText("Bank £0.3m", { exact: true })).toBeVisible();
+    await expect(bar.getByText("XI xP 27.79", { exact: true })).toBeVisible();
+    await expect(bar.getByText("Captain Haaland", { exact: true })).toBeVisible();
+  });
+});
