@@ -106,3 +106,53 @@ jobs:
             e2e/package-lock.json
       - run: npm --prefix frontend ci
       - run: npm --prefix frontend test
+
+  e2e:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97   # v7.0.0
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: pip install --require-hashes -r requirements.txt
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020   # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            e2e/package-lock.json
+      # e2e/playwright.config.ts's `webServer` runs `npm --prefix frontend
+      # run build` itself, so frontend's dependencies must be present here
+      # even though the built bundle is not downloaded into this job. The
+      # config rebuilds the bundle as the first link of its webServer command
+      # chain precisely so a stale or missing bundle can never be served --
+      # downloading a copy of frontend-dist on top of that would be dead
+      # weight at best and a stale-file hazard at worst.
+      - run: npm --prefix frontend ci
+      - run: npm --prefix e2e ci
+      # A cache miss is a slower run, never a failure -- Chromium is
+      # (re-)downloaded by the next step regardless.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9   # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('e2e/package-lock.json') }}
+      - run: npm --prefix e2e run install:browser
+      # e2e/playwright.config.ts owns the ENTIRE server lifecycle: build,
+      # boot fixture-mode uvicorn (x3 for the normal/blank/dgw variants),
+      # health-check, then drive Chromium. CI deliberately leaves E2E_PYTHON
+      # unset so the `python` that actions/setup-python put on PATH is the
+      # one that boots uvicorn -- the one CI-only branch in an otherwise
+      # identical local/CI topology. No project or variant filter is passed:
+      # the full three-server run is what `npm run test` means by default,
+      # and narrowing it here would leave the blank/DGW fixture sets
+      # unexercised on every push. GitHub Actions sets CI=true automatically,
+      # which the config reads to disable server reuse and enable one retry.
+      - run: npm --prefix e2e run test
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a   # v7.0.1
+        if: always()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
