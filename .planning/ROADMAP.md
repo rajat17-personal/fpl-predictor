@@ -143,7 +143,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The rate-my-team flow is covered end to end
   5. The fixtures and prices pages are covered
 
-**Plans**: 6/6 plans executed (3 waves)
+**Plans**: 8 plans (6/8 executed; 2 gap-closure plans added after verification found 2 gaps — 5 waves)
 
 **Wave 1**
 
@@ -159,6 +159,14 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 04-04-PLAN.md — xP table and captain picks: exact cell values, both sort directions with tie and null behaviour, filters and the empty result
 - [x] 04-05-PLAN.md — Team/pitch solver flow: load, lock/exclude, real ILP solve invariants, the single pinned golden, and the two-gameweek plan flow
 - [x] 04-06-PLAN.md — Rate-my-team: the four tiles with their boundary and precision behaviour, and the single-pitch diff with its ghost card
+
+**Wave 4** *(gap closure — 04-VERIFICATION.md, status gaps_found)*
+
+- [ ] 04-07-PLAN.md — CR-01: capture the production `predict.live._gw_pool` once and restore it in an explicit else-branch when `FPL_FIXTURE_DIR` is unset, with the regression assertion `tests/test_fixture_mode.py` was missing
+
+**Wave 5** *(blocked on Wave 4 — its gate boots the `api.main` module Wave 4 edits)*
+
+- [ ] 04-08-PLAN.md — Ghost-row fix: key the rate-diff ghost card off the sell target's actual row (bench included), update the E2E and Vitest assertions to the corrected same-row behaviour, and close WINDOWS.md id=2
 
 **Research flags**: use the Node `@playwright/test` runner, not `pytest-playwright` — the repo's `pytest.ini` disables both plugins over the `--browser` flag collision. Design the fixture strategy (E2E-01) before writing the first test. Gap `G-01-3` handoff: at a 1720px viewport, assert the header's inner content wrapper is ≤1088px wide, horizontally centered, and shares the `<main>` element's content x-range (see `.planning/phases/01-test-base-layer-app-skeleton/deferred-items.md`).
 
