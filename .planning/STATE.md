@@ -20,10 +20,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-03)
+See: .planning/PROJECT.md (updated 2026-09-04)
 
 **Core value:** The weekly recommendations (xP table, squad, captains, transfers) must keep flowing reliably — every change must leave the pipeline, API, and site at least as correct and more trustworthy than before.
-**Current focus:** Phase 04 — E2E Regression Suite
+**Current focus:** Phase 5 — Container Build & CI Pipeline
 
 ## Current Position
 
@@ -32,7 +32,7 @@ Plan: Not started
 Status: Ready to plan
 Last activity: 2026-09-04 — Phase 04 complete, transitioned to Phase 5
 
-Progress: [████░░░░░░] 43% (3/7 phases, 19 plans complete)
+Progress: [██████░░░░] 57% (4/7 phases, 27 plans complete)
 
 ## Performance Metrics
 
@@ -165,7 +165,8 @@ None yet.
 - **Phase 5 unknown:** Python 3.14 (`cp314`) wheel availability for LightGBM, scikit-learn, PyArrow, PuLP is in flux. Verify on PyPI before finalizing the lockfile.
 - **Milestone invariant:** the vanilla site stays live and authoritative until CUT-01 completes.
 - Payment gateway / merchant-of-record choice still pending with the user — out of scope here, but PITCH-01's trademark disclaimer feeds the eventual gateway review.
-- **[Phase 01 → Phase 4]:** G-01-3 pixel-geometry assertion deferred to E2E-01 — at a 1720px viewport, assert the header's inner wrapper is ≤1088px, centered, and shares `<main>`'s content x-range (see `.planning/phases/01-test-base-layer-app-skeleton/deferred-items.md`). Human-verified visually in Phase 01 UAT (2026-09-01).
+- **[Phase 4 → Phase 5]:** pytest's SPA-fallback test (`tests/test_fixture_mode.py`) requires a built `frontend/dist/` (gitignored, never built by the pytest path) — CI must build the frontend before the backend suite or the test 500s (04-REVIEW.md critical finding). Also: bare `open()` calls in `api/main.py` fixture reads and `e2e/scripts/capture_fixtures.py` (04-REVIEW.md warning; folds into the Phase 6 file-handle-leak work).
+- **[Phase 4]:** Security enforcement is on but no 04-SECURITY.md exists — run `/gsd-secure-phase 4` before advancing past Phase 5 planning.
 
 ## Deferred Items
 

@@ -30,11 +30,11 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 - ✓ Seven non-pitch pages (xP table, fixtures, prices, league, scoreboard, differentials, methodology) rebuilt at verified vanilla parity from the unchanged JSON contract, with GW deadline banner, persistent dark mode, self-hosted fonts, and a PARITY-DEVIATIONS.md ledger of every intentional delta — Phase 2
 - ✓ FPL-style pitch renderer + team page: green-gradient pitch with neutral generated SVG kits, formation rows with continuous flex centering (any row size incl. 6-card ghost rows), Squad/Rate/Plan tabs, solver flow with numeric-code locks/excludes and stale-response guard — all 8 pages now rebuilt; UAT 4/4, 21 threats closed — Phase 3
 - ✓ Trademark posture for pitch visuals: neutral generated kits (no crests/sponsors/CDN imagery), sitewide disclaimer, committed decision doc (docs/decisions/pitch-kit-sourcing.md) signed off in UAT — Phase 3
+- ✓ Playwright E2E regression suite on frozen versioned fixtures (normal/blank/DGW) with a fixture-mode API server: team/pitch + solver flow, xP table + captains (exact cell values and sort order), rate-my-team incl. pitch visual diff, fixtures & prices pages — 42 specs, calendar-independent — Phase 4
 
 ### Active
 
-- [ ] Playwright E2E regression suite covering: team/pitch + solver flow, xP table + captains, rate-my-team, fixtures & prices pages
-- [ ] Hardened CI/CD on GitHub Actions: lint, pytest, API tests, Playwright, Docker image build + publish for the API (deploy step stubbed — no live hosting yet)
+- [ ] Hardened CI/CD on GitHub Actions: lint, pytest, API tests, Playwright, Docker image build + publish for the API (deploy step stubbed — no live hosting yet); note: pytest's SPA-fallback test needs a built `frontend/dist/` (gitignored) — CI must build the frontend before running the backend suite (04-REVIEW.md critical)
 - [ ] Security & config hardening: CORS restriction, pinned/locked dependencies, secrets via .env pattern, repo hygiene (remove 134MB Chrome .deb, proper .gitignore)
 - [ ] Reliability fixes: file-handle leaks, cron error traps (remove `|| true`, add retries), FPL API schema validation, graceful JSON-load failures, solve-cache invalidation/LRU
 - [ ] Observability: structured logging, health/monitoring endpoints, failure visibility/alerting for crons and FPL API outages
@@ -85,6 +85,9 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 | Neutral generated SVG kits, not FPL CDN shirt imagery | Trademark/passing-off exposure; no third-party origin dependency; posture documented in a committed decision doc | ✓ Good — Phase 3, UAT-signed-off; revisit at payment-gateway legal review |
 | Continuous flex centering for pitch rows (fixed basis over max(5, n) parts) | Integer grid-column placement is exact only when row size and track count share parity — 2/4-card rows drifted half a column (G-03-1) | ✓ Good — Phase 3, symmetry-tested n∈{1..6}, visually confirmed |
 | Client sends numeric player_code locks/excludes, never free-text names | Server's substring name-resolver never exercised by the rebuilt client; request-body test asserts no display names | ✓ Good — Phase 3 |
+| E2E runs against a fixture-mode API server (`FPL_FIXTURE_DIR`), never the live FPL API | Suite must pass or fail on code, not the calendar; frozen v1 fixtures (normal/blank/DGW) with a manifest | ✓ Good — Phase 4: 42 specs deterministic |
+| Fixture-mode seam uses capture-once + explicit restore of `predict.live._gw_pool` | Module reload alone left production bindings permanently monkeypatched after teardown (CR-01) | ✓ Good — Phase 4 gap closure, identity-asserted in tests |
+| Rate-diff ghost card keyed off the sell target's actual pitch row (bench included) | Deriving row from the buy position rendered phantom rows and distorted the visual diff | ✓ Good — Phase 4 gap closure, adjacency-asserted in E2E |
 
 ## Evolution
 
@@ -104,4 +107,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-03 after Phase 3*
+*Last updated: 2026-09-04 after Phase 4*
