@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { gotoReady, FROZEN_NOW, ENTRY, PICKS_EVENT } from "../helpers/page";
+import { gotoReady, FROZEN_NOW, ENTRY, GW, PICKS_EVENT } from "../helpers/page";
 
 /*
  * Rate-my-team flow (E2E-04) -- the four tiles, the single-pitch visual diff, and the
@@ -20,12 +20,31 @@ import { gotoReady, FROZEN_NOW, ENTRY, PICKS_EVENT } from "../helpers/page";
  * fields on entries/6980093/summary.json, 04-01-SUMMARY.md) -- RateTab.tsx's `manager.manager
  * ? <span>...` guard is therefore never rendered here, and the heading is the bare team name.
  *
- * Task 2 extends this file with the single-pitch visual diff (ghost card, outgoing label,
- * swap line) -- see the header note it adds there for a discovered rendering gap in how the
- * ghost/outgoing cards land when the sell target is a benched player, not a starter.
+ * This frozen rating's best_move happens to sell a BENCHED player (Mateta, xp=0, starting:
+ * false in the no-transfer XI) for a new FWD (Wissa) -- not the starting-player-swap scenario
+ * 03-03-SUMMARY.md's rate_response.json fixture was deliberately corrected to exercise. Pitch.
+ * tsx's ghost mechanism keys the ghost's row purely off the BUY's position (always one of the
+ * four formation rows) and never off the SELL's actual row, so when the sell target is benched
+ * the outgoing "out" label (Bench row) and the incoming ghost card (Forwards row) land in two
+ * different role="group" containers, not the same one. Verified empirically against the real
+ * fixture-mode server + a built frontend/dist before writing the assertions below (not just by
+ * reading Pitch.tsx/RateDiff.tsx). This is a pre-existing Phase 3 rendering gap, not something
+ * this plan's own changes caused (files_modified is this spec file only) -- per the deviation
+ * rules' scope boundary it is asserted as observed and logged to this phase's
+ * deferred-items.md, not silently masked and not fixed here. See 04-06-SUMMARY.md.
  */
 
 const BAD_ENTRY = 9999999;
+
+/** Mirrors team-solver.spec.ts's own rowCount helper: row-group direct children, robust to
+ * whether a card is a plain div (RateDiff's read-only pitch, no onMark) or an action button
+ * (the Squad tab's interactive pitch). */
+async function rowCount(
+  page: Page,
+  label: "Goalkeeper" | "Defenders" | "Midfielders" | "Forwards" | "Bench",
+): Promise<number> {
+  return page.getByRole("group", { name: label }).locator("> div").count();
+}
 
 /** Scopes a locator to one Tile's own three <p> children (heading/value/detail, RateTab.tsx's
  * Tile component) via the heading text -- avoids matching a duplicate string rendered
@@ -150,5 +169,72 @@ test.describe("Rate tab: deep link, pending copy, tiles and failure path", () =>
     await expect(
       page.getByText(`Couldn't rate that team: ${detail}. Check the ID and try again.`),
     ).toBeVisible();
+  });
+});
+
+test.describe("Rate tab: visual diff — one pitch, ghost card, swap line", () => {
+  test("one pitch carries the rating's XI, the outgoing/ghost cards, and a swap line matching the tile", async ({
+    page,
+  }) => {
+    await gotoReady(page, `/team?entry=${ENTRY}&tab=rate`);
+    await expect(page.getByRole("status")).toHaveCount(0);
+
+    // D-18 single-pitch rule, counted by row groups (robust to markup changes), not
+    // container divs: PlanTransfers.tsx only mounts its own per-week pitch once a plan
+    // solve has actually run (never triggered in this file), so exactly one "Goalkeeper"
+    // row group existing means exactly one pitch is on the page.
+    await expect(page.getByRole("group", { name: "Goalkeeper" })).toHaveCount(1);
+
+    await expect(
+      page.getByRole("heading", { level: 2, name: `Your best XI for GW${GW}` }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(
+        "Keeping your current squad (no transfers), this is the lineup and captain the model would field.",
+      ),
+    ).toBeVisible();
+    await expect(page.getByText("4-4-2", { exact: true })).toBeVisible();
+
+    // The rating's fifteen: four formation rows plus the bench, per-row counts including
+    // the ghost slot's growth in the Forwards row (D-16's 6-part ceiling; here 3 of a
+    // possible 6: two real FWD starters plus the one ghost).
+    expect(await rowCount(page, "Goalkeeper")).toBe(1);
+    expect(await rowCount(page, "Defenders")).toBe(4);
+    expect(await rowCount(page, "Midfielders")).toBe(4);
+    expect(await rowCount(page, "Forwards")).toBe(3);
+    expect(await rowCount(page, "Bench")).toBe(4);
+
+    // Ghost + outgoing (both present; NOT the same row here -- see this file's header
+    // comment and 04-06-SUMMARY.md's Deviations section for why).
+    const ghost = page.getByLabel("Suggested incoming player");
+    await expect(ghost).toHaveCount(1);
+    await expect(
+      page.getByRole("group", { name: "Forwards" }).getByLabel("Suggested incoming player"),
+    ).toHaveCount(1);
+    await expect(ghost).toContainText("Wissa");
+    await expect(ghost).toContainText("£6.1");
+    await expect(ghost).toContainText("2.3");
+
+    const outLabel = page.getByText("Suggested transfer out", { exact: true });
+    await expect(outLabel).toHaveCount(1);
+    await expect(
+      page.getByRole("group", { name: "Bench" }).getByText("Suggested transfer out", { exact: true }),
+    ).toHaveCount(1);
+    await expect(
+      page
+        .getByRole("group", { name: "Forwards" })
+        .getByText("Suggested transfer out", { exact: true }),
+    ).toHaveCount(0);
+
+    // Swap line reproduces the sell/buy names and the gain exactly as the Best-move tile's
+    // own values (T-04-24) -- both read the same /api/rate response.
+    await expect(page.getByTestId("swap-line")).toHaveText("Mateta → Wissa +1.12 xP");
+
+    // Plan section heading present below the diff -- no plan solve run here (that flow is
+    // 04-05's coverage; running one here would double this spec's runtime for no added
+    // coverage, per this plan's own action text). The submit control itself is deliberately
+    // not asserted by name in this file to keep this spec's own coverage-gate scan (which
+    // forbids the literal control name here, guarding against an accidental click) honest.
+    await expect(page.getByRole("heading", { level: 2, name: "Plan transfers" })).toBeVisible();
   });
 });
