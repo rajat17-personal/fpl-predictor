@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 04
 current_phase_name: E2E Regression Suite
 status: executing
-stopped_at: Completed 04-04-PLAN.md
-last_updated: "2026-09-04T01:52:03.422Z"
+stopped_at: Completed 04-05-PLAN.md
+last_updated: "2026-09-04T02:17:56.693Z"
 last_activity: 2026-09-03
 last_activity_desc: Phase 04 execution started
-state_head: 76b658c42d08dabfa4fef1828cee95756271b59d
+state_head: 80b4edf6371a782b25b1dd7e3b6f2234cdcb58dc
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 25
-  completed_plans: 23
+  completed_plans: 24
   percent: 43
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-03)
 ## Current Position
 
 Phase: 04 (E2E Regression Suite) — EXECUTING
-Plan: 5 of 6
+Plan: 6 of 6
 Status: Ready to execute
 Last activity: 2026-09-03 — Phase 04 execution started
 
@@ -83,6 +83,7 @@ Progress: [████░░░░░░] 43% (3/7 phases, 19 plans complete)
 | Phase 04 P02 | 75min | 3 tasks | 7 files |
 | Phase 04 P03 | 20 min | 3 tasks | 24 files |
 | Phase 04 P04 | 35 min | 3 tasks | 1 files |
+| Phase 04 P05 | 45min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -138,6 +139,8 @@ Recent decisions affecting current work:
 - [Phase 04]: [Phase 04-03] Playwright's getByText() is case-insensitive substring matching by default and getByLabel() can match repeated identical aria-labels across rows/gameweeks -- specs must scope locators to the specific cell under test and add { exact: true } to short legend labels, not rely on page-wide queries.
 - [Phase 04]: [Phase 04] [Phase 4 Plan 04] Captains sub-table's literal 'undefined' ownership fallback (R18) and the top-50 status-flag reveal have no exercisable row in the immutable v1 capture (zero null captain ownership, zero non-'a' status in top 50) -- documented and skipped rather than mutating the frozen fixture. — D-08 forbids editing v1 fixtures in place; a future v2 cut would need to deliberately include such rows to exercise these two vanilla-parity code paths.
 - [Phase 04]: [Phase 04] [Phase 4 Plan 04] The full 651-row frozen xp_table.json has zero rows with a null price_m/ownership/xp_capt anywhere -- the plan's suggested position-filter fallback for the null-key sort test cannot surface one, so that assertion is skipped and documented rather than worked around. — Confirmed by scripting an inspection of the entire committed fixture (not just the top 50) before writing any assertion; every other Task 2 requirement (glyphs, both directions, two independent tie groups, text-column sort) is fully covered.
+- [Phase 04]: [Phase 04-05] Rule 1 fix: SquadTab.tsx's teamQuery used fetchApi (discards a non-ok response's detail), unlike this file's own postSolve/RateTab's fetchRate/PlanTransfers' postPlan — added fetchTeam() mirroring the established custom-fetch pattern. — The failure-path E2E test's own required assertion ('Couldn't load that team' including the API's detail text) was unsatisfiable against the pre-fix code, which rendered only a bare status code.
+- [Phase 04]: [Phase 04-05] The plan's prescribed /api/solve failure-copy trigger (a lock naming a nonexistent player) cannot be reached through the real UI (locks/excludes are numeric-only, D-15) — resolved by wrapping window.fetch in-page to inject one bogus string lock into the outgoing request body, a real round trip to the real server, not a Playwright route mock. — Keeps D-15's numeric-only client invariant fully intact while still proving the server's real _resolve() player-not-found error path end to end.
 
 ### Pending Todos
 
@@ -165,6 +168,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-04T01:52:03.344Z
-Stopped at: Completed 04-04-PLAN.md
+Last session: 2026-09-04T02:17:56.611Z
+Stopped at: Completed 04-05-PLAN.md
 Resume file: None

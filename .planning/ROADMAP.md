@@ -143,7 +143,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The rate-my-team flow is covered end to end
   5. The fixtures and prices pages are covered
 
-**Plans**: 4/6 plans executed (3 waves)
+**Plans**: 5/6 plans executed (3 waves)
 
 **Wave 1**
 
@@ -157,7 +157,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] 04-03-PLAN.md — Blank and double-gameweek fixture synthesis plus the fixtures ticker, price watch and four targeted variant specs
 - [x] 04-04-PLAN.md — xP table and captain picks: exact cell values, both sort directions with tie and null behaviour, filters and the empty result
-- [ ] 04-05-PLAN.md — Team/pitch solver flow: load, lock/exclude, real ILP solve invariants, the single pinned golden, and the two-gameweek plan flow
+- [x] 04-05-PLAN.md — Team/pitch solver flow: load, lock/exclude, real ILP solve invariants, the single pinned golden, and the two-gameweek plan flow
 - [ ] 04-06-PLAN.md — Rate-my-team: the four tiles with their boundary and precision behaviour, and the single-pitch diff with its ghost card
 
 **Research flags**: use the Node `@playwright/test` runner, not `pytest-playwright` — the repo's `pytest.ini` disables both plugins over the `--browser` flag collision. Design the fixture strategy (E2E-01) before writing the first test. Gap `G-01-3` handoff: at a 1720px viewport, assert the header's inner content wrapper is ≤1088px wide, horizontally centered, and shares the `<main>` element's content x-range (see `.planning/phases/01-test-base-layer-app-skeleton/deferred-items.md`).
@@ -221,7 +221,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Test Base Layer & App Skeleton | 6/6 | Complete    | 2026-09-01 |
 | 2. Data Layer & Non-Pitch Pages | 8/8 | Complete    | 2026-09-02 |
 | 3. Pitch Renderer & Squad Views | 5/5 | Complete    | 2026-09-03 |
-| 4. E2E Regression Suite | 4/6 | In Progress|  |
+| 4. E2E Regression Suite | 5/6 | In Progress|  |
 | 5. Container Build & CI Pipeline | 0/TBD | Not started | - |
 | 6. Security, Reliability & Observability Hardening | 0/TBD | Not started | - |
 | 7. Parity Validation & Cutover | 0/TBD | Not started | - |
