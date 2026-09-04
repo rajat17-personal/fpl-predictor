@@ -4,7 +4,9 @@ import { PlayerCard, type PlayerMark } from "./PlayerCard";
 import { EmptyState } from "../EmptyState";
 
 export interface PitchGhost {
-  row: "GK" | "DEF" | "MID" | "FWD";
+  /** The OUTGOING player's row -- not the incoming player's position. "BENCH" covers a
+   * sell target that isn't in the starting XI (04-08, WINDOWS.md id=2). */
+  row: "GK" | "DEF" | "MID" | "FWD" | "BENCH";
   afterCode: number | null;
   player: PitchPlayer;
 }
@@ -47,7 +49,9 @@ function cardMeasure(parts: number): string {
 
 /* Ghost/insert card (D-16, D-18): same kit/name/price/xP layout as a real
  * card, reduced opacity, dashed accent border — a suggested incoming
- * player, not yet part of the squad. No onMark, no captain/vice, no marks. */
+ * player, not yet part of the squad. No onMark, no captain/vice, no marks.
+ * Placed via PitchGhost.row, which names the OUTGOING player's row (Bench
+ * included) so the ghost always sits alongside the card it is replacing. */
 function GhostCard({ player }: { player: PitchPlayer }) {
   return (
     <div
@@ -268,6 +272,7 @@ export function Pitch({
           diffs={diffs}
           onMark={onMark}
           label="Bench"
+          {...rowGhost("BENCH")}
         />
       </div>
     </div>

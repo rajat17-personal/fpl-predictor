@@ -19,7 +19,14 @@ const VALID_PITCH_ROWS = new Set<string>(["GK", "DEF", "MID", "FWD"]);
  * (must_haves' "own unit test file" backstop). Matching is exact-string-
  * equal only, on names — never substring, never fuzzy (T-03-11): the client
  * always has the option of falling back to a text-only swap line, so it
- * never needs the server's own tie-break-ranked fuzzy resolver. */
+ * never needs the server's own tie-break-ranked fuzzy resolver.
+ *
+ * The ghost's row follows the SELL target's own row, Bench included, not the
+ * buy's position — so the "incoming ghost sits where the outgoing player
+ * was" promise holds even for the ordinary case of selling a benched player
+ * (04-08, closing WINDOWS.md id=2). Order: bench sell -> "BENCH"; starter
+ * sell -> the sell row's own position; sell unresolved -> the buy's
+ * position (unchanged fallback); none of those -> no ghost. */
 export function resolveRateOverlay(
   xi: SquadRow[],
   xpTable: XpRow[],
@@ -31,11 +38,13 @@ export function resolveRateOverlay(
 
   const diffs: Record<number, "out"> = {};
   let outCode: number | null = null;
+  let sellRow: SquadRow | null = null;
   const sellName = bestMove.sell[0];
   if (sellName != null) {
     const matches = xi.filter((r) => r.name === sellName);
     if (matches.length === 1) {
-      outCode = matches[0].player_code;
+      sellRow = matches[0];
+      outCode = sellRow.player_code;
       diffs[outCode] = "out";
     }
   }
@@ -63,9 +72,17 @@ export function resolveRateOverlay(
         news: row.news,
         ownership: row.ownership,
       };
-      if (VALID_PITCH_ROWS.has(row.position)) {
+      let ghostRow: PitchGhost["row"] | null = null;
+      if (sellRow && !sellRow.starting) {
+        ghostRow = "BENCH";
+      } else if (sellRow && sellRow.starting && VALID_PITCH_ROWS.has(sellRow.position)) {
+        ghostRow = sellRow.position as PitchGhost["row"];
+      } else if (VALID_PITCH_ROWS.has(row.position)) {
+        ghostRow = row.position as PitchGhost["row"];
+      }
+      if (ghostRow) {
         ghost = {
-          row: row.position as PitchGhost["row"],
+          row: ghostRow,
           afterCode: outCode,
           player: ghostPlayer,
         };

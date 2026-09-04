@@ -20,18 +20,16 @@ import { gotoReady, FROZEN_NOW, ENTRY, GW, PICKS_EVENT } from "../helpers/page";
  * fields on entries/6980093/summary.json, 04-01-SUMMARY.md) -- RateTab.tsx's `manager.manager
  * ? <span>...` guard is therefore never rendered here, and the heading is the bare team name.
  *
- * This frozen rating's best_move happens to sell a BENCHED player (Mateta, xp=0, starting:
- * false in the no-transfer XI) for a new FWD (Wissa) -- not the starting-player-swap scenario
- * 03-03-SUMMARY.md's rate_response.json fixture was deliberately corrected to exercise. Pitch.
- * tsx's ghost mechanism keys the ghost's row purely off the BUY's position (always one of the
- * four formation rows) and never off the SELL's actual row, so when the sell target is benched
- * the outgoing "out" label (Bench row) and the incoming ghost card (Forwards row) land in two
- * different role="group" containers, not the same one. Verified empirically against the real
- * fixture-mode server + a built frontend/dist before writing the assertions below (not just by
- * reading Pitch.tsx/RateDiff.tsx). This is a pre-existing Phase 3 rendering gap, not something
- * this plan's own changes caused (files_modified is this spec file only) -- per the deviation
- * rules' scope boundary it is asserted as observed and logged to this phase's
- * deferred-items.md, not silently masked and not fixed here. See 04-06-SUMMARY.md.
+ * This frozen rating's best_move sells a BENCHED player (Mateta, xp=0, starting: false in the
+ * no-transfer XI) for a new FWD (Wissa) -- selling a worthless bench player is an ordinary
+ * "best move", arguably the more common real-world suggestion shape. Plan 04-08 keyed Pitch.
+ * tsx's ghost mechanism off the SELL target's own row (Bench included), not the buy's
+ * position, so the ghost card and the dimmed outgoing card now land in the SAME
+ * role="group" container (Bench), immediately adjacent to each other -- closing
+ * WINDOWS.md id=2 and 04-VERIFICATION.md Gap 2. Verified empirically against the real
+ * fixture-mode server + a built frontend/dist before writing the assertions below (not just
+ * by reading Pitch.tsx/RateDiff.tsx). The starter-sell same-row behavior this plan preserves
+ * unchanged is proven at component level by RateDiff.test.tsx/Pitch.test.tsx (04-08-SUMMARY.md).
  */
 
 const BAD_ENTRY = 9999999;
@@ -196,21 +194,25 @@ test.describe("Rate tab: visual diff — one pitch, ghost card, swap line", () =
     await expect(page.getByText("4-4-2", { exact: true })).toBeVisible();
 
     // The rating's fifteen: four formation rows plus the bench, per-row counts including
-    // the ghost slot's growth in the Forwards row (D-16's 6-part ceiling; here 3 of a
-    // possible 6: two real FWD starters plus the one ghost).
+    // the ghost slot's growth in the Bench row (D-16's 6-part ceiling; here 5 of a
+    // possible 6: four real bench cards plus the one ghost). Forwards holds its two real
+    // starters only -- the ghost no longer grows that row (04-08, WINDOWS.md id=2).
     expect(await rowCount(page, "Goalkeeper")).toBe(1);
     expect(await rowCount(page, "Defenders")).toBe(4);
     expect(await rowCount(page, "Midfielders")).toBe(4);
-    expect(await rowCount(page, "Forwards")).toBe(3);
-    expect(await rowCount(page, "Bench")).toBe(4);
+    expect(await rowCount(page, "Forwards")).toBe(2);
+    expect(await rowCount(page, "Bench")).toBe(5);
 
-    // Ghost + outgoing (both present; NOT the same row here -- see this file's header
-    // comment and 04-06-SUMMARY.md's Deviations section for why).
+    // Ghost + outgoing: both present, in the SAME role="group" container (Bench) -- the
+    // corrected same-row contract (see this file's header comment).
     const ghost = page.getByLabel("Suggested incoming player");
     await expect(ghost).toHaveCount(1);
     await expect(
-      page.getByRole("group", { name: "Forwards" }).getByLabel("Suggested incoming player"),
+      page.getByRole("group", { name: "Bench" }).getByLabel("Suggested incoming player"),
     ).toHaveCount(1);
+    await expect(
+      page.getByRole("group", { name: "Forwards" }).getByLabel("Suggested incoming player"),
+    ).toHaveCount(0);
     await expect(ghost).toContainText("Wissa");
     await expect(ghost).toContainText("£6.1");
     await expect(ghost).toContainText("2.3");
@@ -225,6 +227,25 @@ test.describe("Rate tab: visual diff — one pitch, ghost card, swap line", () =
         .getByRole("group", { name: "Forwards" })
         .getByText("Suggested transfer out", { exact: true }),
     ).toHaveCount(0);
+
+    // Adjacency proof: "same row" means the ghost sits immediately next to the outgoing
+    // card, not just somewhere in the same group -- mirrors Pitch.test.tsx's own
+    // cell-index check for the Midfielders row.
+    const benchCells = page.getByRole("group", { name: "Bench" }).locator("> div");
+    const benchCellCount = await benchCells.count();
+    let outIdx = -1;
+    let ghostIdx = -1;
+    for (let i = 0; i < benchCellCount; i++) {
+      const cell = benchCells.nth(i);
+      if (await cell.getByText("Suggested transfer out", { exact: true }).count()) {
+        outIdx = i;
+      }
+      if (await cell.getByLabel("Suggested incoming player").count()) {
+        ghostIdx = i;
+      }
+    }
+    expect(outIdx).toBeGreaterThanOrEqual(0);
+    expect(ghostIdx).toBe(outIdx + 1);
 
     // Swap line reproduces the sell/buy names and the gain exactly as the Best-move tile's
     // own values (T-04-24) -- both read the same /api/rate response.
