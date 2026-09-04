@@ -238,3 +238,114 @@ test.describe("xP table -- sort semantics", () => {
     await expect(priceHeader).not.toContainText("▲");
   });
 });
+
+/*
+ * Filters (position chips + search) and the empty-result state (R12/R13). Position
+ * counts within the frozen top 50: GK=12, DEF=10, MID=22, FWD=6 (sums to 50, proving the
+ * filter runs on top of the already-sliced 50, never the full fetched array). "Man City"
+ * is the search term for the full-club-name test: 9 of the top 50 rows have team="Man
+ * City"/team_short="MCI", and the full name is never rendered in any cell on this page --
+ * so a passing search can only be exercising the r.team match (R13), not a rendered
+ * substring.
+ */
+test.describe("xP table -- filters, empty state, and filter/sort interaction", () => {
+  test("position chips render All/GK/DEF/MID/FWD with All pressed by default", async ({
+    page,
+  }) => {
+    await gotoReady(page, "/");
+    for (const label of ["All", "GK", "DEF", "MID", "FWD"]) {
+      await expect(page.getByRole("button", { name: label, exact: true })).toBeVisible();
+    }
+    await expect(page.getByRole("button", { name: "All", exact: true, pressed: true })).toHaveCount(
+      1,
+    );
+  });
+
+  test("each position chip renders the exact frozen row count for the top 50", async ({
+    page,
+  }) => {
+    await gotoReady(page, "/");
+    const table = page.getByRole("table", { name: "xP table" });
+    const counts: Record<string, number> = { GK: 12, DEF: 10, MID: 22, FWD: 6 };
+    let sum = 0;
+    for (const [label, count] of Object.entries(counts)) {
+      await page.getByRole("button", { name: label, exact: true }).click();
+      await expect(table.locator("tbody tr")).toHaveCount(count);
+      sum += count;
+    }
+    expect(sum).toBe(50);
+  });
+
+  test("searching a club's full name matches on team, never a rendered cell", async ({
+    page,
+  }) => {
+    await gotoReady(page, "/");
+    const table = page.getByRole("table", { name: "xP table" });
+    const searchBox = page.getByRole("searchbox", { name: "Search player or team" });
+    await searchBox.fill("Man City");
+
+    const rows = table.locator("tbody tr");
+    await expect(rows).toHaveCount(9);
+    const teamCells = table.locator("tbody tr td:nth-child(3)");
+    const teamShorts = await teamCells.allTextContents();
+    for (const short of teamShorts) {
+      expect(short).toBe("MCI");
+    }
+  });
+
+  test("an unmatched search shows the no-match block, distinct from the empty-data block", async ({
+    page,
+  }) => {
+    await gotoReady(page, "/");
+    const searchBox = page.getByRole("searchbox", { name: "Search player or team" });
+    await searchBox.fill("zzz-no-such-player-or-club-zzz");
+
+    await expect(page.getByRole("heading", { name: "No players match" })).toBeVisible();
+    await expect(
+      page.getByText("Try a different position filter or search term."),
+    ).toBeVisible();
+    await expect(page.getByRole("table", { name: "xP table" })).toHaveCount(0);
+    // Distinct from the page-level EmptyState (an empty FETCH, not an empty FILTER) --
+    // that heading must never appear here.
+    await expect(page.getByRole("heading", { name: "Nothing here yet" })).toHaveCount(0);
+    // The chips and search box stay present so the user can recover.
+    await expect(page.getByRole("button", { name: "All", exact: true })).toBeVisible();
+    await expect(searchBox).toBeVisible();
+
+    await searchBox.fill("");
+    await expect(page.getByRole("table", { name: "xP table" }).locator("tbody tr")).toHaveCount(
+      50,
+    );
+  });
+
+  test("sort runs over the filtered subset, not the unfiltered 50", async ({ page }) => {
+    await gotoReady(page, "/");
+    const table = page.getByRole("table", { name: "xP table" });
+    await page.getByRole("button", { name: "GK", exact: true }).click();
+    const rows = table.locator("tbody tr");
+    await expect(rows).toHaveCount(12);
+
+    const priceHeader = table.locator("thead th").nth(3); // £m
+    await priceHeader.locator("button").click(); // fresh click: ascending
+
+    const names = await table.locator("tbody tr td:nth-child(2)").allTextContents();
+    // Hand-derived: all 12 GK rows in the frozen top 50, sorted ascending by price_m,
+    // ties broken by the pre-sort (descending-xp) relative order -- proves the sort
+    // operated over the 12-row GK subset, not the unfiltered 50 (which would include
+    // non-GK names this list never mentions).
+    expect(names).toEqual([
+      "Petrović",
+      "Leno",
+      "Verbruggen",
+      "Tzolakis",
+      "Kelleher",
+      "Trafford",
+      "Horníček",
+      "Sels",
+      "Henderson",
+      "Donnarumma",
+      "A.Becker",
+      "Pickford",
+    ]);
+  });
+});
