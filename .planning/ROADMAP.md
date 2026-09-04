@@ -183,11 +183,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. A multi-stage `python:3.14-slim` image builds, passes a smoke test proving the CBC solver is available and `/health` responds, and publishes to GHCR with SHA-pinned actions and a scoped `GITHUB_TOKEN` (deploy step stubbed)
   5. A Trivy vulnerability scan reports on the image on every build
 
-**Plans**: 5 plans (4 waves)
+**Plans**: 1/5 plans executed (4 waves)
 
 **Wave 1**
 
-- [ ] 05-01-PLAN.md — Dependency tracer: the `requirements.in`/`requirements-dev.in` split, uv-compiled hashed locks, a clean-venv `--require-hashes` install that runs the whole existing test suite green, plus the `uv`/`ruff` package-legitimacy gate and the Python lint configuration
+- [x] 05-01-PLAN.md — Dependency tracer: the `requirements.in`/`requirements-dev.in` split, uv-compiled hashed locks, a clean-venv `--require-hashes` install that runs the whole existing test suite green, plus the `uv`/`ruff` package-legitimacy gate and the Python lint configuration
 
 **Wave 2** *(blocked on Wave 1; the two run in parallel — zero file overlap)*
 
@@ -247,7 +247,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 2. Data Layer & Non-Pitch Pages | 8/8 | Complete    | 2026-09-02 |
 | 3. Pitch Renderer & Squad Views | 5/5 | Complete    | 2026-09-03 |
 | 4. E2E Regression Suite | 8/8 | Complete    | 2026-09-04 |
-| 5. Container Build & CI Pipeline | 0/5 | Planned     | - |
+| 5. Container Build & CI Pipeline | 1/5 | In Progress|  |
 | 6. Security, Reliability & Observability Hardening | 0/TBD | Not started | - |
 | 7. Parity Validation & Cutover | 0/TBD | Not started | - |
 

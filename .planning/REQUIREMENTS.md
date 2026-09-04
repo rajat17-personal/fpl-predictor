@@ -46,7 +46,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### CI/CD
 
-- [ ] **CI-01**: GitHub Actions workflow — lint, typecheck, pytest + API tests on every push/PR
+- [x] **CI-01**: GitHub Actions workflow — lint, typecheck, pytest + API tests on every push/PR
 - [ ] **CI-02**: Frontend build + Playwright E2E job with cached browsers, run against uvicorn serving the built frontend + fixture data
 - [ ] **CI-03**: Multi-stage Dockerfile on `python:3.14-slim` with locked deps, CBC solver installed, and a container smoke test (solver available + health check passes)
 - [ ] **CI-04**: Image published to GHCR with SHA-pinned actions and scoped `GITHUB_TOKEN`; deploy step stubbed
@@ -55,7 +55,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 ### Security & Config
 
 - [ ] **SEC-01**: CORS restricted from `["*"]` to configured origins
-- [ ] **SEC-02**: Dependencies pinned/locked (uv lock or equivalent), verified installable in a fresh environment with cp314 wheels
+- [x] **SEC-02**: Dependencies pinned/locked (uv lock or equivalent), verified installable in a fresh environment with cp314 wheels
 - [ ] **SEC-03**: Secrets via `.env` pattern (mode 600), never in code, logs, or workflows
 - [ ] **SEC-04**: Repo hygiene — Chrome .deb removed, proper `.gitignore`, workflows tracked in git
 
@@ -136,12 +136,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | E2E-03 | Phase 4 | Complete |
 | E2E-04 | Phase 4 | Complete |
 | E2E-05 | Phase 4 | Complete |
-| CI-01 | Phase 5 | Pending |
+| CI-01 | Phase 5 | Complete |
 | CI-02 | Phase 5 | Pending |
 | CI-03 | Phase 5 | Pending |
 | CI-04 | Phase 5 | Pending |
 | CI-05 | Phase 5 | Pending |
-| SEC-02 | Phase 5 | Pending |
+| SEC-02 | Phase 5 | Complete |
 | SEC-04 | Phase 5 | Pending |
 | SEC-01 | Phase 6 | Pending |
 | SEC-03 | Phase 6 | Pending |
