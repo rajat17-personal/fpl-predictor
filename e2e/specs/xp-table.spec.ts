@@ -120,3 +120,121 @@ test.describe("xP table -- exact cell values and row order", () => {
     await expect(captainCells.nth(4)).toHaveText("6.82");
   });
 });
+
+/*
+ * Sort semantics (sortRows, web/assets/app.js's makeSortable ported verbatim). The
+ * polarity is counter-intuitive and deliberate (frontend/src/lib/sortable.ts's own header
+ * comment): a FRESH click sorts ASCENDING with nulls at the TOP (dir=-1, glyph "▼"); a
+ * REPEAT click on the same header sorts DESCENDING with nulls at the BOTTOM (dir=1, glyph
+ * "▲"). Every expected order below was hand-computed once from the frozen top 50 by
+ * running sortRows' own comparator logic on paper against xp_table.json, never by
+ * importing sortable.ts into this file.
+ *
+ * Tie coverage: price_m=4.5 is the minimum price in the frozen top 50, and its five-way
+ * tie group (Dedic, Petrovic, Leno, Ajer, Verbruggen -- in that pre-sort relative order)
+ * lands at the very front on the fresh (ascending) click and the very back on the repeat
+ * (descending) click, in the SAME relative order both times -- exactly what a stable sort
+ * guarantees for equal keys. ownership=0.6 (Ndoye, Janelt) is a second, independent tie
+ * used for the same proof on a different numeric column.
+ *
+ * Null coverage: the full 651-row frozen capture (not just the top 50) has zero rows with
+ * a null price_m, ownership or xp_capt -- confirmed by scripted inspection of the committed
+ * v1 normal fixture. The plan's flagged-assumption fallback ("cover the tie/null cases
+ * through a position filter that narrows to rows that do") presumes a null exists
+ * SOMEWHERE reachable by filtering; since none exists anywhere in the committed JSON, no
+ * filter can manufacture one without mutating the immutable v1 fixture (forbidden by D-08).
+ * The null-key assertions are therefore not exercisable against this fixture and are
+ * skipped here -- documented in the plan SUMMARY, not silently dropped. Everything else
+ * this task's <action> text asks for (both directions, both glyphs, tie stability, a text
+ * column) is fully covered below.
+ */
+test.describe("xP table -- sort semantics", () => {
+  test("numeric column: fresh/repeat click glyphs, exact order, and a stable tie", async ({
+    page,
+  }) => {
+    await gotoReady(page, "/");
+    const table = page.getByRole("table", { name: "xP table" });
+    const headerCells = table.locator("thead th");
+    const priceHeader = headerCells.nth(3); // £m
+    const names = () => table.locator("tbody tr td:nth-child(2)").allTextContents();
+
+    // Fresh click: ascending, nulls-at-top polarity (none present here, so plain ascending).
+    await priceHeader.locator("button").click();
+    await expect(priceHeader).toContainText("▼");
+    let visible = await names();
+    expect(visible.slice(0, 5)).toEqual(["Dedić", "Petrović", "Leno", "Ajer", "Verbruggen"]);
+    expect(visible).toHaveLength(50);
+
+    // Repeat click on the SAME header: descending, nulls-at-bottom polarity.
+    await priceHeader.locator("button").click();
+    await expect(priceHeader).toContainText("▲");
+    visible = await names();
+    expect(visible.slice(0, 5)).toEqual(["Haaland", "B.Fernandes", "Palmer", "Saka", "Isak"]);
+    // The same tie group, still in the SAME relative order (Dedić before Petrović),
+    // now at the bottom instead of the top -- a stable sort neither merges nor swaps ties.
+    expect(visible.slice(-5)).toEqual(["Dedić", "Petrović", "Leno", "Ajer", "Verbruggen"]);
+    expect(visible).toHaveLength(50);
+  });
+
+  test("a second numeric tie (ownership=0.6) stays in relative order in both directions", async ({
+    page,
+  }) => {
+    await gotoReady(page, "/");
+    const table = page.getByRole("table", { name: "xP table" });
+    const headerCells = table.locator("thead th");
+    const ownershipHeader = headerCells.nth(4); // Own %
+    const names = () => table.locator("tbody tr td:nth-child(2)").allTextContents();
+
+    await ownershipHeader.locator("button").click();
+    let visible = await names();
+    // Ndoye and Janelt both have ownership=0.6, the minimum in the frozen top 50 -- fresh
+    // click puts them first, in their original pre-sort relative order.
+    expect(visible[0]).toBe("Ndoye");
+    expect(visible[1]).toBe("Janelt");
+
+    await ownershipHeader.locator("button").click();
+    visible = await names();
+    // Same pair, same relative order (Ndoye before Janelt), now at the bottom.
+    expect(visible[48]).toBe("Ndoye");
+    expect(visible[49]).toBe("Janelt");
+  });
+
+  test("text column (Player): fresh/repeat click glyphs and exact first/last names", async ({
+    page,
+  }) => {
+    await gotoReady(page, "/");
+    const table = page.getByRole("table", { name: "xP table" });
+    const headerCells = table.locator("thead th");
+    const playerHeader = headerCells.nth(1); // Player
+    const names = () => table.locator("tbody tr td:nth-child(2)").allTextContents();
+
+    await playerHeader.locator("button").click();
+    await expect(playerHeader).toContainText("▼");
+    let visible = await names();
+    expect(visible[0]).toBe("A.Becker");
+    expect(visible[visible.length - 1]).toBe("Wissa");
+
+    await playerHeader.locator("button").click();
+    await expect(playerHeader).toContainText("▲");
+    visible = await names();
+    expect(visible[0]).toBe("Wissa");
+    expect(visible[visible.length - 1]).toBe("A.Becker");
+  });
+
+  test("clicking a different header resets to the fresh-click direction", async ({ page }) => {
+    await gotoReady(page, "/");
+    const table = page.getByRole("table", { name: "xP table" });
+    const headerCells = table.locator("thead th");
+    const priceHeader = headerCells.nth(3); // £m
+    const ownershipHeader = headerCells.nth(4); // Own %
+
+    await priceHeader.locator("button").click();
+    await expect(priceHeader).toContainText("▼");
+
+    await ownershipHeader.locator("button").click();
+    await expect(ownershipHeader).toContainText("▼");
+    // The previously-active header no longer shows a glyph at all.
+    await expect(priceHeader).not.toContainText("▼");
+    await expect(priceHeader).not.toContainText("▲");
+  });
+});
