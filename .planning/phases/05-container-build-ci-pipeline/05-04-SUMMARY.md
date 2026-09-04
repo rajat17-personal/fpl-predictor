@@ -40,7 +40,7 @@ key-decisions:
   - "google-chrome-stable_current_amd64.deb removed via a plain `rm` only after `git log --all --oneline -- <path>` confirmed empty — a working-tree deletion, not a history rewrite (D-16)."
   - "downloaded_files/ left untouched — it holds real scratch files (sportsref_download.xls, two lock files), not the empty directory the plan's conditional removal targeted."
   - ".gsd/, .venv/+venv/, and .docker/ added under the existing 'Scratch and installers' .gitignore section (each with its own inline reason comment) rather than a new section, per the plan's 'under the appropriate existing section' instruction."
-  - "Personal-email scan found one out-of-scope hit (s.rajat1702@gmail.com quoted twice in 05-PATTERNS.md, a planning doc outside this task's file list) — documented as a finding per the plan's own design ('a hit anywhere else is a finding for the SUMMARY'), not silently redacted; recorded to .planning/WINDOWS.md for visibility at the 05-05 push checkpoint."
+  - "Personal-email scan found one out-of-scope hit (<redacted-personal-email> quoted twice in 05-PATTERNS.md, a planning doc outside this task's file list) — documented as a finding per the plan's own design ('a hit anywhere else is a finding for the SUMMARY'), not silently redacted; recorded to .planning/WINDOWS.md for visibility at the 05-05 push checkpoint."
 
 coverage:
   - id: D1
@@ -75,7 +75,7 @@ coverage:
         ref: "plan 05-04 task 2 automated <verify>: git ls-files count + grep -InE scan across all tracked files (scanned 400+ files)"
         status: fail
     human_judgment: true
-    rationale: "Scan is fully automated and ran correctly (self-evidencing count confirmed), but it found a real hit outside the plan's anticipated scope: s.rajat1702@gmail.com quoted twice in .planning/phases/05-container-build-ci-pipeline/05-PATTERNS.md (a planning doc, not in this task's files_modified list). The plan's own action text designates this exact scenario a developer decision, not an executor auto-fix -- recorded to WINDOWS.md, needs human sign-off before the 05-05 push checkpoint."
+    rationale: "Scan is fully automated and ran correctly (self-evidencing count confirmed), but it found a real hit outside the plan's anticipated scope: <redacted-personal-email> quoted twice in .planning/phases/05-container-build-ci-pipeline/05-PATTERNS.md (a planning doc, not in this task's files_modified list). The plan's own action text designates this exact scenario a developer decision, not an executor auto-fix -- recorded to WINDOWS.md, needs human sign-off before the 05-05 push checkpoint."
   - id: D5
     description: "data/snapshots remains tracked and byte-identical to HEAD -- no plan-05-04 change touched the irreplaceable daily price-snapshot history"
     requirement: SEC-04
@@ -135,7 +135,7 @@ Each task was committed atomically:
 
 **1. [Rule 4-adjacent — plan-designated developer decision] Personal email literal found outside the anticipated scope**
 - **Found during:** Task 2's tracked-file scan
-- **Issue:** `s.rajat1702@gmail.com` appears twice in `.planning/phases/05-container-build-ci-pipeline/05-PATTERNS.md` (lines 141 and 153) — both are quotes of `weekly.yml`'s *pre-modernization* content, documenting the exact fix this plan's Task 1 makes. This file is not in Task 2's `files_modified` list (`.gitignore`, the installer only).
+- **Issue:** `<redacted-personal-email>` appears twice in `.planning/phases/05-container-build-ci-pipeline/05-PATTERNS.md` (lines 141 and 153) — both are quotes of `weekly.yml`'s *pre-modernization* content, documenting the exact fix this plan's Task 1 makes. This file is not in Task 2's `files_modified` list (`.gitignore`, the installer only).
 - **Why not auto-fixed:** The plan's own action text designates this precise scenario explicitly: "If there is a hit, print it and stop; do not redact and continue, because a literal in a tracked file is a decision for the developer, not a cleanup for the executor... a hit anywhere else is a finding for the SUMMARY." This is a planning-history document (not live infrastructure), and editing it is outside this task's declared file scope.
 - **Disposition:** Recorded to `.planning/WINDOWS.md` (entry id 3, kind `deviation`, phase 05) for visibility before the human-gated first push in plan 05-05. The developer can redact `05-PATTERNS.md` (or accept it as historical record in a private repo) as part of that checkpoint.
 - **Files affected (not modified by this plan):** `.planning/phases/05-container-build-ci-pipeline/05-PATTERNS.md`
@@ -156,7 +156,7 @@ None - no external service configuration required.
 ## Next Phase Readiness
 - Both scheduler workflows are modernized and ready to be pushed alongside `ci.yml` in plan 05-05
 - Repo is clean of the 140MB installer with no history-rewrite risk; `.gitignore` covers every generated/secret-bearing/tool-runtime path this milestone introduced
-- **Before plan 05-05's push checkpoint:** the developer should decide whether to redact the two `s.rajat1702@gmail.com` occurrences in `05-PATTERNS.md` (tracked in `.planning/WINDOWS.md` entry 3) — this is the only open item blocking a fully clean "nothing you'd want back" first push
+- **Before plan 05-05's push checkpoint:** the developer should decide whether to redact the two `<redacted-personal-email>` occurrences in `05-PATTERNS.md` (tracked in `.planning/WINDOWS.md` entry 3) — this is the only open item blocking a fully clean "nothing you'd want back" first push
 - `data/snapshots` history is verified untouched — the time-critical daily-cron invariant holds
 
 ---

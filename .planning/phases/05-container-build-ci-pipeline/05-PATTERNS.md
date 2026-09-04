@@ -138,7 +138,7 @@ jobs:
       - name: Commit outputs
         run: |
           git config user.name "rajat sharma"
-          git config user.email "s.rajat1702@gmail.com"
+          git config user.email "<redacted-personal-email>"
           git add web/data data/raw/live || true
           git diff --cached --quiet || git commit -m "weekly: GW export $(date -u +%F)"
           git push
@@ -150,7 +150,7 @@ jobs:
 3. `actions/setup-python@v5` with `python-version: "3.12"` → SHA-pinned `actions/setup-python@<sha>  # v7.0.0` with `python-version: "3.14"`.
 4. `pip install -r requirements.txt` → `pip install --require-hashes -r requirements.txt` (D-04).
 5. `weekly.yml`'s header comment ("Requires models/artifacts/xp_model.joblib in the repo") is a known-false assumption (D-05) — correct or delete it, do not preserve.
-6. Git identity block — replace both the `fpl-bot`/`actions@users.noreply.github.com` (already close to correct) and especially `weekly.yml`'s hardcoded personal `"rajat sharma"` / `s.rajat1702@gmail.com` with the github-actions bot identity:
+6. Git identity block — replace both the `fpl-bot`/`actions@users.noreply.github.com` (already close to correct) and especially `weekly.yml`'s hardcoded personal `"rajat sharma"` / `<redacted-personal-email>` with the github-actions bot identity:
    ```yaml
    git config user.name "github-actions[bot]"
    git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
