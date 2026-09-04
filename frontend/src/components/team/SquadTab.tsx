@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  fetchApi,
   fetchJson,
   type MetaResponse,
   type SolveRequest,
@@ -79,6 +78,30 @@ export function buildSolveRequest(
     body.max_transfers = values.maxTransfers;
   }
   return body;
+}
+
+/* Custom fetch (not lib/api.ts's fetchApi) — same precedent as RateTab.tsx's
+ * fetchRate and PlanTransfers.tsx's postPlan, and the sibling postSolve below:
+ * fetchApi discards the response body on a non-ok response, which cannot
+ * reproduce the exact "Couldn't load that team: {message}." copy (D-15) that
+ * needs the response's own `detail` field (e.g. _fetch_entry_picks's 404
+ * "entry {entry}: no picks for GW{gw-1} ...") when present, falling back to
+ * the status code otherwise. Fixed alongside the E2E failure-path spec that
+ * caught teamQuery still using the discarding fetchApi despite this file's
+ * own postSolve comment already documenting why that doesn't work here. */
+async function fetchTeam(entry: number): Promise<TeamResponse> {
+  const res = await fetch(`/api/team/${entry}`);
+  if (!res.ok) {
+    let detail: string | undefined;
+    try {
+      const parsed = (await res.json()) as { detail?: string };
+      detail = parsed?.detail;
+    } catch {
+      // Response body wasn't JSON — fall back to the status code below.
+    }
+    throw new Error(detail || String(res.status));
+  }
+  return (await res.json()) as TeamResponse;
 }
 
 /* Custom fetch (not lib/api.ts's fetchApi) — same precedent as RateTab.tsx's
@@ -392,7 +415,7 @@ export function SquadTab({ entry, onLoadEntry, onClearEntry }: SquadTabProps) {
   });
   const teamQuery = useQuery({
     queryKey: ["team", entry],
-    queryFn: () => fetchApi<TeamResponse>(`/api/team/${entry}`),
+    queryFn: () => fetchTeam(entry as number),
     enabled: entry != null,
   });
 
