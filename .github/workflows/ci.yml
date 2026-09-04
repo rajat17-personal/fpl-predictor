@@ -1,0 +1,108 @@
+# Single chained verification workflow (D-08). Jobs run in one linear `needs`
+# chain -- lint-build -> test -> e2e -> image -> publish -- rather than in
+# parallel, because the backend test suite cannot run before the frontend has
+# been built: tests/test_fixture_mode.py's SPA-fallback test serves a 500
+# against a missing frontend/dist directory (Phase 4's review, RESEARCH.md
+# Pitfall 5). The built bundle is produced once in lint-build and shared via
+# actions/upload-artifact/download-artifact rather than rebuilt (or assumed
+# present) in every downstream job. Everything after that first handoff stays
+# chained too, so a broken lint/test/e2e stage never wastes minutes building
+# and scanning an image, and the image job's smoke test always runs against
+# the exact bundle the earlier jobs already verified.
+name: ci
+
+on:
+  # No branch filter on push -- every commit to every branch gets a full run.
+  # pull_request is narrowed to the events a push does not already cover
+  # (opened/reopened/ready_for_review): a push to a branch that already has
+  # an open PR otherwise fires both `push` and `pull_request` for the same
+  # commit, burning two full runs out of the 2000-minute monthly budget
+  # (D-13). This narrowing plus the concurrency group below gives exactly one
+  # verification run per commit, while a freshly-opened PR with no new push
+  # behind it still gets verified.
+  push:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+
+# Least-privilege default -- individual jobs widen this only where they must
+# (image: security-events: write: publish: packages: write).
+permissions:
+  contents: read
+
+# A superseded push or PR update cancels its in-flight predecessor instead of
+# racing it to completion.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97   # v7.0.0
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: pip install --require-hashes -r requirements.txt -r requirements-dev.txt
+      - name: Lint (ruff)
+        run: ruff check .
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020   # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            e2e/package-lock.json
+      - run: npm --prefix frontend ci
+      # This is the real typecheck: `tsc -b` expands the project references.
+      # The repo's own `npm run typecheck` script runs `tsc --noEmit` with no
+      # `-b` against a root tsconfig.json whose `files` array is empty, so it
+      # type-checks nothing and exits 0 regardless of real errors. Never use
+      # it as a CI gate (RESEARCH.md Anti-Patterns, confirmed by direct read
+      # of frontend/tsconfig.json).
+      - run: npm --prefix frontend run build
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a   # v7.0.1
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+  test:
+    needs: lint-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97   # v7.0.0
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: pip install --require-hashes -r requirements.txt -r requirements-dev.txt
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c   # v8.0.1
+        with:
+          name: frontend-dist
+          path: frontend/dist
+      # Without a built bundle, tests/test_fixture_mode.py's SPA-fallback
+      # test 500s and the pytest failure output points nowhere useful --
+      # guard explicitly and name exactly which file is missing.
+      - name: Guard built frontend bundle
+        run: |
+          if [ ! -f frontend/dist/index.html ]; then
+            echo "FAILED: frontend/dist/index.html is missing -- the frontend-dist artifact from lint-build did not download correctly"
+            exit 1
+          fi
+          if [ ! -f frontend/dist/404.html ]; then
+            echo "FAILED: frontend/dist/404.html is missing -- the frontend-dist artifact from lint-build did not download correctly"
+            exit 1
+          fi
+      # Bare -- pytest.ini's plugin disables and testpaths are picked up
+      # automatically from the repo root, no extra flags needed.
+      - run: pytest
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020   # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            e2e/package-lock.json
+      - run: npm --prefix frontend ci
+      - run: npm --prefix frontend test
