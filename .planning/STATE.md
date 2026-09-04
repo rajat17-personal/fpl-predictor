@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 04
 current_phase_name: E2E Regression Suite
 status: executing
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-09-04T01:39:38.452Z"
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-09-04T01:52:03.422Z"
 last_activity: 2026-09-03
 last_activity_desc: Phase 04 execution started
-state_head: b9f933e2f2e04ba202e3924946c25ee969f88f4e
+state_head: 76b658c42d08dabfa4fef1828cee95756271b59d
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 25
-  completed_plans: 22
+  completed_plans: 23
   percent: 43
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-03)
 ## Current Position
 
 Phase: 04 (E2E Regression Suite) — EXECUTING
-Plan: 4 of 6
+Plan: 5 of 6
 Status: Ready to execute
 Last activity: 2026-09-03 — Phase 04 execution started
 
@@ -82,6 +82,7 @@ Progress: [████░░░░░░] 43% (3/7 phases, 19 plans complete)
 | Phase 04 P01 | 55min | 3 tasks | 28 files |
 | Phase 04 P02 | 75min | 3 tasks | 7 files |
 | Phase 04 P03 | 20 min | 3 tasks | 24 files |
+| Phase 04 P04 | 35 min | 3 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -135,6 +136,8 @@ Recent decisions affecting current work:
 - [Phase 04]: [Phase 04-02] Corrected verify-command form for later plans: (cd e2e && npx tsc --noEmit -p tsconfig.json), not npx tsc --noEmit -p e2e/tsconfig.json from repo root -- typescript is installed only in e2e/node_modules, isolated from frontend/ (a sibling, not an ancestor, directory).
 - [Phase 04]: [Phase 04-03] Selection rule executed exactly as specified: sort fixtures.json's 20 ticker rows ascending by short; first six = BLANK clubs (ARS, AVL, BHA, BOU, BRE, CHE), first four = DOUBLE clubs (ARS, AVL, BHA, BOU) -- recorded in MANIFEST.md and hardcoded identically in every variant spec.
 - [Phase 04]: [Phase 04-03] Playwright's getByText() is case-insensitive substring matching by default and getByLabel() can match repeated identical aria-labels across rows/gameweeks -- specs must scope locators to the specific cell under test and add { exact: true } to short legend labels, not rely on page-wide queries.
+- [Phase 04]: [Phase 04] [Phase 4 Plan 04] Captains sub-table's literal 'undefined' ownership fallback (R18) and the top-50 status-flag reveal have no exercisable row in the immutable v1 capture (zero null captain ownership, zero non-'a' status in top 50) -- documented and skipped rather than mutating the frozen fixture. — D-08 forbids editing v1 fixtures in place; a future v2 cut would need to deliberately include such rows to exercise these two vanilla-parity code paths.
+- [Phase 04]: [Phase 04] [Phase 4 Plan 04] The full 651-row frozen xp_table.json has zero rows with a null price_m/ownership/xp_capt anywhere -- the plan's suggested position-filter fallback for the null-key sort test cannot surface one, so that assertion is skipped and documented rather than worked around. — Confirmed by scripting an inspection of the entire committed fixture (not just the top 50) before writing any assertion; every other Task 2 requirement (glyphs, both directions, two independent tie groups, text-column sort) is fully covered.
 
 ### Pending Todos
 
@@ -162,6 +165,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-04T01:39:38.370Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-09-04T01:52:03.344Z
+Stopped at: Completed 04-04-PLAN.md
 Resume file: None
