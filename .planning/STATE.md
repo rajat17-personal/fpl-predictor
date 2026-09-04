@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 04
 current_phase_name: E2E Regression Suite
 status: executing
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-09-04T01:25:04.648Z"
+stopped_at: Completed 04-03-PLAN.md
+last_updated: "2026-09-04T01:39:38.452Z"
 last_activity: 2026-09-03
 last_activity_desc: Phase 04 execution started
-state_head: b72421fb30a5a40aa6d541e33428ec7b1301c6f3
+state_head: b9f933e2f2e04ba202e3924946c25ee969f88f4e
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 25
-  completed_plans: 21
+  completed_plans: 22
   percent: 43
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-03)
 ## Current Position
 
 Phase: 04 (E2E Regression Suite) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 Status: Ready to execute
 Last activity: 2026-09-03 — Phase 04 execution started
 
@@ -81,6 +81,7 @@ Progress: [████░░░░░░] 43% (3/7 phases, 19 plans complete)
 | Phase 03 P05 | 7min | 2 tasks | 4 files |
 | Phase 04 P01 | 55min | 3 tasks | 28 files |
 | Phase 04 P02 | 75min | 3 tasks | 7 files |
+| Phase 04 P03 | 20 min | 3 tasks | 24 files |
 
 ## Accumulated Context
 
@@ -132,6 +133,8 @@ Recent decisions affecting current work:
 - [Phase 04]: [Phase 04-02] Task 1 checkpoint:decision (gate=blocking-human) -- approve-with-deps for @playwright/test@1.62.1 (registry re-verified, zero drift); Chromium ultimately installed browser-binary-only (no sudo) after root's PATH resolved system Node 18 under sudo, verified via in-process launch that WSL2 already has every required shared library.
 - [Phase 04]: [Phase 04-02] Two unplanned package-legitimacy checkpoints beyond Task 1's single-package surface: @types/node@26.4.1 (tsconfig types/process/path support) and typescript@6.0.3 (matching frontend's pin) -- both human-approved individually. Discovered via a concrete near-miss: npx tsc without a local typescript install silently resolves an unrelated deprecated registry package literally named 'tsc', not the real compiler.
 - [Phase 04]: [Phase 04-02] Corrected verify-command form for later plans: (cd e2e && npx tsc --noEmit -p tsconfig.json), not npx tsc --noEmit -p e2e/tsconfig.json from repo root -- typescript is installed only in e2e/node_modules, isolated from frontend/ (a sibling, not an ancestor, directory).
+- [Phase 04]: [Phase 04-03] Selection rule executed exactly as specified: sort fixtures.json's 20 ticker rows ascending by short; first six = BLANK clubs (ARS, AVL, BHA, BOU, BRE, CHE), first four = DOUBLE clubs (ARS, AVL, BHA, BOU) -- recorded in MANIFEST.md and hardcoded identically in every variant spec.
+- [Phase 04]: [Phase 04-03] Playwright's getByText() is case-insensitive substring matching by default and getByLabel() can match repeated identical aria-labels across rows/gameweeks -- specs must scope locators to the specific cell under test and add { exact: true } to short legend labels, not rely on page-wide queries.
 
 ### Pending Todos
 
@@ -159,6 +162,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-04T01:25:04.568Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-09-04T01:39:38.370Z
+Stopped at: Completed 04-03-PLAN.md
 Resume file: None

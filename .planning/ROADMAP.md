@@ -143,7 +143,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The rate-my-team flow is covered end to end
   5. The fixtures and prices pages are covered
 
-**Plans**: 2/6 plans executed (3 waves)
+**Plans**: 3/6 plans executed (3 waves)
 
 **Wave 1**
 
@@ -155,7 +155,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 3** *(blocked on Wave 2; the four run in parallel — zero file overlap)*
 
-- [ ] 04-03-PLAN.md — Blank and double-gameweek fixture synthesis plus the fixtures ticker, price watch and four targeted variant specs
+- [x] 04-03-PLAN.md — Blank and double-gameweek fixture synthesis plus the fixtures ticker, price watch and four targeted variant specs
 - [ ] 04-04-PLAN.md — xP table and captain picks: exact cell values, both sort directions with tie and null behaviour, filters and the empty result
 - [ ] 04-05-PLAN.md — Team/pitch solver flow: load, lock/exclude, real ILP solve invariants, the single pinned golden, and the two-gameweek plan flow
 - [ ] 04-06-PLAN.md — Rate-my-team: the four tiles with their boundary and precision behaviour, and the single-pitch diff with its ghost card
@@ -221,7 +221,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Test Base Layer & App Skeleton | 6/6 | Complete    | 2026-09-01 |
 | 2. Data Layer & Non-Pitch Pages | 8/8 | Complete    | 2026-09-02 |
 | 3. Pitch Renderer & Squad Views | 5/5 | Complete    | 2026-09-03 |
-| 4. E2E Regression Suite | 2/6 | In Progress|  |
+| 4. E2E Regression Suite | 3/6 | In Progress|  |
 | 5. Container Build & CI Pipeline | 0/TBD | Not started | - |
 | 6. Security, Reliability & Observability Hardening | 0/TBD | Not started | - |
 | 7. Parity Validation & Cutover | 0/TBD | Not started | - |
