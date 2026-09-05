@@ -180,6 +180,52 @@ def test_jsonlog_configure_logging_is_idempotent(capsys):
     assert json.loads(lines[0])["event"] == "test.event"
 
 
+def test_redact_blanks_key_shaped_fields_regardless_of_value(monkeypatch):
+    from ops.jsonlog import redact
+
+    monkeypatch.delenv("FPL_API_KEYS", raising=False)
+    fields = {
+        "api_key": "sk-abc123", "token": 42, "user_secret": {"nested": "x"},
+        "PASSWORD": "hunter2", "Authorization": "Bearer abc", "webhook_url": "https://x",
+        "path": "/data/live/bootstrap-static.json", "gw": 5,
+    }
+    out = redact(fields)
+    for key in ("api_key", "token", "user_secret", "PASSWORD", "Authorization", "webhook_url"):
+        assert out[key] == "[redacted]", key
+    assert out["path"] == "/data/live/bootstrap-static.json"
+    assert out["gw"] == 5
+
+
+def test_redact_blanks_any_value_matching_an_fpl_api_keys_entry(monkeypatch):
+    from ops.jsonlog import redact
+
+    monkeypatch.setenv("FPL_API_KEYS", "k1,k2, k3 ")
+    fields = {"error": "auth failed for k2", "detail": "k2", "unrelated": "k4"}
+    out = redact(fields)
+    assert out["detail"] == "[redacted]"          # exact match on a non-key-shaped field
+    assert out["error"] == "auth failed for k2"    # substring match is not redacted (exact-only)
+    assert out["unrelated"] == "k4"
+
+
+def test_jsonformatter_output_never_contains_a_redacted_secret(monkeypatch):
+    import logging as _logging
+
+    from ops.jsonlog import JsonFormatter
+
+    monkeypatch.setenv("FPL_API_KEYS", "supersecretkey")
+    fmt = JsonFormatter("test-service")
+    record = _logging.LogRecord(
+        name="test", level=_logging.ERROR, pathname="", lineno=0,
+        msg="auth.failed", args=(), exc_info=None,
+    )
+    record.event = "auth.failed"
+    record.x_api_key = "supersecretkey"
+    line = fmt.format(record)
+    assert "supersecretkey" not in line
+    obj = json.loads(line)
+    assert obj["x_api_key"] == "[redacted]"
+
+
 # ---------------------------------------------------------------- ops.payloads (Task 2)
 
 
