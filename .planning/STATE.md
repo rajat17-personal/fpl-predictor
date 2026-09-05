@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 06
 current_phase_name: Security, Reliability & Observability Hardening
 status: executing
-stopped_at: Completed 06-03-PLAN.md
-last_updated: "2026-09-05T12:26:23.850Z"
+stopped_at: Completed 06-04-PLAN.md
+last_updated: "2026-09-05T12:47:23.552Z"
 last_activity: 2026-09-05
 last_activity_desc: Phase 06 execution started
-state_head: 3b11ce525dae039db1f847773b33869c399ec81a
+state_head: eac08ce763272db26ef5909845c6622c457ba2e0
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 37
-  completed_plans: 35
+  completed_plans: 36
   percent: 71
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-05)
 ## Current Position
 
 Phase: 06 (Security, Reliability & Observability Hardening) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-09-05 — Phase 06 execution started
 
@@ -97,6 +97,7 @@ Progress: [███████░░░] 71% (5/7 phases, 32 plans complete)
 | Phase 06 P01 | 30min | 3 tasks | 8 files |
 | Phase 06 P02 | 25min | 3 tasks | 12 files |
 | Phase 06 P03 | 25min | 3 tasks | 11 files |
+| Phase 06 P04 | 35min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -176,6 +177,10 @@ Recent decisions affecting current work:
 - [Phase 06]: [Phase 06-03]: Fixed a bug in the plan's own literal run_step wording ('if ! CMD; then rc=$?') that always captures exit code 0 due to bash if-negation semantics -- used the non-negated else-branch form instead, which correctly captures the real exit code while remaining exempt from set -e. — Verified empirically with a standalone bash reproduction before implementing; the plan's own acceptance criteria requires the printed/reported exit code to name the real failure code.
 - [Phase 06]: [Phase 06-03]: Rewrote both workflows' pre-existing 'git diff --cached --quiet || git commit' conditional-commit idiom (untouched since Phase 5) as an explicit if-block without '||'. — The plan's own Task 2 <verify> requires zero '||' anywhere in either workflow file; leaving that line as-is would make the plan's own acceptance criteria unsatisfiable. Behavior (commit only when something is staged) is unchanged.
 - [Phase 06]: [Phase 06-03]: ops.notify.report() passes the alert record's 'message' field to log_event() under the key 'alert_message' (on-disk/POSTed record keeps 'message'). — Python's stdlib logging module reserves the 'message' attribute name on LogRecord; passing it through as an extra field raised 'Attempt to overwrite message in LogRecord' on every call, silently discarding every alert via report()'s own outer except-swallow.
+- [Phase 06]: [Phase 06]: [Phase 06-04]: Read _state['pool_version'] under a short separate with-_lock block inside solve()/plan() rather than changing _pool()'s return signature -- keeps team()/rate()'s existing 3-tuple unpacking untouched and limits blast radius to the two cache-consuming endpoints.
+- [Phase 06]: [Phase 06]: [Phase 06-04]: Implemented _cache_get/_cache_put using OrderedDict's method API exclusively (.get/.pop/.update/.move_to_end/.popitem), never subscript syntax -- satisfies the plan's own literal grep-based acceptance check for zero _solve_cache[ access outside the two locked helpers.
+- [Phase 06]: [Phase 06]: [Phase 06-04]: Scoped tests/test_obs.py's log_capture fixture to the api.main logger, not root -- httpx's own access-log line on a sibling logger was contaminating whole-buffer substring assertions with a query string api/main.py's own middleware never logged.
+- [Phase 06]: [Phase 06]: [Phase 06-04]: The plan's own literal subscript-check grep command fails under this environment's grep-to-ugrep shim (empty-stdin -qv semantics differ from GNU grep); verified correctness with 'command grep' instead of changing the implementation -- mirrors the Phase 06-03 bash-negation precedent of a plan-authored verify command that doesn't hold in this shell.
 
 ### Pending Todos
 
@@ -204,6 +209,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-05T12:26:23.721Z
-Stopped at: Completed 06-03-PLAN.md
+Last session: 2026-09-05T12:47:23.419Z
+Stopped at: Completed 06-04-PLAN.md
 Resume file: None

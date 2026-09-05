@@ -65,7 +65,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **REL-02**: Cron error traps — remove `|| true`, add retry/backoff to snapshot, failures visible
 - [x] **REL-03**: Pydantic schema validation on FPL bootstrap/fixtures payloads
 - [ ] **REL-04**: Graceful JSON-load failures in predict/* with actionable error messages
-- [ ] **REL-05**: Solve cache bounded (LRU/TTL) with the invalidation race fixed
+- [x] **REL-05**: Solve cache bounded (LRU/TTL) with the invalidation race fixed
 
 ### Observability
 
@@ -149,7 +149,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REL-02 | Phase 6 | Pending |
 | REL-03 | Phase 6 | Complete |
 | REL-04 | Phase 6 | Pending |
-| REL-05 | Phase 6 | Pending |
+| REL-05 | Phase 6 | Complete |
 | OBS-01 | Phase 6 | Pending |
 | OBS-02 | Phase 6 | Pending |
 | OBS-03 | Phase 6 | Pending |
