@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 06
 current_phase_name: Security, Reliability & Observability Hardening
 status: executing
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-09-05T12:02:21.071Z"
+stopped_at: Completed 06-03-PLAN.md
+last_updated: "2026-09-05T12:26:23.850Z"
 last_activity: 2026-09-05
 last_activity_desc: Phase 06 execution started
-state_head: df55f8a0971b6c755e306603f065b4f51576e729
+state_head: 3b11ce525dae039db1f847773b33869c399ec81a
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 37
-  completed_plans: 34
+  completed_plans: 35
   percent: 71
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-05)
 ## Current Position
 
 Phase: 06 (Security, Reliability & Observability Hardening) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-09-05 — Phase 06 execution started
 
@@ -96,6 +96,7 @@ Progress: [███████░░░] 71% (5/7 phases, 32 plans complete)
 | Phase 05 P05 | 153min | 2 tasks | 7 files |
 | Phase 06 P01 | 30min | 3 tasks | 8 files |
 | Phase 06 P02 | 25min | 3 tasks | 12 files |
+| Phase 06 P03 | 25min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -172,6 +173,9 @@ Recent decisions affecting current work:
 - [Phase 06]: [Phase 06-01]: Added direct unit tests for ops.jsonlog.redact() beyond the plan's explicit acceptance criteria — T-06-01-03's threat mitigation (no secret in a log line) had implementation from Task 1 but no test proving it until this close-out pass (Rule 2 deviation — missing test coverage for a stated security mitigation).
 - [Phase 06]: [Phase 06-02]: Closed all 24 remaining bare file-handle sites across data/, models/, predict/, e2e/scripts/ and tests/ onto ops.jsonio; added tests/test_reliability.py as a self-tested, repository-wide regression gate (scanner + positive/negative controls) that keeps the leak inventory at zero on every future push.
 - [Phase 06]: [Phase 06-02]: Plan's own literal whole-repo read_json(/what= shell grep always false-flags ops/jsonio.py's def line (its what parameter has no default); the real CI gate is tests/test_reliability.py, which correctly excludes definition lines and passes with zero findings — documented rather than weakening ops.jsonio's stable signature.
+- [Phase 06]: [Phase 06-03]: Fixed a bug in the plan's own literal run_step wording ('if ! CMD; then rc=$?') that always captures exit code 0 due to bash if-negation semantics -- used the non-negated else-branch form instead, which correctly captures the real exit code while remaining exempt from set -e. — Verified empirically with a standalone bash reproduction before implementing; the plan's own acceptance criteria requires the printed/reported exit code to name the real failure code.
+- [Phase 06]: [Phase 06-03]: Rewrote both workflows' pre-existing 'git diff --cached --quiet || git commit' conditional-commit idiom (untouched since Phase 5) as an explicit if-block without '||'. — The plan's own Task 2 <verify> requires zero '||' anywhere in either workflow file; leaving that line as-is would make the plan's own acceptance criteria unsatisfiable. Behavior (commit only when something is staged) is unchanged.
+- [Phase 06]: [Phase 06-03]: ops.notify.report() passes the alert record's 'message' field to log_event() under the key 'alert_message' (on-disk/POSTed record keeps 'message'). — Python's stdlib logging module reserves the 'message' attribute name on LogRecord; passing it through as an extra field raised 'Attempt to overwrite message in LogRecord' on every call, silently discarding every alert via report()'s own outer except-swallow.
 
 ### Pending Todos
 
@@ -200,6 +204,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-05T12:02:20.945Z
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-09-05T12:26:23.721Z
+Stopped at: Completed 06-03-PLAN.md
 Resume file: None
