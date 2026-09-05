@@ -217,7 +217,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The API emits structured JSON request logs and exposes distinct liveness and readiness endpoints
   5. A long-running API process leaks no file handles, and the solve cache is bounded with correct invalidation under concurrent requests
 
-**Plans**: 1/5 plans executed (3 waves)
+**Plans**: 2/5 plans executed (3 waves)
 
 **Wave 1**
 
@@ -225,7 +225,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 2** *(blocked on Wave 1; the three run in parallel — zero file overlap)*
 
-- [ ] 06-02-PLAN.md — REL-01/REL-04 sweep: 24 remaining bare file handles across `data/`, `models/`, `predict/`, `e2e/scripts/` and `tests/`, plus the self-tested repository-wide regression gate
+- [x] 06-02-PLAN.md — REL-01/REL-04 sweep: 24 remaining bare file handles across `data/`, `models/`, `predict/`, `e2e/scripts/` and `tests/`, plus the self-tested repository-wide regression gate
 - [ ] 06-03-PLAN.md — Cron reliability and secrets: snapshot retry/backoff with atomic writes, never-raising `ops/notify.py`, per-step accounting in `daily.sh`/`weekly.sh` with the workflows delegating to them, and the mode-600 `.env` pattern
 - [ ] 06-04-PLAN.md — API hardening: configured CORS origins with a wildcard treated as a boot failure, a bounded LRU/TTL solve cache keyed on a monotonic pool version, and one redacted JSON log record per request
 
@@ -264,7 +264,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Pitch Renderer & Squad Views | 5/5 | Complete    | 2026-09-03 |
 | 4. E2E Regression Suite | 8/8 | Complete    | 2026-09-04 |
 | 5. Container Build & CI Pipeline | 5/5 | Complete    | 2026-09-05 |
-| 6. Security, Reliability & Observability Hardening | 1/5 | In Progress|  |
+| 6. Security, Reliability & Observability Hardening | 2/5 | In Progress|  |
 | 7. Parity Validation & Cutover | 0/TBD | Not started | - |
 
 ## Requirement Coverage

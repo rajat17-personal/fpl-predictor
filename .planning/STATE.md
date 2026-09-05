@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 06
 current_phase_name: Security, Reliability & Observability Hardening
 status: executing
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-09-05T11:41:19.430Z"
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-09-05T12:02:21.071Z"
 last_activity: 2026-09-05
 last_activity_desc: Phase 06 execution started
-state_head: 5664c5e002b77e97b1bfde28c7a6fca1780ac45f
+state_head: df55f8a0971b6c755e306603f065b4f51576e729
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 37
-  completed_plans: 33
+  completed_plans: 34
   percent: 71
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-05)
 ## Current Position
 
 Phase: 06 (Security, Reliability & Observability Hardening) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-09-05 — Phase 06 execution started
 
@@ -95,6 +95,7 @@ Progress: [███████░░░] 71% (5/7 phases, 32 plans complete)
 | Phase 05 P03 | 18min | 3 tasks | 1 files |
 | Phase 05 P05 | 153min | 2 tasks | 7 files |
 | Phase 06 P01 | 30min | 3 tasks | 8 files |
+| Phase 06 P02 | 25min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -169,6 +170,8 @@ Recent decisions affecting current work:
 - [Phase 05]: [Phase 05] [Phase 05-05] First real CI push surfaced two genuine environment bugs invisible to local preflight: bare pytest omitting CWD from sys.path (fixed via python -m pytest, 11cd68e) and missing libgomp1 in the runtime image for LightGBM's dlopen (fixed 65cd2e7) -- third PR run and the main-branch run (incl. publish) both went green.
 - [Phase 06]: [Phase 06-01]: Task 2 (tdd="true") implementation and its behavior tests were committed together in a single feat(06-01) commit rather than a separate RED test(06-01) commit followed by a GREEN feat(06-01) commit — ops/payloads.py and its Task 2 tests were designed together as one new module with no pre-existing production code to characterize a RED phase against; documented as a TDD Gate Compliance flag in 06-01-SUMMARY.md rather than silently omitted.
 - [Phase 06]: [Phase 06-01]: Added direct unit tests for ops.jsonlog.redact() beyond the plan's explicit acceptance criteria — T-06-01-03's threat mitigation (no secret in a log line) had implementation from Task 1 but no test proving it until this close-out pass (Rule 2 deviation — missing test coverage for a stated security mitigation).
+- [Phase 06]: [Phase 06-02]: Closed all 24 remaining bare file-handle sites across data/, models/, predict/, e2e/scripts/ and tests/ onto ops.jsonio; added tests/test_reliability.py as a self-tested, repository-wide regression gate (scanner + positive/negative controls) that keeps the leak inventory at zero on every future push.
+- [Phase 06]: [Phase 06-02]: Plan's own literal whole-repo read_json(/what= shell grep always false-flags ops/jsonio.py's def line (its what parameter has no default); the real CI gate is tests/test_reliability.py, which correctly excludes definition lines and passes with zero findings — documented rather than weakening ops.jsonio's stable signature.
 
 ### Pending Todos
 
@@ -197,6 +200,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-05T11:41:19.308Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-09-05T12:02:20.945Z
+Stopped at: Completed 06-02-PLAN.md
 Resume file: None
