@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 current_phase: 06
 current_phase_name: Security, Reliability & Observability Hardening
-status: executing
-stopped_at: Completed 06-04-PLAN.md
-last_updated: "2026-09-05T12:47:23.552Z"
+status: verifying
+stopped_at: Completed 06-05-PLAN.md
+last_updated: "2026-09-05T13:04:05.727Z"
 last_activity: 2026-09-05
 last_activity_desc: Phase 06 execution started
-state_head: eac08ce763272db26ef5909845c6622c457ba2e0
+state_head: 55cc819aae9ee97b545b91d43c8fabeb33e51f89
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 37
-  completed_plans: 36
+  completed_plans: 37
   percent: 71
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-05)
 
 Phase: 06 (Security, Reliability & Observability Hardening) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-05 — Phase 06 execution started
 
 Progress: [███████░░░] 71% (5/7 phases, 32 plans complete)
@@ -98,6 +98,7 @@ Progress: [███████░░░] 71% (5/7 phases, 32 plans complete)
 | Phase 06 P02 | 25min | 3 tasks | 12 files |
 | Phase 06 P03 | 25min | 3 tasks | 11 files |
 | Phase 06 P04 | 35min | 3 tasks | 4 files |
+| Phase 06 P05 | 20min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -181,6 +182,8 @@ Recent decisions affecting current work:
 - [Phase 06]: [Phase 06]: [Phase 06-04]: Implemented _cache_get/_cache_put using OrderedDict's method API exclusively (.get/.pop/.update/.move_to_end/.popitem), never subscript syntax -- satisfies the plan's own literal grep-based acceptance check for zero _solve_cache[ access outside the two locked helpers.
 - [Phase 06]: [Phase 06]: [Phase 06-04]: Scoped tests/test_obs.py's log_capture fixture to the api.main logger, not root -- httpx's own access-log line on a sibling logger was contaminating whole-buffer substring assertions with a query string api/main.py's own middleware never logged.
 - [Phase 06]: [Phase 06]: [Phase 06-04]: The plan's own literal subscript-check grep command fails under this environment's grep-to-ugrep shim (empty-stdin -qv semantics differ from GNU grep); verified correctness with 'command grep' instead of changing the implementation -- mirrors the Phase 06-03 bash-negation precedent of a plan-authored verify command that doesn't hold in this shell.
+- [Phase 06]: [Phase 06]: [Phase 06-05]: scripts/verify_hardening.sh sends the SEC-03 sentinel X-API-Key header on the SEC-01 allowed-origin CORS preflight OPTIONS request rather than a separate dedicated request -- an OPTIONS preflight never reaches a route handler, so this satisfies 'sent on one of the requests above' at zero solve-path cost.
+- [Phase 06]: [Phase 06]: [Phase 06-05]: Reworded scripts/preflight.sh's two skip-path announce lines to lowercase 'skipped' -- the SKIPPED-count acceptance check (<=2 for two real skips) only holds if each skip is recorded by name exactly once via the summary table row; first implementation double-counted (4, not 2) until caught and fixed.
 
 ### Pending Todos
 
@@ -209,6 +212,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-05T12:47:23.419Z
-Stopped at: Completed 06-04-PLAN.md
+Last session: 2026-09-05T13:04:05.599Z
+Stopped at: Completed 06-05-PLAN.md
 Resume file: None

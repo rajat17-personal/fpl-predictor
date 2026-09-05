@@ -217,7 +217,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The API emits structured JSON request logs and exposes distinct liveness and readiness endpoints
   5. A long-running API process leaks no file handles, and the solve cache is bounded with correct invalidation under concurrent requests
 
-**Plans**: 4/5 plans executed (3 waves)
+**Plans**: 5/5 plans executed (3 waves)
 
 **Wave 1**
 
@@ -231,7 +231,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 06-05-PLAN.md — `scripts/verify_hardening.sh` runtime proof against a real uvicorn boot on the frozen fixture set, wired into `scripts/preflight.sh` as a new gate
+- [x] 06-05-PLAN.md — `scripts/verify_hardening.sh` runtime proof against a real uvicorn boot on the frozen fixture set, wired into `scripts/preflight.sh` as a new gate
 
 **User setup required**: a mode-600 `.env` (06-03) and the daily/weekly cron schedule plus a watched alert webhook (06-05) — `crontab -l` currently reports no crontab on this host.
 
@@ -264,7 +264,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Pitch Renderer & Squad Views | 5/5 | Complete    | 2026-09-03 |
 | 4. E2E Regression Suite | 8/8 | Complete    | 2026-09-04 |
 | 5. Container Build & CI Pipeline | 5/5 | Complete    | 2026-09-05 |
-| 6. Security, Reliability & Observability Hardening | 4/5 | In Progress|  |
+| 6. Security, Reliability & Observability Hardening | 5/5 | In Progress|  |
 | 7. Parity Validation & Cutover | 0/TBD | Not started | - |
 
 ## Requirement Coverage
