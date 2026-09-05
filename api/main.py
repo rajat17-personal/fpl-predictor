@@ -26,13 +26,14 @@ import logging
 import os
 import threading
 import time
+import uuid
 from collections import OrderedDict
 from pathlib import Path
 
 import joblib
 import pandas as pd
 import requests
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -42,7 +43,7 @@ import config
 import predict.live as live
 from models import intervals
 from ops.jsonio import read_json
-from ops.jsonlog import configure_logging, log_event
+from ops.jsonlog import configure_logging, log_event, redact
 from ops.payloads import validate_bootstrap, validate_fixtures
 from optimize.multi_period import solve_multi_period
 from optimize.squad_ilp import pick_squad
@@ -117,6 +118,55 @@ configure_logging("api")
 _logger = logging.getLogger(__name__)
 log_event(_logger, "cors.configured", origin_count=len(_cors_origin_list),
           origins=_cors_origin_list)
+
+
+def _route_template(request: Request) -> str:
+    """The matched route's path template (e.g. "/api/team/{entry}") when one
+    matched this request, falling back to the concrete URL path only for
+    unrouted 404s. This is what keeps a manager's numeric entry id out of
+    the request log for /api/team/{entry} and /api/rate/{entry} (OBS-01)."""
+    route = request.scope.get("route")
+    return route.path if route is not None else request.url.path
+
+
+def _request_log_fields(request: Request, request_id: str, status: int,
+                        duration_ms: float, **extra) -> dict:
+    """Assemble the fixed field set for one `http.request` record. Never
+    reads the request body, the query string, or any header value -- only
+    method, matched route template, status, duration and client address.
+    Passed through `redact` before being handed to `log_event`, which itself
+    redacts again on format -- belt and suspenders, so a secret that reaches
+    this dict by any future route is still blanked twice over."""
+    fields = {"request_id": request_id, "method": request.method,
+              "path": _route_template(request), "status": status,
+              "duration_ms": duration_ms}
+    if request.client is not None:
+        fields["client"] = request.client.host
+    fields.update(extra)
+    return redact(fields)
+
+
+@app.middleware("http")
+async def _log_requests(request: Request, call_next):
+    """Emit exactly one structured, secret-free `http.request` record per
+    HTTP request (OBS-01), with a correlatable id echoed back to the caller
+    via the X-Request-ID response header."""
+    request_id = uuid.uuid4().hex[:12]
+    start = time.perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        duration_ms = round((time.perf_counter() - start) * 1000, 1)
+        fields = _request_log_fields(request, request_id, 500, duration_ms,
+                                     error=f"{type(exc).__name__}: {exc}")
+        log_event(_logger, "http.request", level="error", **fields)
+        raise
+    duration_ms = round((time.perf_counter() - start) * 1000, 1)
+    fields = _request_log_fields(request, request_id, response.status_code, duration_ms)
+    log_event(_logger, "http.request", **fields)
+    response.headers["X-Request-ID"] = request_id
+    return response
+
 
 _lock = threading.Lock()
 
