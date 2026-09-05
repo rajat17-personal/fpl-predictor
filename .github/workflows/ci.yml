@@ -1,0 +1,257 @@
+# Single chained verification workflow (D-08). Jobs run in one linear `needs`
+# chain -- lint-build -> test -> e2e -> image -> publish -- rather than in
+# parallel, because the backend test suite cannot run before the frontend has
+# been built: tests/test_fixture_mode.py's SPA-fallback test serves a 500
+# against a missing frontend/dist directory (Phase 4's review, RESEARCH.md
+# Pitfall 5). The built bundle is produced once in lint-build and shared via
+# actions/upload-artifact/download-artifact rather than rebuilt (or assumed
+# present) in every downstream job. Everything after that first handoff stays
+# chained too, so a broken lint/test/e2e stage never wastes minutes building
+# and scanning an image, and the image job's smoke test always runs against
+# the exact bundle the earlier jobs already verified.
+name: ci
+
+on:
+  # No branch filter on push -- every commit to every branch gets a full run.
+  # pull_request is narrowed to the events a push does not already cover
+  # (opened/reopened/ready_for_review): a push to a branch that already has
+  # an open PR otherwise fires both `push` and `pull_request` for the same
+  # commit, burning two full runs out of the 2000-minute monthly budget
+  # (D-13). This narrowing plus the concurrency group below gives exactly one
+  # verification run per commit, while a freshly-opened PR with no new push
+  # behind it still gets verified.
+  push:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+
+# Least-privilege default -- individual jobs widen this only where they must
+# (image: security-events: write: publish: packages: write).
+permissions:
+  contents: read
+
+# A superseded push or PR update cancels its in-flight predecessor instead of
+# racing it to completion.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97   # v7.0.0
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: pip install --require-hashes -r requirements.txt -r requirements-dev.txt
+      - name: Lint (ruff)
+        run: ruff check .
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020   # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            e2e/package-lock.json
+      - run: npm --prefix frontend ci
+      # This is the real typecheck: `tsc -b` expands the project references.
+      # The repo's own `npm run typecheck` script runs `tsc --noEmit` with no
+      # `-b` against a root tsconfig.json whose `files` array is empty, so it
+      # type-checks nothing and exits 0 regardless of real errors. Never use
+      # it as a CI gate (RESEARCH.md Anti-Patterns, confirmed by direct read
+      # of frontend/tsconfig.json).
+      - run: npm --prefix frontend run build
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a   # v7.0.1
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+  test:
+    needs: lint-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97   # v7.0.0
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: pip install --require-hashes -r requirements.txt -r requirements-dev.txt
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c   # v8.0.1
+        with:
+          name: frontend-dist
+          path: frontend/dist
+      # Without a built bundle, tests/test_fixture_mode.py's SPA-fallback
+      # test 500s and the pytest failure output points nowhere useful --
+      # guard explicitly and name exactly which file is missing.
+      - name: Guard built frontend bundle
+        run: |
+          if [ ! -f frontend/dist/index.html ]; then
+            echo "FAILED: frontend/dist/index.html is missing -- the frontend-dist artifact from lint-build did not download correctly"
+            exit 1
+          fi
+          if [ ! -f frontend/dist/404.html ]; then
+            echo "FAILED: frontend/dist/404.html is missing -- the frontend-dist artifact from lint-build did not download correctly"
+            exit 1
+          fi
+      # python -m pytest, not bare pytest: -m prepends the repo root to
+      # sys.path, which top-level imports (config, backtest, ...) rely on.
+      - run: python -m pytest
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020   # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            e2e/package-lock.json
+      - run: npm --prefix frontend ci
+      - run: npm --prefix frontend test
+
+  e2e:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97   # v7.0.0
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: pip install --require-hashes -r requirements.txt
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020   # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            e2e/package-lock.json
+      # e2e/playwright.config.ts's `webServer` runs `npm --prefix frontend
+      # run build` itself, so frontend's dependencies must be present here
+      # even though the built bundle is not downloaded into this job. The
+      # config rebuilds the bundle as the first link of its webServer command
+      # chain precisely so a stale or missing bundle can never be served --
+      # downloading a copy of frontend-dist on top of that would be dead
+      # weight at best and a stale-file hazard at worst.
+      - run: npm --prefix frontend ci
+      - run: npm --prefix e2e ci
+      # A cache miss is a slower run, never a failure -- Chromium is
+      # (re-)downloaded by the next step regardless.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9   # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('e2e/package-lock.json') }}
+      - run: npm --prefix e2e run install:browser
+      # e2e/playwright.config.ts owns the ENTIRE server lifecycle: build,
+      # boot fixture-mode uvicorn (x3 for the normal/blank/dgw variants),
+      # health-check, then drive Chromium. CI deliberately leaves E2E_PYTHON
+      # unset so the `python` that actions/setup-python put on PATH is the
+      # one that boots uvicorn -- the one CI-only branch in an otherwise
+      # identical local/CI topology. No project or variant filter is passed:
+      # the full three-server run is what `npm run test` means by default,
+      # and narrowing it here would leave the blank/DGW fixture sets
+      # unexercised on every push. GitHub Actions sets CI=true automatically,
+      # which the config reads to disable server reuse and enable one retry.
+      - run: npm --prefix e2e run test
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a   # v7.0.1
+        if: always()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+
+  image:
+    needs: e2e
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e   # v4.3.0
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c   # v8.0.1
+        with:
+          name: frontend-dist
+          path: frontend/dist
+      # push: false, load: true -- the image is built and loaded into the
+      # local Docker daemon for the smoke test and scanner, never pushed.
+      # This is what makes a PR or branch build unable to reach GHCR at all,
+      # regardless of the publish job's own `if:` gate.
+      - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a   # v7.3.0
+        with:
+          context: .
+          push: false
+          load: true
+          tags: local/fpl:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      # CI-03 gate: boots the loaded image against the frozen fixture set and
+      # asserts a real solve completes through the CBC binary inside the
+      # container. Must run before the scanner and before any publish --
+      # a broken image must never be scanned-and-forgotten or shipped.
+      - run: bash scripts/smoke_test.sh local/fpl:ci
+      # No exit-code input set -- the action's default of 0 is what makes
+      # this scan report-only (D-10); a non-zero value would turn a report
+      # into a gate this milestone deliberately does not want.
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25   # v0.36.0
+        with:
+          image-ref: local/fpl:ci
+          format: sarif
+          output: trivy-results.sarif
+      # Ordering and the two sinks are deliberate: GitHub's own docs are
+      # internally inconsistent about whether a non-CodeQL SARIF upload
+      # succeeds for a private repo on this plan (RESEARCH.md Pitfall 4), so
+      # the artifact is the sink that always works and is uploaded first;
+      # the Security-tab upload is best-effort and runs only after it. This
+      # is the only step in the whole workflow allowed to carry
+      # continue-on-error, because it is a report sink, not a verification
+      # step.
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a   # v7.0.1
+        if: always()
+        with:
+          name: trivy-results
+          path: trivy-results.sarif
+      - uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938   # v4.37.9
+        if: always()
+        continue-on-error: true
+        with:
+          sarif_file: trivy-results.sarif
+
+  publish:
+    needs: image
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e   # v4.3.0
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c   # v8.0.1
+        with:
+          name: frontend-dist
+          path: frontend/dist
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f   # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302   # v6.2.0
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+      - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a   # v7.3.0
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+      # Deploy placeholder (stub, CI-04): performs no deployment, contacts no
+      # host, holds no credentials. Live deployment lands next milestone
+      # alongside hosting -- a stub that half-deploys would be worse than
+      # none.
+      - name: Deploy placeholder (stub -- live deployment lands next milestone)
+        run: |
+          echo "Published ghcr.io/${{ github.repository }} tags: ${{ steps.meta.outputs.tags }}"
+          echo "No live deployment target exists yet. Hosting (Cloudflare Pages / Hetzner) is purchased and wired up in a future milestone."

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Price watch — FPL ML</title>
+<meta name="description" content="Likely FPL price risers and fallers tonight.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<script src="config.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="index.html">FPL<span>ML</span></a>
+  <nav class="site" aria-label="Site">
+    <a href="index.html" data-page="index">xP table</a>
+    <a href="fixtures.html" data-page="fixtures">Fixtures</a>
+    <a href="league.html" data-page="league">League</a>
+    <a href="differentials.html" data-page="differentials">Differentials</a>
+    <a href="prices.html" data-page="prices">Prices</a>
+    <a href="team.html" data-page="team">Rate my team</a>
+    <a href="scoreboard.html" data-page="scoreboard">Scoreboard</a>
+    <a href="methodology.html" data-page="methodology">Method</a>
+  </nav>
+  <span class="deadline">loading…</span>
+</header>
+
+<h1>Price watch</h1>
+<p class="sub" id="sub">Players trending toward an overnight price change.</p>
+<div id="modenote"></div>
+
+<h2>Likely risers</h2>
+<div class="tablewrap"><table id="risers">
+  <thead><tr><th>Player</th><th>Team</th><th>Pos</th><th data-num>£m</th><th data-num>Own %</th><th data-num>Net transfers</th><th>Progress</th><th>Status</th></tr></thead>
+  <tbody></tbody></table></div>
+
+<h2>Likely fallers</h2>
+<div class="tablewrap"><table id="fallers">
+  <thead><tr><th>Player</th><th>Team</th><th>Pos</th><th data-num>£m</th><th data-num>Own %</th><th data-num>Net transfers</th><th>Progress</th><th>Status</th></tr></thead>
+  <tbody></tbody></table></div>
+<p class="sub">Low-ownership players rise and fall too — FPL's thresholds scale
+with how many managers own a player, so a 1%-owned player with a big inflow can
+move faster than a 40%-owned one. Progress is our estimate of distance to the
+change threshold; it becomes a calibrated probability once the model has enough
+history to train.</p>
+
+<footer class="site">
+  <p>Not affiliated with the Premier League or the official Fantasy Premier League game.</p>
+</footer>
+</div>
+
+<script type="module">
+import { initChrome, loadJSON } from "./assets/app.js";
+await initChrome("prices");
+const w = await loadJSON("watchlist.json");
+
+document.querySelector("#sub").textContent =
+  `Players trending toward an overnight price change — data as of ${w.date}.`;
+if (w.mode === "official") {
+  document.querySelector("#modenote").innerHTML = `<p class="note">
+    <strong>Live from FPL's own price predictor.</strong> Progress is the
+    official percentage toward the next change (100% = threshold reached —
+    change due at the 00:00 UK update); status follows FPL's published
+    likelihood. ${w.locked_players ? `${w.locked_players} price-locked players
+    (new signings, recently unflagged) are excluded.` : ""}</p>`;
+} else if (w.mode === "heuristic") {
+  document.querySelector("#modenote").innerHTML = `<p class="note warn">
+    <strong>Heuristic mode.</strong> These lists rank net event transfers per
+    owner — the community-standard signal. A trained model takes over
+    automatically once enough daily history is collected, and its hit-rate will
+    be published on the <a href="scoreboard.html">scoreboard</a>.</p>`;
+} else {
+  document.querySelector("#modenote").innerHTML = `<p class="note">
+    Model predictions (trained ${w.trained_utc?.slice(0, 10)}; hit-rate on
+    actual movers ${(100 * w.val_moved_hit).toFixed(0)}% in validation).
+    Status reflects the model's probability.</p>`;
+}
+
+const fill = (sel, rows) => {
+  document.querySelector(sel).querySelector("tbody").innerHTML = rows.map((r) => {
+    const raw = r.prob ?? r.progress ?? 0;
+    const pct = Math.round(100 * Math.abs(raw));
+    const bar = Math.min(pct, 100);
+    const label = w.mode === "official"
+      ? `${pct}%${r.proj_tonight != null
+          ? ` → ${Math.round(100 * Math.abs(r.proj_tonight))}% tonight` : ""}`
+      : (r.prob != null ? `${pct}%` : `${bar}% of threshold`);
+    return `<tr>
+    <td>${r.name}</td><td class="pos">${r.team}</td><td class="pos">${r.position}</td>
+    <td class="n">${r.price_m.toFixed(1)}</td>
+    <td class="n">${r.ownership.toFixed(1)}</td>
+    <td class="n">${(r.net_transfers ?? 0).toLocaleString()}</td>
+    <td><span class="band"><span class="track-wrap"><span class="track"
+      style="left:0;width:${bar}%"></span></span>
+      <span class="range">${label}</span></span></td>
+    <td><span class="pos">${r.status ?? ""}</span></td>
+  </tr>`; }).join("");
+};
+fill("#risers", w.risers);
+fill("#fallers", w.fallers);
+</script>
+</body>
+</html>

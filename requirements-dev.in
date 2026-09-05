@@ -1,0 +1,6 @@
+-r requirements.in
+
+# Test-only
+responses>=0.25,<0.27   # FPL API HTTP mocking in tests
+pytest>=8
+ruff==0.16.6             # Python lint — CI-01's lint step (dev/CI-side only)

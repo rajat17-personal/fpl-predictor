@@ -1,0 +1,185 @@
+{
+ "note": "GW3: standard fixtures (no double/blank).",
+ "structure": [
+  {
+   "gw": 3,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 4,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 5,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 6,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 7,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 8,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 9,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 10,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 11,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 12,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 13,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 14,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 15,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 16,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 17,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 18,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 19,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 20,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 21,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 22,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 23,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 24,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 25,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 26,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 27,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 28,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 29,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 30,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 31,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 32,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 33,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 34,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 35,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 36,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 37,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  },
+  {
+   "gw": 38,
+   "dgw_clubs": 0,
+   "bgw_clubs": 0
+  }
+ ]
+}

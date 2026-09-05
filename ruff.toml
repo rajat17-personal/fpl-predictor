@@ -1,0 +1,20 @@
+# Python lint configuration for CI-01's lint step (05-01-PLAN.md Task 3).
+# No pyproject.toml exists in this repo (no packaging metadata) — a standalone
+# ruff.toml avoids implying packaging semantics that aren't there.
+target-version = "py314"
+line-length = 100
+exclude = [
+    "data",
+    "models/artifacts",
+    "frontend",
+    "e2e",
+    "web",
+    "downloaded_files",
+    ".planning",
+    ".gsd",
+]
+
+[lint]
+# Explicit default rule set (E4/E7/E9/F) so the gate cannot silently change
+# meaning if ruff's own default selection moves in a future release.
+select = ["E4", "E7", "E9", "F"]

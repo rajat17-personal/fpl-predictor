@@ -1,0 +1,58 @@
+# --- Python caches ----------------------------------------------------------
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# --- Node ---------------------------------------------------------------
+node_modules/
+frontend/node_modules/
+frontend/dist/
+dist/
+*.tsbuildinfo
+
+# --- Regenerable pipeline data (rebuilt by data/ingest.py, data/build_table.py) ---
+data/raw/
+data/processed/
+data/cron.log
+
+# --- Regenerable model output (rebuilt by models/train.py, models/price.py) ---
+models/artifacts/
+
+# --- Scratch and installers --------------------------------------------
+downloaded_files/
+google-chrome-stable_current_amd64.deb
+*.deb
+
+# GSD workflow runtime state - not part of the tracked project
+.gsd/
+
+# Local virtual environments - never committed, each dev/CI env installs its
+# own from the locked requirements*.txt
+.venv/
+venv/
+
+# Docker build metadata (buildx/BuildKit state), not build output itself
+.docker/
+
+# --- Playwright E2E run output ---------------------------------------------
+e2e/test-results/
+e2e/playwright-report/
+e2e/blob-report/
+
+# --- Secrets --------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# --- Irreplaceable daily price-snapshot history: cannot be backfilled once ---
+# --- lost, so re-include it even though it lives under data/ ---------------
+!data/snapshots/
+!data/snapshots/**
+
+# --- Deliberately NOT ignored (no rule above matches these; listed here for ---
+# --- clarity so future edits don't accidentally add one that shadows them) ---
+# web/data/*.json      - the pipeline-to-product export contract (Phases 4/5/7 read it)
+# .github/workflows/   - SEC-04 requires CI workflow definitions tracked
+# requirements.txt, pytest.ini, README.md, PLAN.md, ROADMAP.md, IMPROVEMENTS.md,
+# PROJECT_INDEX.json, PROJECT_INDEX.md
+# e2e/fixtures/        - the immutable v1 E2E fixture set is committed on purpose (D-08)

@@ -1,0 +1,39 @@
+# Daily: snapshot + watchlist + scoreboard. Dormant until this repo is pushed
+# to GitHub. Outputs are committed back so Cloudflare Pages redeploys the site.
+name: daily
+on:
+  # Dispatch-only: the local WSL cron remains the one production scheduler
+  # for this time-critical daily price snapshot — that history cannot be
+  # backfilled if a day is missed. Arming this workflow's own schedule is
+  # next milestone's work, once model delivery and hosting are settled (D-12).
+  workflow_dispatch:
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97   # v7.0.0
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: pip install --require-hashes -r requirements.txt
+      - name: Run daily jobs
+        env:
+          PYTHONPATH: .
+        run: |
+          python -m data.snapshot
+          python -m models.price --train || true
+          python -m models.price
+          python -m predict.scoreboard
+      - name: Commit outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # models/artifacts/ is gitignored today, so the price-model path below
+          # is a no-op element of this add — inherited work for Phase 6's
+          # cron-reliability requirement, not changed here.
+          git add data/snapshots web/data models/artifacts/price_model.joblib || true
+          git diff --cached --quiet || git commit -m "daily: snapshot + watchlist $(date -u +%F)"
+          git push

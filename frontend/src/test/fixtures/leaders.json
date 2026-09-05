@@ -1,0 +1,24 @@
+{
+  "points": [
+    { "name": "B.Fernandes", "team": "MUN", "position": "MID", "value": 25 },
+    { "name": "Cherki", "team": "MCI", "position": "MID", "value": 22 },
+    { "name": "Palmer", "team": "CHE", "position": "MID", "value": 20 },
+    { "name": "João Pedro", "team": "CHE", "position": "FWD", "value": 20 },
+    { "name": "Ajayi", "team": "HUL", "position": "DEF", "value": 20 },
+    { "name": "Tzolakis", "team": "HUL", "position": "GK", "value": 20 },
+    { "name": "M.Sangaré", "team": "BRE", "position": "MID", "value": 18 },
+    { "name": "Tarkowski", "team": "EVE", "position": "DEF", "value": 18 },
+    { "name": "De Cuyper", "team": "BHA", "position": "DEF", "value": 17 },
+    { "name": "Egan", "team": "HUL", "position": "DEF", "value": 17 }
+  ],
+  "goals": [],
+  "clean_sheets": [
+    { "name": "Tzolakis", "team": "HUL", "position": "GK", "value": 2 },
+    { "name": "Raya", "team": "ARS", "position": "GK", "value": 2 },
+    { "name": "Ajayi", "team": "HUL", "position": "DEF", "value": 2 }
+  ],
+  "cards": [
+    { "name": "Cunha", "team": "MUN", "position": "FWD", "value": 3 },
+    { "name": "Gomez", "team": "BHA", "position": "MID", "value": 2 }
+  ]
+}

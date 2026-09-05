@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>League table &amp; leaders — FPL ML</title>
+<meta name="description" content="Premier League standings and season player leaderboards: goals, assists, clean sheets, cards.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<script src="config.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="index.html">FPL<span>ML</span></a>
+  <nav class="site" aria-label="Site">
+    <a href="index.html" data-page="index">xP table</a>
+    <a href="fixtures.html" data-page="fixtures">Fixtures</a>
+    <a href="league.html" data-page="league">League</a>
+    <a href="differentials.html" data-page="differentials">Differentials</a>
+    <a href="prices.html" data-page="prices">Prices</a>
+    <a href="team.html" data-page="team">Rate my team</a>
+    <a href="scoreboard.html" data-page="scoreboard">Scoreboard</a>
+    <a href="methodology.html" data-page="methodology">Method</a>
+  </nav>
+  <span class="deadline">loading…</span>
+</header>
+
+<h1>League table &amp; season leaders</h1>
+<p class="sub">Standings computed from finished fixtures, and the players
+racking up the season's goals, assists, clean sheets and cards.</p>
+
+<h2>Premier League table</h2>
+<div class="tablewrap">
+<table id="standings">
+  <thead><tr>
+    <th data-num>#</th><th>Team</th><th data-num>P</th><th data-num>W</th>
+    <th data-num>D</th><th data-num>L</th><th data-num>GF</th><th data-num>GA</th>
+    <th data-num>GD</th><th data-num>Pts</th>
+  </tr></thead>
+  <tbody></tbody>
+</table>
+</div>
+
+<div class="squadgrid" id="leaders" style="margin-top:28px"></div>
+
+<footer class="site">
+  <p>Not affiliated with the Premier League or the official Fantasy Premier League game.</p>
+</footer>
+</div>
+
+<script type="module">
+import { initChrome, loadJSON } from "./assets/app.js";
+await initChrome("league");
+
+const standings = await loadJSON("standings.json");
+document.querySelector("#standings tbody").innerHTML = standings.map((t, i) => `<tr>
+  <td class="n">${i + 1}</td>
+  <td><strong>${t.short}</strong> <span class="pos">${t.team}</span></td>
+  <td class="n">${t.played}</td><td class="n">${t.won}</td>
+  <td class="n">${t.drawn}</td><td class="n">${t.lost}</td>
+  <td class="n">${t.gf}</td><td class="n">${t.ga}</td>
+  <td class="n">${t.gd > 0 ? "+" : ""}${t.gd}</td>
+  <td class="n"><strong>${t.points}</strong></td></tr>`).join("");
+
+const leaders = await loadJSON("leaders.json");
+const BOARDS = [
+  ["points", "Most FPL points"], ["goals", "Most goals"],
+  ["assists", "Most assists"], ["clean_sheets", "Clean sheets (GK/DEF)"],
+  ["cards", "Most cards"],
+];
+document.querySelector("#leaders").innerHTML = BOARDS.map(([key, label]) => `
+  <div class="squadcard"><h3>${label}</h3><ul>
+    ${(leaders[key] || []).slice(0, 8).map((p) => `<li>
+      <span>${p.name} <span class="pos">${p.team} · ${p.position}</span></span>
+      <span class="n">${p.value}</span></li>`).join("")
+     || "<li><span class='pos'>Nothing yet this season</span></li>"}
+  </ul></div>`).join("");
+</script>
+</body>
+</html>

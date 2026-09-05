@@ -1,0 +1,312 @@
+{
+ "points": [
+  {
+   "name": "B.Fernandes",
+   "team": "MUN",
+   "position": "MID",
+   "value": 25
+  },
+  {
+   "name": "Cherki",
+   "team": "MCI",
+   "position": "MID",
+   "value": 22
+  },
+  {
+   "name": "Calafiori",
+   "team": "ARS",
+   "position": "DEF",
+   "value": 20
+  },
+  {
+   "name": "Saka",
+   "team": "ARS",
+   "position": "MID",
+   "value": 20
+  },
+  {
+   "name": "Palmer",
+   "team": "CHE",
+   "position": "MID",
+   "value": 20
+  },
+  {
+   "name": "Jo\u00e3o Pedro",
+   "team": "CHE",
+   "position": "FWD",
+   "value": 20
+  },
+  {
+   "name": "Ajayi",
+   "team": "HUL",
+   "position": "DEF",
+   "value": 20
+  },
+  {
+   "name": "Tzolakis",
+   "team": "HUL",
+   "position": "GK",
+   "value": 20
+  },
+  {
+   "name": "White",
+   "team": "ARS",
+   "position": "DEF",
+   "value": 18
+  },
+  {
+   "name": "M.Sangar\u00e9",
+   "team": "BRE",
+   "position": "MID",
+   "value": 18
+  }
+ ],
+ "goals": [
+  {
+   "name": "B.Fernandes",
+   "team": "MUN",
+   "position": "MID",
+   "value": 3
+  },
+  {
+   "name": "Saka",
+   "team": "ARS",
+   "position": "MID",
+   "value": 2
+  },
+  {
+   "name": "Hinshelwood",
+   "team": "BHA",
+   "position": "MID",
+   "value": 2
+  },
+  {
+   "name": "Palmer",
+   "team": "CHE",
+   "position": "MID",
+   "value": 2
+  },
+  {
+   "name": "Jo\u00e3o Pedro",
+   "team": "CHE",
+   "position": "FWD",
+   "value": 2
+  },
+  {
+   "name": "Cherki",
+   "team": "MCI",
+   "position": "MID",
+   "value": 2
+  },
+  {
+   "name": "Haaland",
+   "team": "MCI",
+   "position": "FWD",
+   "value": 2
+  },
+  {
+   "name": "Elanga",
+   "team": "NEW",
+   "position": "MID",
+   "value": 2
+  },
+  {
+   "name": "\u00d8degaard",
+   "team": "ARS",
+   "position": "MID",
+   "value": 1
+  },
+  {
+   "name": "Havertz",
+   "team": "ARS",
+   "position": "FWD",
+   "value": 1
+  }
+ ],
+ "assists": [
+  {
+   "name": "Calafiori",
+   "team": "ARS",
+   "position": "DEF",
+   "value": 2
+  },
+  {
+   "name": "Evanilson",
+   "team": "BOU",
+   "position": "FWD",
+   "value": 2
+  },
+  {
+   "name": "M.Sangar\u00e9",
+   "team": "BRE",
+   "position": "MID",
+   "value": 2
+  },
+  {
+   "name": "Gomez",
+   "team": "BHA",
+   "position": "MID",
+   "value": 2
+  },
+  {
+   "name": "Jo\u00e3o Pedro",
+   "team": "CHE",
+   "position": "FWD",
+   "value": 2
+  },
+  {
+   "name": "Castagne",
+   "team": "FUL",
+   "position": "DEF",
+   "value": 2
+  },
+  {
+   "name": "Enciso",
+   "team": "IPS",
+   "position": "MID",
+   "value": 2
+  },
+  {
+   "name": "Foden",
+   "team": "MCI",
+   "position": "MID",
+   "value": 2
+  },
+  {
+   "name": "Cherki",
+   "team": "MCI",
+   "position": "MID",
+   "value": 2
+  },
+  {
+   "name": "Cunha",
+   "team": "MUN",
+   "position": "MID",
+   "value": 2
+  }
+ ],
+ "clean_sheets": [
+  {
+   "name": "Raya",
+   "team": "ARS",
+   "position": "GK",
+   "value": 2
+  },
+  {
+   "name": "Gabriel",
+   "team": "ARS",
+   "position": "DEF",
+   "value": 2
+  },
+  {
+   "name": "Calafiori",
+   "team": "ARS",
+   "position": "DEF",
+   "value": 2
+  },
+  {
+   "name": "White",
+   "team": "ARS",
+   "position": "DEF",
+   "value": 2
+  },
+  {
+   "name": "Mosquera",
+   "team": "ARS",
+   "position": "DEF",
+   "value": 2
+  },
+  {
+   "name": "Egan",
+   "team": "HUL",
+   "position": "DEF",
+   "value": 2
+  },
+  {
+   "name": "Ajayi",
+   "team": "HUL",
+   "position": "DEF",
+   "value": 2
+  },
+  {
+   "name": "Giles",
+   "team": "HUL",
+   "position": "DEF",
+   "value": 2
+  },
+  {
+   "name": "Tzolakis",
+   "team": "HUL",
+   "position": "GK",
+   "value": 2
+  },
+  {
+   "name": "Kelleher",
+   "team": "BRE",
+   "position": "GK",
+   "value": 1
+  }
+ ],
+ "cards": [
+  {
+   "name": "McGinn",
+   "team": "AVL",
+   "position": "MID",
+   "value": 2
+  },
+  {
+   "name": "Janelt",
+   "team": "BRE",
+   "position": "MID",
+   "value": 2
+  },
+  {
+   "name": "Aina",
+   "team": "NFO",
+   "position": "DEF",
+   "value": 2
+  },
+  {
+   "name": "Gabriel",
+   "team": "ARS",
+   "position": "DEF",
+   "value": 1
+  },
+  {
+   "name": "Tzolis",
+   "team": "ARS",
+   "position": "MID",
+   "value": 1
+  },
+  {
+   "name": "Cash",
+   "team": "AVL",
+   "position": "DEF",
+   "value": 1
+  },
+  {
+   "name": "Maatsen",
+   "team": "AVL",
+   "position": "DEF",
+   "value": 1
+  },
+  {
+   "name": "Alysson",
+   "team": "AVL",
+   "position": "MID",
+   "value": 1
+  },
+  {
+   "name": "Gomes",
+   "team": "AVL",
+   "position": "MID",
+   "value": 1
+  },
+  {
+   "name": "Smith",
+   "team": "BOU",
+   "position": "DEF",
+   "value": 1
+  }
+ ]
+}

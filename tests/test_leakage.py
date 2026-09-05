@@ -1,0 +1,47 @@
+"""Leakage regression tests (frozen versions of the manual Phase-2 checks)."""
+import numpy as np
+import pandas as pd
+import pytest
+
+import config
+
+FEATURES = config.PROCESSED_DIR / "features.parquet"
+RAW = config.PROCESSED_DIR / "player_gw.parquet"
+needs_data = pytest.mark.skipif(not (FEATURES.exists() and RAW.exists()),
+                                reason="run the data pipeline first")
+
+
+@pytest.fixture(scope="module")
+def feat():
+    return pd.read_parquet(FEATURES)
+
+
+@needs_data
+def test_first_appearance_has_no_rolling_features(feat):
+    roll_cols = [c for c in feat.columns
+                 if any(c.endswith(sfx) for sfx in ("_r3", "_r5", "_r10", "_rall"))]
+    first = (feat.sort_values(["season", "player_id", "kickoff_time"])
+             .groupby(["season", "player_id"]).head(1))
+    assert first[roll_cols].notna().any(axis=1).sum() == 0
+
+
+@needs_data
+def test_minutes_r5_matches_independent_recompute(feat):
+    raw = pd.read_parquet(RAW)
+    season = "2023-24"
+    pid = feat.loc[feat.season == season, "player_id"].value_counts().index[0]
+    got = (feat[(feat.season == season) & (feat.player_id == pid)]
+           .sort_values("kickoff_time")["minutes_r5"])
+    exp = (raw[(raw.season == season) & (raw.player_id == pid)]
+           .sort_values("kickoff_time")["minutes"]
+           .shift(1).rolling(5, min_periods=1).mean())
+    assert np.allclose(got.fillna(-1).values, exp.fillna(-1).values)
+
+
+@needs_data
+def test_zero_minutes_never_scores_positive(feat):
+    """A non-playing player cannot EARN points. (Exactly-zero is almost always
+    true, but ~14 rows/253k are unused subs shown a card from the bench -> -1/-3.)"""
+    zero = feat[feat.y_minutes == 0]
+    assert (zero.y_points <= 0).all()
+    assert (zero.y_points == 0).mean() > 0.999

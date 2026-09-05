@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rate my team — FPL ML</title>
+<meta name="description" content="Score your FPL squad against the model's optimum and get your best move.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<script src="config.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <a class="brand" href="index.html">FPL<span>ML</span></a>
+  <nav class="site" aria-label="Site">
+    <a href="index.html" data-page="index">xP table</a>
+    <a href="fixtures.html" data-page="fixtures">Fixtures</a>
+    <a href="league.html" data-page="league">League</a>
+    <a href="differentials.html" data-page="differentials">Differentials</a>
+    <a href="prices.html" data-page="prices">Prices</a>
+    <a href="team.html" data-page="team">Rate my team</a>
+    <a href="scoreboard.html" data-page="scoreboard">Scoreboard</a>
+    <a href="methodology.html" data-page="methodology">Method</a>
+  </nav>
+  <span class="deadline">loading…</span>
+</header>
+
+<h1>Rate my team</h1>
+<p class="sub">Enter your FPL team ID and the model scores your squad against
+the best possible team at your budget, picks your captain, and suggests your
+single best move. Your ID is in the URL on the official site's Points page:
+<span class="n">fantasy.premierleague.com/entry/<strong>1234567</strong>/…</span></p>
+
+<div class="controls">
+  <input type="number" id="entry" min="1" placeholder="Team ID, e.g. 1234567" aria-label="FPL team ID">
+  <button class="primary" id="go">Rate it</button>
+</div>
+
+<div id="result"></div>
+
+<footer class="site">
+  <p>Not affiliated with the Premier League or the official Fantasy Premier League game.
+  Team IDs are public data from the official API; nothing is stored.</p>
+</footer>
+</div>
+
+<script type="module">
+import { initChrome, detectApiBase } from "./assets/app.js";
+await initChrome("team");
+
+const out = document.querySelector("#result");
+const btn = document.querySelector("#go");
+const API_BASE = await detectApiBase();
+
+if (API_BASE === null) {
+  btn.disabled = true;
+  out.innerHTML = `<p class="note warn"><strong>Almost ready.</strong> The rating
+  engine runs on our solver server, which isn't switched on for this deployment
+  yet. The weekly xP table, fixtures and differentials are all live meanwhile.
+  (Local dev: <span class="n">uvicorn api.main:app --port 8000</span> serves the
+  site and the API together — then this page works.)</p>`;
+}
+
+const fmtRank = (n) => (n == null ? "–" : n.toLocaleString());
+
+function squadCards(rows, gwLabel) {
+  const byPos = { GK: [], DEF: [], MID: [], FWD: [] };
+  rows.forEach((p) => byPos[p.position]?.push(p));
+  return `<div class="squadgrid">${Object.entries(byPos).map(([pos, ps]) => `
+    <div class="squadcard"><h3>${pos}</h3><ul>${ps.map((p) => `
+      <li class="${p.starting ? "" : "bench"}">
+        <span class="${p.captain ? "cap" : ""}">${p.name}${p.captain ? " (C)" : ""}${p.starting ? "" : " · bench"}</span>
+        <span class="n">£${p.price_m.toFixed(1)} · ${p.xp.toFixed(1)}</span>
+      </li>`).join("")}</ul></div>`).join("")}</div>`;
+}
+
+async function rate() {
+  const id = document.querySelector("#entry").value.trim();
+  if (!id) return;
+  out.innerHTML = `<p class="empty">Solving your squad…</p>`;
+  try {
+    const r = await fetch(`${API_BASE}/api/rate/${id}`);
+    if (!r.ok) throw new Error((await r.json()).detail || r.status);
+    const d = await r.json();
+    const mgr = d.manager || {};
+    out.innerHTML = `
+      ${mgr.team_name ? `<h2>${mgr.team_name} <span class="pos">· ${mgr.manager ?? ""}</span></h2>` : ""}
+      <div class="tiles">
+        <div class="tile"><p class="k">Team score</p><p class="v">${d.score}<span class="vs">/100</span></p>
+          <p class="d">best XI xP ${d.xi_xp}${d.xi_p10 != null
+            ? ` <span class="n">(${d.xi_p10}–${d.xi_p90} in 8/10 GWs)</span>` : ""}
+            vs ideal ${d.ideal_xi_xp}</p></div>
+        <div class="tile"><p class="k">Season so far</p>
+          <p class="v">${mgr.overall_points ?? "–"} <span class="vs">pts</span></p>
+          <p class="d">overall rank ${fmtRank(mgr.overall_rank)} · last GW ${mgr.gw_points ?? "–"} pts</p></div>
+        <div class="tile"><p class="k">Captain</p><p class="v" style="font-size:1.1rem">${d.captain}</p>
+          <p class="d">best armband in your current squad</p></div>
+        ${d.best_move ? `<div class="tile"><p class="k">Best move</p>
+          <p class="v" style="font-size:1.1rem">${d.best_move.sell.join(", ")} → ${d.best_move.buy.join(", ")}</p>
+          <p class="d">+${d.best_move.xp_gain} xP this gameweek</p></div>`
+        : `<div class="tile"><p class="k">Best move</p><p class="v" style="font-size:1.1rem">Hold</p>
+          <p class="d">no single transfer beats your current squad</p></div>`}
+      </div>
+      <h2>Your best XI for GW${d.gw}</h2>
+      <p class="sub">Keeping your current squad (no transfers), this is the
+      lineup and captain the model would field.</p>
+      ${squadCards(d.xi ?? [])}
+      <h2>Plan transfers</h2>
+      <p class="sub">The solver plans your moves jointly over the horizon —
+      when to move now, when to bank a free transfer, when a hit pays for
+      itself. Free transfers are pre-filled with our estimate from your
+      transfer history (FPL only shows the true figure to your own login) —
+      correct it if the official site says otherwise.</p>
+      <div class="controls">
+        <label>Free transfers
+          <input type="number" id="ft" min="1" max="5"
+                 value="${d.free_transfers ?? 1}" style="width:60px"></label>
+        <label>Plan over
+          <select id="hz">
+            <option value="1">next GW only</option>
+            <option value="2">2 gameweeks</option>
+            <option value="3" selected>3 gameweeks</option>
+            <option value="4">4 gameweeks</option>
+            <option value="6">6 gameweeks</option>
+          </select></label>
+        <button class="primary" id="plan">Plan my transfers</button>
+      </div>
+      <div id="planout"></div>`;
+    document.querySelector("#plan").addEventListener("click", () => plan(id));
+  } catch (e) {
+    out.innerHTML = `<p class="note warn">Couldn't rate that team: ${e.message}.
+      Check the ID and try again.</p>`;
+  }
+}
+
+/* Pair sells with buys inside each position (quotas are fixed per position,
+   so counts always match: a sold MID is replaced by a bought MID). */
+function pairMoves(sells, buys) {
+  const byPos = (rows) => rows.reduce(
+    (m, r) => ((m[r.position] ??= []).push(r), m), {});
+  const s = byPos(sells), b = byPos(buys);
+  const pairs = [];
+  for (const pos of Object.keys(s)) {
+    s[pos].forEach((sell, i) => pairs.push(
+      `${sell.name} → ${b[pos]?.[i]?.name ?? "?"} <span class="pos">${pos}</span>`));
+  }
+  return pairs;
+}
+
+async function plan(id) {
+  const pout = document.querySelector("#planout");
+  const hz = Number(document.querySelector("#hz").value || 1);
+  const ft = Number(document.querySelector("#ft").value);
+  pout.innerHTML = `<p class="empty">Planning ${hz} gameweek${hz > 1 ? "s" : ""} jointly…
+    ${hz > 1 ? "(a fresh horizon takes ~10-60s while future gameweeks are predicted)" : ""}</p>`;
+  try {
+    const r = await fetch(`${API_BASE}/api/plan`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entry: Number(id), horizon: hz,
+                            ...(Number.isFinite(ft) && ft >= 1 ? { free_transfers: ft } : {}) }),
+    });
+    if (!r.ok) throw new Error((await r.json()).detail || r.status);
+    const d = await r.json();
+    pout.innerHTML = d.weeks.map((w, i) => `
+      <h2>GW${w.gw} ${i === 0 ? "— do this now" : "— planned"}</h2>
+      <div class="tiles">
+        <div class="tile"><p class="k">Moves</p>
+          <p class="v" style="font-size:1.05rem">${w.buys.length
+            ? pairMoves(w.sells, w.buys).join("<br>")
+            : "Hold"}</p>
+          <p class="d">${w.buys.length} transfer(s)${w.hits ? `, −${4 * w.hits} pts in hits` : ""}
+            · ${w.free_transfers_after} FT carried to next GW</p></div>
+        <div class="tile"><p class="k">Projected XI</p><p class="v">${w.xi_xp} <span class="vs">xP</span></p>
+          <p class="d">${w.xi_p10 != null ? `${w.xi_p10}–${w.xi_p90} in 8/10 GWs · ` : ""}captain ${w.captain} · bank £${w.bank.toFixed(1)}m</p></div>
+      </div>
+      <details ${i === 0 ? "open" : ""}><summary>Squad for GW${w.gw}</summary>
+        ${squadCards(w.squad ?? [])}</details>`).join("")
+      + `<p class="sub">Week one is the decision to act on; later weeks are the
+      current plan and will re-optimise as prices, injuries and form move.</p>`;
+  } catch (e) {
+    pout.innerHTML = `<p class="note warn">Planning failed: ${e.message}</p>`;
+  }
+}
+btn.addEventListener("click", rate);
+document.querySelector("#entry").addEventListener("keydown",
+  (e) => { if (e.key === "Enter") rate(); });
+
+// Deep link: team.html?entry=1234567 rates immediately (shareable).
+const preset = new URLSearchParams(location.search).get("entry");
+if (preset && API_BASE !== null) {
+  document.querySelector("#entry").value = preset;
+  rate();
+}
+</script>
+</body>
+</html>

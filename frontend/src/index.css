@@ -1,0 +1,149 @@
+@import "tailwindcss";
+@import "@fontsource/archivo/700.css";
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+
+/* Design tokens ported from web/assets/style.css, the vanilla site's single source of
+ * visual truth. Light values declared on the token; dark values applied through the
+ * `.dark` class block below. Dark mode is resolved via Tailwind v4's class-based
+ * `@custom-variant dark` strategy (UIX-02, D-16/D-17) — an inline script in
+ * frontend/index.html applies the `dark` class to <html> before React mounts, and
+ * useTheme() keeps it in sync afterward. This is the single dark-mode mechanism; no
+ * `@media (prefers-color-scheme: dark)` block competes with it.
+ *
+ * Every colour the UI-SPEC names is declared here now, even ones unused by this
+ * phase's shell (--color-warn, --color-band*, --color-fdr*) — later phases add usage,
+ * never new tokens. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Backgrounds / surfaces */
+  --color-bg: #fafbf7;
+  --color-surface: #f1f4ec;
+  --color-surface-2: #e7ece2;
+
+  /* Text */
+  --color-ink: #18231d;
+  --color-ink-2: #5a685f;
+  --color-line: #d5dcd1;
+
+  /* Accent */
+  --color-accent: #1c7a45;
+  --color-accent-ink: #146036;
+  --color-accent-bg: #e2efe5;
+
+  /* Destructive */
+  --color-bad: #a3392e;
+
+  /* Reserved: Phase 2+ price/injury flags */
+  --color-warn: #a8720e;
+  --color-warn-bg: #f6eed9;
+
+  /* Reserved: Phase 3 p10/p90 interval bands (UIX-01) */
+  --color-band: #86b6ef;
+  --color-band-pt: #2a78d6;
+
+  /* Reserved: Phase 2 FDR fixture-difficulty ticker (UI-03) */
+  --color-fdr1-bg: #2a78d6;
+  --color-fdr1-ink: #ffffff;
+  --color-fdr2-bg: #86b6ef;
+  --color-fdr2-ink: #18231d;
+  --color-fdr3-bg: #f0efec;
+  --color-fdr3-ink: #18231d;
+  --color-fdr4-bg: #ee938f;
+  --color-fdr4-ink: #18231d;
+  --color-fdr5-bg: #e34948;
+  --color-fdr5-ink: #ffffff;
+
+  /* Phase 3 pitch surface (D-05) — deliberately, visibly green; not a
+   * "neutral" role, so exempt from the dark-neutral chroma-budget gate in
+   * scripts/check-tokens.mjs, which only inspects bg/surface/surface-2/line. */
+  --color-pitch-1: #3fae6a;
+  --color-pitch-2: #1c7a45;
+  --color-pitch-line: rgba(255, 255, 255, 0.55);
+
+  /* Spacing scale (multiples of 4) */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+
+  /* Typography roles: two weights (400 regular, 700 bold) across two families.
+   * --font-mono is the "Numeric" modifier (UI-SPEC Typography table) — same
+   * Label/Body size and weight as its assigned role, IBM Plex Mono family
+   * only, used for tabular/numeric text (deadline chip, GW banner). */
+  --font-label: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-heading: "Archivo", "Arial Black", sans-serif;
+  --font-display: "Archivo", "Arial Black", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  --text-label: 14px;
+  --text-label--line-height: 1.4;
+  --text-body: 16px;
+  --text-body--line-height: 1.5;
+  --text-heading: 20px;
+  --text-heading--line-height: 1.2;
+  --text-display: 28px;
+  --text-display--line-height: 1.15;
+}
+
+:root {
+  color-scheme: light;
+  /* Pitch row gap (PITCH-02, G-03-1 fix): a custom property, not a Tailwind gap
+   * utility, because the card measure below is computed in a `calc()` that must
+   * subtract the same gap — a utility class is invisible to `calc()`. */
+  --pitch-gap: var(--spacing-xs);
+}
+
+@media (min-width: 480px) {
+  :root {
+    --pitch-gap: var(--spacing-sm);
+  }
+}
+
+.dark {
+  color-scheme: dark;
+
+  --color-bg: #141715;
+  --color-surface: #1b201c;
+  --color-surface-2: #222924;
+
+  --color-ink: #e6ece6;
+  --color-ink-2: #9caba0;
+  --color-line: #2e3731;
+
+  --color-accent: #4cb878;
+  --color-accent-ink: #6bcb90;
+  --color-accent-bg: #1a2e22;
+
+  --color-bad: #e08578;
+
+  --color-warn: #d9a94a;
+  --color-warn-bg: #2a2415;
+
+  --color-band: #184f95;
+  --color-band-pt: #3987e5;
+
+  --color-fdr1-bg: #3987e5;
+  --color-fdr1-ink: #111815;
+  --color-fdr2-bg: #184f95;
+  --color-fdr2-ink: #e6ece6;
+  --color-fdr3-bg: #383835;
+  --color-fdr3-ink: #e6ece6;
+  --color-fdr4-bg: #a04644;
+  --color-fdr4-ink: #e6ece6;
+  --color-fdr5-bg: #e66767;
+  --color-fdr5-ink: #111815;
+
+  --color-pitch-1: #1f5c3a;
+  --color-pitch-2: #123321;
+  --color-pitch-line: rgba(255, 255, 255, 0.3);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+}

@@ -1,0 +1,31 @@
+{
+  "mode": "heuristic",
+  "date": "2026-09-01",
+  "note": "net event transfers per owner — model trains itself once 14 days of snapshots exist",
+  "risers": [
+    {
+      "name": "Semenyo",
+      "team": "BOU",
+      "position": "MID",
+      "price_m": 6.8,
+      "ownership": 9.4,
+      "net_transfers": 45210,
+      "net_per_owner": 0.041,
+      "progress": 1.02,
+      "status": "very likely"
+    }
+  ],
+  "fallers": [
+    {
+      "name": "Mbeumo",
+      "team": "MUN",
+      "position": "MID",
+      "price_m": 8.0,
+      "ownership": 22.1,
+      "net_transfers": -38210,
+      "net_per_owner": -0.028,
+      "progress": 0.71,
+      "status": "likely"
+    }
+  ]
+}
