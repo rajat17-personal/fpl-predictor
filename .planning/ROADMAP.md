@@ -217,7 +217,23 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The API emits structured JSON request logs and exposes distinct liveness and readiness endpoints
   5. A long-running API process leaks no file handles, and the solve cache is bounded with correct invalidation under concurrent requests
 
-**Plans**: TBD
+**Plans**: 5 plans (3 waves)
+
+**Wave 1**
+
+- [ ] 06-01-PLAN.md — Fail-loudly tracer: the `ops/` package (jsonio, jsonlog, payloads), `predict.live._load_live` reading and validating through it, and `/api/ready` as the operator-visible far end of a corrupt FPL payload
+
+**Wave 2** *(blocked on Wave 1; the three run in parallel — zero file overlap)*
+
+- [ ] 06-02-PLAN.md — REL-01/REL-04 sweep: 24 remaining bare file handles across `data/`, `models/`, `predict/`, `e2e/scripts/` and `tests/`, plus the self-tested repository-wide regression gate
+- [ ] 06-03-PLAN.md — Cron reliability and secrets: snapshot retry/backoff with atomic writes, never-raising `ops/notify.py`, per-step accounting in `daily.sh`/`weekly.sh` with the workflows delegating to them, and the mode-600 `.env` pattern
+- [ ] 06-04-PLAN.md — API hardening: configured CORS origins with a wildcard treated as a boot failure, a bounded LRU/TTL solve cache keyed on a monotonic pool version, and one redacted JSON log record per request
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 06-05-PLAN.md — `scripts/verify_hardening.sh` runtime proof against a real uvicorn boot on the frozen fixture set, wired into `scripts/preflight.sh` as a new gate
+
+**User setup required**: a mode-600 `.env` (06-03) and the daily/weekly cron schedule plus a watched alert webhook (06-05) — `crontab -l` currently reports no crontab on this host.
 
 **Research flags**: none — FastAPI CORS, pydantic validation, structured logging, and LRU/TTL caching are standard patterns. The concrete gap inventory lives in `.planning/codebase/CONCERNS.md`. The daily snapshot cron is time-critical (price history cannot be backfilled) — REL-02 changes must not interrupt it.
 
@@ -248,7 +264,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Pitch Renderer & Squad Views | 5/5 | Complete    | 2026-09-03 |
 | 4. E2E Regression Suite | 8/8 | Complete    | 2026-09-04 |
 | 5. Container Build & CI Pipeline | 5/5 | Complete    | 2026-09-05 |
-| 6. Security, Reliability & Observability Hardening | 0/TBD | Not started | - |
+| 6. Security, Reliability & Observability Hardening | 0/5 | Planned     | - |
 | 7. Parity Validation & Cutover | 0/TBD | Not started | - |
 
 ## Requirement Coverage
