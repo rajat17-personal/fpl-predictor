@@ -41,6 +41,7 @@ import config
 import predict.live as live
 from models import intervals
 from ops.jsonlog import configure_logging, log_event
+from ops.payloads import validate_bootstrap, validate_fixtures
 from optimize.multi_period import solve_multi_period
 from optimize.squad_ilp import pick_squad
 from optimize.transfers import optimize_gw
@@ -99,8 +100,15 @@ _solve_cache: dict = {}
 def _load_live_fixture(force: bool = True):
     """Fixture-mode replacement for predict.live._load_live: reads the
     committed, trimmed bootstrap-static.json/fixtures.json from disk instead
-    of predict.live._load_live's unconditional fetch_fpl_live download."""
-    return _fixture_json("bootstrap-static.json"), _fixture_json("fixtures.json")
+    of predict.live._load_live's unconditional fetch_fpl_live download. Runs
+    the same validators as the live path, in the "fixture" profile, so the
+    frozen E2E capture is exercised by the same validator on every fixture-mode
+    boot and the validator can never drift untested."""
+    boot = _fixture_json("bootstrap-static.json")
+    fixtures = _fixture_json("fixtures.json")
+    validate_bootstrap(boot, source=str(_FIXTURE_API / "bootstrap-static.json"), profile="fixture")
+    validate_fixtures(fixtures, source=str(_FIXTURE_API / "fixtures.json"))
+    return boot, fixtures
 
 
 def _gw_pool_fixture(boot: dict, fixtures: list, gw: int, artifact) -> pd.DataFrame:

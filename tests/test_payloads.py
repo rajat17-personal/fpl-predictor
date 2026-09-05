@@ -4,12 +4,32 @@ must produce one actionable message, one parseable JSON log line, and a 503 on
 with pydantic schema-validation behavior cases."""
 from __future__ import annotations
 
+import copy
 import json
 import logging
+import pathlib
+import sys
 
 import pytest
 
+import config
 from ops.jsonio import PayloadError, read_json, write_json
+from ops.payloads import validate_bootstrap, validate_fixtures
+
+# tests/ has no __init__.py -- pytest's default prepend import mode makes
+# `from test_api import fake_boot` resolve.
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+from test_api import fake_boot  # noqa: E402
+
+_NORMAL_FIXTURE_DIR = config.ROOT / "e2e" / "fixtures" / "v1" / "normal" / "api"
+
+
+def _load_committed_bootstrap() -> dict:
+    return read_json(_NORMAL_FIXTURE_DIR / "bootstrap-static.json", what="committed fixture bootstrap")
+
+
+def _load_committed_fixtures() -> list:
+    return read_json(_NORMAL_FIXTURE_DIR / "fixtures.json", what="committed fixture fixtures")
 
 # ---------------------------------------------------------------- read_json
 
@@ -162,3 +182,78 @@ def test_jsonlog_configure_logging_is_idempotent(capsys):
     lines = [line for line in captured.err.splitlines() if line.strip()]
     assert len(lines) == 1
     assert json.loads(lines[0])["event"] == "test.event"
+
+
+# ---------------------------------------------------------------- ops.payloads (Task 2)
+
+
+def test_validate_bootstrap_synthetic_live_payload_passes():
+    validate_bootstrap(fake_boot(), source="synthetic", profile="live")
+
+
+def test_validate_bootstrap_committed_fixture_passes_under_fixture_profile():
+    validate_bootstrap(_load_committed_bootstrap(), source="committed-fixture", profile="fixture")
+
+
+def test_validate_bootstrap_committed_fixture_fails_under_live_profile():
+    with pytest.raises(PayloadError) as exc_info:
+        validate_bootstrap(_load_committed_bootstrap(), source="committed-fixture", profile="live")
+    assert "transfers_in_event" in str(exc_info.value)
+
+
+def test_validate_fixtures_committed_fixture_passes_all_380_entries():
+    fixtures = _load_committed_fixtures()
+    assert len(fixtures) == 380
+    validate_fixtures(fixtures, source="committed-fixture")
+
+
+def test_validate_bootstrap_missing_now_cost_names_elements_and_field():
+    boot = copy.deepcopy(fake_boot())
+    del boot["elements"][0]["now_cost"]
+    with pytest.raises(PayloadError) as exc_info:
+        validate_bootstrap(boot, source="mutated", profile="live")
+    msg = str(exc_info.value)
+    assert "elements" in msg
+    assert "now_cost" in msg
+
+
+def test_validate_bootstrap_empty_elements_list_names_elements():
+    boot = copy.deepcopy(fake_boot())
+    boot["elements"] = []
+    with pytest.raises(PayloadError) as exc_info:
+        validate_bootstrap(boot, source="mutated", profile="fixture")
+    assert "elements" in str(exc_info.value)
+
+
+def test_validate_bootstrap_list_input_raises_payload_error_not_type_error():
+    with pytest.raises(PayloadError):
+        validate_bootstrap([1, 2, 3], source="mutated", profile="fixture")
+
+
+def test_validate_fixtures_uncoercible_difficulty_names_index_and_field():
+    fixtures = copy.deepcopy(_load_committed_fixtures())
+    fixtures[0]["team_h_difficulty"] = "not-a-number"
+    with pytest.raises(PayloadError) as exc_info:
+        validate_fixtures(fixtures, source="mutated")
+    msg = str(exc_info.value)
+    assert "0" in msg
+    assert "team_h_difficulty" in msg
+
+
+def test_validate_bootstrap_rejects_unknown_profile():
+    with pytest.raises(ValueError):
+        validate_bootstrap(fake_boot(), source="synthetic", profile="bogus")
+
+
+def test_predict_live_wires_validators(monkeypatch):
+    import predict.live as live
+    assert "validate_bootstrap" in live.__dict__
+    assert "validate_fixtures" in live.__dict__
+
+
+def test_api_main_fixture_loader_uses_fixture_profile():
+    import inspect
+
+    import api.main as m
+    src = inspect.getsource(m._load_live_fixture)
+    assert 'profile="fixture"' in src

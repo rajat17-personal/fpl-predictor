@@ -34,6 +34,7 @@ from data.ingest import fetch_fpl_live
 from models.train import predict_xp
 from ops.jsonio import PayloadError, read_json
 from ops.jsonlog import log_event
+from ops.payloads import validate_bootstrap, validate_fixtures
 from optimize.squad_ilp import pick_squad
 from optimize.transfers import optimize_gw
 
@@ -57,11 +58,25 @@ def _read_live_json(path, *, what: str):
 
 def _load_live(force: bool = True):
     fetch_fpl_live(force=force)
-    boot = _read_live_json(config.RAW_DIR / "live" / "bootstrap-static.json",
-                           what="FPL bootstrap-static payload")
-    fixtures = _read_live_json(config.RAW_DIR / "live" / "fixtures.json",
-                               what="FPL fixtures payload")
+    boot_path = config.RAW_DIR / "live" / "bootstrap-static.json"
+    fixtures_path = config.RAW_DIR / "live" / "fixtures.json"
+    boot = _read_live_json(boot_path, what="FPL bootstrap-static payload")
+    fixtures = _read_live_json(fixtures_path, what="FPL fixtures payload")
+    _validate_or_log(boot_path, "FPL bootstrap-static payload",
+                     lambda: validate_bootstrap(boot, source=str(boot_path.resolve()), profile="live"))
+    _validate_or_log(fixtures_path, "FPL fixtures payload",
+                     lambda: validate_fixtures(fixtures, source=str(fixtures_path.resolve())))
     return boot, fixtures
+
+
+def _validate_or_log(path, what: str, validate) -> None:
+    """Run `validate()`; on PayloadError log the `payload.invalid` structured
+    event (fields: path, what) and re-raise unchanged — never catch-and-continue."""
+    try:
+        validate()
+    except PayloadError:
+        log_event(_LOGGER, "payload.invalid", level="error", path=str(path), what=what)
+        raise
 
 
 def _next_gw(boot: dict) -> int:
