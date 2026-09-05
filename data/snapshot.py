@@ -12,22 +12,28 @@ a random intraday mix).
 Run:
   python -m data.snapshot            # write today's snapshot if missing
   python -m data.snapshot --force    # overwrite today's
+  python -m data.snapshot --retries 5 --backoff 3   # tune outage tolerance
 """
 from __future__ import annotations
 
 import argparse
 import datetime as dt
-import json
+import os
+import random
 import sys
+import time
 
 import pandas as pd
 import requests
 
 import config
+from ops.notify import report
 
 SNAP_DIR = config.DATA_DIR / "snapshots"
 _HEADERS = {"User-Agent": "fpl-ml-project/0.1"}
 _POS = {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}
+_JOB = "snapshot"
+_RETRYABLE_STATUS = {429, 500, 502, 503, 504}
 
 # Everything the price model or scoreboard could plausibly want, kept slim.
 # ep_next is FPL's own expected points — captured now so the scoreboard can
@@ -81,7 +87,44 @@ def snapshot_frame(boot: dict, ts: dt.datetime) -> pd.DataFrame:
     return df
 
 
-def take_snapshot(*, force: bool = False) -> "pd.DataFrame | None":
+def _fetch_bootstrap(*, retries: int, backoff: float) -> dict:
+    """GET bootstrap-static with bounded retry + exponential backoff + jitter.
+
+    Retries on a transport-level `requests.RequestException` or a retryable
+    5xx/429 status. A non-retryable 4xx is not retried (a client error will
+    not fix itself) and raises immediately on the first attempt. After the
+    final failed attempt, reports the failure and re-raises so the caller's
+    exit code is non-zero.
+    """
+    last_exc: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            r = requests.get(f"{config.FPL_API}/bootstrap-static/", headers=_HEADERS, timeout=30)
+            if r.status_code in _RETRYABLE_STATUS:
+                raise requests.HTTPError(f"{r.status_code} {r.reason}", response=r)
+            r.raise_for_status()
+            return r.json()
+        except requests.RequestException as exc:
+            last_exc = exc
+            is_last = attempt == retries
+            reason = str(exc)
+            if is_last:
+                report(_JOB, "fetch", f"bootstrap-static fetch failed after {attempt} attempt(s): {reason}")
+                raise
+            # Non-retryable 4xx (other than the retryable set above) should
+            # not be retried — a client error will not fix itself.
+            status = getattr(getattr(exc, "response", None), "status_code", None)
+            if status is not None and status not in _RETRYABLE_STATUS and 400 <= status < 500:
+                report(_JOB, "fetch", f"bootstrap-static fetch failed (non-retryable {status}): {reason}")
+                raise
+            sleep_s = backoff ** (attempt - 1) + random.random()
+            print(f"[snapshot] attempt {attempt}/{retries} failed ({reason}) — retrying in {sleep_s:.1f}s")
+            time.sleep(sleep_s)
+    # Unreachable in practice (loop always returns or raises), but keeps mypy/lint happy.
+    raise last_exc if last_exc is not None else RuntimeError("bootstrap-static fetch failed")
+
+
+def take_snapshot(*, force: bool = False, retries: int = 3, backoff: float = 2.0) -> "pd.DataFrame | None":
     """Fetch bootstrap-static and persist today's snapshot. None if already done."""
     ts = dt.datetime.now(dt.timezone.utc)
     SNAP_DIR.mkdir(parents=True, exist_ok=True)
@@ -89,10 +132,16 @@ def take_snapshot(*, force: bool = False) -> "pd.DataFrame | None":
     if out.exists() and not force:
         print(f"[snapshot] {out.name} already exists (use --force to overwrite)")
         return None
-    r = requests.get(f"{config.FPL_API}/bootstrap-static/", headers=_HEADERS, timeout=30)
-    r.raise_for_status()
-    df = snapshot_frame(r.json(), ts)
-    df.to_parquet(out, index=False)
+    boot = _fetch_bootstrap(retries=retries, backoff=backoff)
+    df = snapshot_frame(boot, ts)
+    tmp = out.with_suffix(out.suffix + f".{os.getpid()}.tmp")
+    try:
+        df.to_parquet(tmp, index=False)
+        os.replace(tmp, out)
+    except Exception:
+        if tmp.exists():
+            tmp.unlink()
+        raise
     print(f"[snapshot] {out.name}: {len(df)} players, next GW {df.next_gw.iloc[0]}")
     return df
 
@@ -109,8 +158,12 @@ def load_snapshots() -> pd.DataFrame:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--retries", type=int, default=3,
+                     help="max fetch attempts before giving up (default: 3)")
+    ap.add_argument("--backoff", type=float, default=2.0,
+                     help="exponential backoff base in seconds (default: 2.0)")
     args = ap.parse_args(argv)
-    take_snapshot(force=args.force)
+    take_snapshot(force=args.force, retries=args.retries, backoff=args.backoff)
     return 0
 
 
