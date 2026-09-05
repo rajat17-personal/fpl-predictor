@@ -91,6 +91,32 @@ uvicorn api.main:app --port 8000
 - **Start the daily snapshot cron first** — the price model trains itself from
   day-over-day history that cannot be backfilled.
 
+## Secrets and configuration
+
+Every secret this project reads (`FPL_API_KEYS`, `ODDS_API_KEY`,
+`FPL_CORS_ORIGINS`, `FPL_ALERT_WEBHOOK`, `FPL_ALERT_LOG`) lives in one place:
+a `.env` file at the repository root, loaded once by `config.load_dotenv()`
+at import time.
+
+- **Copy [.env.example](.env.example) to `.env`, fill in the values you
+  need, then run `chmod 600 .env`.** `.env` must be readable only by its
+  owner — `load_dotenv` prints a loud (but non-blocking) stderr warning if
+  it finds any other mode.
+- `.env` is git-ignored; `.env.example` is tracked and carries no values —
+  every line is `KEY=` with the explanation in a comment above it, never a
+  real credential.
+- **Already-set environment variables always win over the file.** A
+  container, a CI runner, or an exported shell variable is never overwritten
+  by `.env` — a deployment can override without editing anything.
+- **GitHub Actions must use repository secrets, never inline values.** The
+  publish job in `.github/workflows/ci.yml` already does this via the
+  `${{ secrets.* }}` expression form; any new workflow step that needs a
+  credential should follow the same pattern rather than embedding a literal.
+- `scripts/preflight.sh` Gate 6 scans every tracked file for
+  credential-shaped literals (private keys, API tokens, personal emails) on
+  every run — a defense-in-depth check independent of the `.env` pattern
+  above.
+
 ## How it works
 
 ```

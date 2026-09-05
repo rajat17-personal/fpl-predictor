@@ -241,3 +241,148 @@ exit 0
     alerts = _read_alerts(tmp_path)
     assert len(alerts) == 1
     assert alerts[0]["step"] == "models.price-train"
+
+
+# ------------------------------------------------------------- SEC-03: .env
+
+
+def test_env_example_is_tracked_and_env_is_ignored():
+    import subprocess
+
+    env_example = config.ROOT / ".env.example"
+    assert env_example.exists()
+    tracked = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", ".env.example"],
+        cwd=str(config.ROOT), capture_output=True,
+    )
+    assert tracked.returncode == 0
+    ignored = subprocess.run(["git", "check-ignore", "-q", ".env"], cwd=str(config.ROOT))
+    assert ignored.returncode == 0
+
+
+def test_env_example_lines_are_keys_with_no_assigned_value():
+    import re
+
+    env_example = config.ROOT / ".env.example"
+    with open(env_example, encoding="utf-8") as f:
+        lines = f.read().splitlines()
+    key_line_re = re.compile(r"^[A-Z_][A-Z0-9_]*=$")
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        assert key_line_re.match(stripped), f"not a bare KEY= line: {stripped!r}"
+
+
+def test_env_example_names_every_expected_key():
+    env_example = config.ROOT / ".env.example"
+    with open(env_example, encoding="utf-8") as f:
+        text = f.read()
+    for key in (
+        "FPL_API_KEYS", "ODDS_API_KEY", "FPL_CORS_ORIGINS", "FPL_ALERT_WEBHOOK",
+        "FPL_ALERT_LOG", "FPL_FIXTURE_DIR", "FPL_FIXTURE_DATA_DIR",
+    ):
+        assert f"{key}=" in text, f"{key} missing from .env.example"
+
+
+def test_load_dotenv_sets_an_unset_key(tmp_path, monkeypatch):
+    envfile = tmp_path / ".env"
+    envfile.write_text("SOME_NEW_VAR=hello\n")
+    envfile.chmod(0o600)
+    monkeypatch.delenv("SOME_NEW_VAR", raising=False)
+
+    count = config.load_dotenv(envfile)
+
+    assert count == 1
+    assert os.environ["SOME_NEW_VAR"] == "hello"
+
+
+def test_load_dotenv_never_overwrites_an_already_set_key(tmp_path, monkeypatch):
+    envfile = tmp_path / ".env"
+    envfile.write_text("ALREADY_SET_VAR=from_file\n")
+    envfile.chmod(0o600)
+    monkeypatch.setenv("ALREADY_SET_VAR", "from_process_env")
+
+    count = config.load_dotenv(envfile)
+
+    assert count == 0
+    assert os.environ["ALREADY_SET_VAR"] == "from_process_env"
+
+
+def test_load_dotenv_skips_a_malformed_line_without_raising(tmp_path, monkeypatch):
+    envfile = tmp_path / ".env"
+    envfile.write_text("this line has no equals sign\nGOOD_VAR=value\n")
+    envfile.chmod(0o600)
+    monkeypatch.delenv("GOOD_VAR", raising=False)
+
+    count = config.load_dotenv(envfile)
+
+    assert count == 1
+    assert os.environ["GOOD_VAR"] == "value"
+
+
+def test_load_dotenv_warns_on_mode_0644_but_not_on_mode_0600(tmp_path, capsys, monkeypatch):
+    envfile = tmp_path / ".env"
+    envfile.write_text("X=1\n")
+    monkeypatch.delenv("X", raising=False)
+
+    envfile.chmod(0o644)
+    config.load_dotenv(envfile)
+    assert "0o644" in capsys.readouterr().err
+
+    envfile.chmod(0o600)
+    config.load_dotenv(envfile)
+    assert capsys.readouterr().err == ""
+
+
+def test_load_dotenv_strips_one_layer_of_matching_quotes(tmp_path, monkeypatch):
+    envfile = tmp_path / ".env"
+    envfile.write_text('QUOTED_VAR="quoted value"\n')
+    envfile.chmod(0o600)
+    monkeypatch.delenv("QUOTED_VAR", raising=False)
+
+    config.load_dotenv(envfile)
+
+    assert os.environ["QUOTED_VAR"] == "quoted value"
+
+
+def test_load_dotenv_missing_file_returns_zero_and_does_not_raise(tmp_path):
+    missing = tmp_path / "does-not-exist" / ".env"
+    assert config.load_dotenv(missing) == 0
+
+
+@pytest.mark.skipif(not (config.ROOT / ".env").exists(), reason="no .env at repo root")
+def test_real_dotenv_if_present_is_mode_0600():
+    import stat as stat_mod
+
+    mode = stat_mod.S_IMODE((config.ROOT / ".env").stat().st_mode)
+    assert mode == 0o600
+
+
+def test_workflow_secret_assignments_all_use_a_secrets_expression():
+    """Every workflow line that assigns a project secret-carrying env var must
+    do so via a GitHub `secrets.` expression, never an inline literal. Counts
+    the assigning lines and the subset referencing `secrets.` and asserts the
+    two counts are equal, so the assertion holds vacuously (and correctly)
+    when there are none."""
+    import re
+
+    secret_names = (
+        "FPL_API_KEYS", "ODDS_API_KEY", "FPL_CORS_ORIGINS", "FPL_ALERT_WEBHOOK",
+    )
+    assign_re = re.compile(
+        r"^\s*(" + "|".join(secret_names) + r")\s*:\s*(.+)$"
+    )
+    workflow_dir = config.ROOT / ".github" / "workflows"
+    total_assignments = 0
+    secrets_assignments = 0
+    for path in sorted(workflow_dir.glob("*.yml")):
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                m = assign_re.match(line)
+                if not m:
+                    continue
+                total_assignments += 1
+                if "secrets." in m.group(2):
+                    secrets_assignments += 1
+    assert total_assignments == secrets_assignments

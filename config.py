@@ -1,6 +1,9 @@
 """Project constants and paths (Phase 0)."""
 from __future__ import annotations
 
+import os
+import stat
+import sys
 from pathlib import Path
 
 # --- Paths ------------------------------------------------------------------
@@ -11,6 +14,68 @@ PROCESSED_DIR = DATA_DIR / "processed"  # canonical parquet tables
 
 for _d in (RAW_DIR, PROCESSED_DIR):
     _d.mkdir(parents=True, exist_ok=True)
+
+
+def load_dotenv(path: Path | None = None) -> int:
+    """Populate `os.environ` from a `KEY=VALUE` `.env` file (SEC-03).
+
+    Reads `path` (default `ROOT / ".env"`) if it exists; blank lines and
+    lines whose first non-space character is `#` are skipped. A value may be
+    wrapped in one layer of matching single or double quotes, which is
+    stripped. A key already present in `os.environ` is never overwritten —
+    an exported shell variable, a container, or a CI runner always wins over
+    the file, so a deployment can override without editing anything.
+
+    Never raises: a malformed line is skipped with a one-line stderr warning
+    naming the line number; an unreadable file is a warning, not a failure —
+    the process must still start. When the file exists with permission bits
+    other than 0o600, prints an unmissable (but non-blocking) stderr warning.
+
+    Returns the number of keys this call actually set.
+    """
+    target = Path(path) if path is not None else (ROOT / ".env")
+    if not target.exists():
+        return 0
+
+    try:
+        mode = stat.S_IMODE(target.stat().st_mode)
+        if mode != 0o600:
+            print(
+                f"[config] {target} has mode {oct(mode)}, expected 0o600 "
+                f"(secrets are readable by more than the owner) -- run `chmod 600 .env`",
+                file=sys.stderr,
+            )
+    except OSError as exc:
+        print(f"[config] could not stat {target}: {exc}", file=sys.stderr)
+
+    try:
+        with open(target, encoding="utf-8") as f:
+            lines = f.readlines()
+    except OSError as exc:
+        print(f"[config] could not read {target}: {exc}", file=sys.stderr)
+        return 0
+
+    count = 0
+    for lineno, raw_line in enumerate(lines, start=1):
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        key, sep, value = line.partition("=")
+        key = key.strip()
+        if not sep or not key:
+            print(f"[config] {target}:{lineno}: malformed line, skipping", file=sys.stderr)
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+            value = value[1:-1]
+        if key in os.environ:
+            continue
+        os.environ[key] = value
+        count += 1
+    return count
+
+
+load_dotenv()
 
 # --- Data sources -----------------------------------------------------------
 VAASTAV_RAW = "https://raw.githubusercontent.com/vaastav/Fantasy-Premier-League/master/data"
