@@ -8,6 +8,7 @@ Task 3 extends this module with the `.env` / `config.load_dotenv` gates.
 from __future__ import annotations
 
 import json
+import os
 
 import pytest
 import responses
@@ -183,3 +184,60 @@ def test_report_never_raises_even_when_everything_is_broken(tmp_path, monkeypatc
     result = report("daily", "fetch", "failed")
 
     assert result is None
+
+
+# --------------------------------------------------------------- cron scripts
+
+
+def test_daily_and_weekly_scripts_parse_and_are_executable():
+    import subprocess
+
+    for name in ("daily.sh", "weekly.sh"):
+        script = config.ROOT / "scripts" / name
+        assert subprocess.run(["bash", "-n", str(script)]).returncode == 0
+        assert os.access(script, os.X_OK)
+
+
+def test_daily_sh_failure_is_non_zero_notifies_once_and_lets_later_steps_run(tmp_path, monkeypatch):
+    """A stub interpreter fails only the price-training step; the script must
+    still exit non-zero, the two later independent steps must still run, and
+    exactly one alert record must name the failing step."""
+    import stat
+    import subprocess
+
+    real_python = "/home/sraja/miniconda3/envs/python314/bin/python"
+    invocation_log = tmp_path / "invocations.log"
+    alert_log = tmp_path / "alerts.jsonl"
+
+    stub = tmp_path / "stub_python"
+    stub.write_text(f"""#!/usr/bin/env bash
+echo "$@" >> "{invocation_log}"
+if [ "$1" = "-m" ] && [ "$2" = "models.price" ] && [ "$3" = "--train" ]; then
+  exit 3
+fi
+if [ "$1" = "-m" ] && [ "$2" = "ops.notify" ]; then
+  exec {real_python} "$@"
+fi
+exit 0
+""")
+    stub.chmod(stub.stat().st_mode | stat.S_IEXEC)
+
+    env = dict(os.environ)
+    env["PYTHON"] = str(stub)
+    env["FPL_ALERT_LOG"] = str(alert_log)
+    env.pop("FPL_ALERT_WEBHOOK", None)
+    env["PYTHONPATH"] = str(config.ROOT)
+
+    result = subprocess.run(
+        ["bash", str(config.ROOT / "scripts" / "daily.sh")],
+        cwd=str(config.ROOT), env=env, capture_output=True, text=True,
+    )
+
+    assert result.returncode != 0
+    lines = [line for line in invocation_log.read_text().splitlines() if line.strip()]
+    assert "-m models.price --train" in lines
+    assert "-m models.price" in lines
+    assert "-m predict.scoreboard" in lines
+    alerts = _read_alerts(tmp_path)
+    assert len(alerts) == 1
+    assert alerts[0]["step"] == "models.price-train"
