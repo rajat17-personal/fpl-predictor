@@ -79,11 +79,41 @@ def _fixture_json(*parts: str):
                      remedy="see e2e/fixtures/v1/MANIFEST.md")
 
 
+def _cors_origins() -> list[str]:
+    """Resolve the browser trust boundary from FPL_CORS_ORIGINS (SEC-01).
+
+    Splits the comma-separated env var, strips whitespace, drops empty
+    entries. Unset or resolving to an empty list falls back to the local
+    development origins -- the Vite dev server and the uvicorn-served build,
+    on both localhost and 127.0.0.1 -- that Phases 1 and 4 already depend on.
+    A wildcard entry anywhere in the resolved list is a boot failure: an
+    unrestricted origin list is not an accepted configuration, so the process
+    refuses to start rather than defaulting wide open.
+    """
+    raw = os.environ.get("FPL_CORS_ORIGINS", "")
+    origins = [o.strip() for o in raw.split(",") if o.strip()]
+    if "*" in origins:
+        raise RuntimeError(
+            "FPL_CORS_ORIGINS must not contain '*' -- an unrestricted CORS "
+            "origin list is not an accepted configuration. Set one or more "
+            "explicit origins (comma-separated) instead."
+        )
+    if not origins:
+        return ["http://localhost:5173", "http://127.0.0.1:5173",
+                "http://localhost:8000", "http://127.0.0.1:8000"]
+    return origins
+
+
 app = FastAPI(title="FPL ML API", version="0.1")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
-                   allow_headers=["*"])
+_cors_origin_list = _cors_origins()
+app.add_middleware(CORSMiddleware, allow_origins=_cors_origin_list,
+                   allow_methods=["GET", "POST", "OPTIONS"],
+                   allow_headers=["Content-Type", "X-API-Key"],
+                   allow_credentials=False, max_age=600)
 configure_logging("api")
 _logger = logging.getLogger(__name__)
+log_event(_logger, "cors.configured", origin_count=len(_cors_origin_list),
+          origins=_cors_origin_list)
 
 _lock = threading.Lock()
 
