@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import threading
 import time
@@ -32,12 +33,14 @@ import pandas as pd
 import requests
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 import config
 import predict.live as live
 from models import intervals
+from ops.jsonlog import configure_logging, log_event
 from optimize.multi_period import solve_multi_period
 from optimize.squad_ilp import pick_squad
 from optimize.transfers import optimize_gw
@@ -76,6 +79,8 @@ def _fixture_json(*parts: str):
 app = FastAPI(title="FPL ML API", version="0.1")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
                    allow_headers=["*"])
+configure_logging("api")
+_logger = logging.getLogger(__name__)
 
 _lock = threading.Lock()
 
@@ -84,7 +89,7 @@ def _initial_state() -> dict:
     """Factory for _state's pristine shape — single source of truth so tests
     (and _refresh's cold-start check) never hardcode the dict's keys."""
     return {"artifact": None, "boot": None, "fixtures": None, "gw": None,
-            "pools": {}, "loaded_at": 0.0}
+            "pools": {}, "loaded_at": 0.0, "ready": False, "last_error": None}
 
 
 _state: dict = _initial_state()
@@ -158,15 +163,21 @@ def _refresh(force: bool = False) -> None:
         stale = time.time() - _state["loaded_at"] > POOL_TTL_S
         if not (force or stale or _state["boot"] is None):
             return
-        if _state["artifact"] is None:
-            # Fixture mode: a non-None sentinel, never the real (gitignored,
-            # absent-on-clean-checkout) joblib artifact (D-10, Pitfall 3).
-            _state["artifact"] = ("fixture-mode" if _FIXTURE_ROOT else joblib.load(
-                config.ROOT / "models" / "artifacts" / "xp_model.joblib"))
-        boot, fixtures = _load_live()
-        _state.update(boot=boot, fixtures=fixtures, gw=_next_gw(boot),
-                      pools={}, loaded_at=time.time())
-        _solve_cache.clear()
+        try:
+            if _state["artifact"] is None:
+                # Fixture mode: a non-None sentinel, never the real (gitignored,
+                # absent-on-clean-checkout) joblib artifact (D-10, Pitfall 3).
+                _state["artifact"] = ("fixture-mode" if _FIXTURE_ROOT else joblib.load(
+                    config.ROOT / "models" / "artifacts" / "xp_model.joblib"))
+            boot, fixtures = _load_live()
+            _state.update(boot=boot, fixtures=fixtures, gw=_next_gw(boot),
+                          pools={}, loaded_at=time.time(), ready=True, last_error=None)
+            _solve_cache.clear()
+        except Exception as exc:
+            _state["ready"] = False
+            _state["last_error"] = str(exc)
+            log_event(_logger, "pool.refresh_failed", level="error", error=str(exc))
+            raise
 
 
 def _with_bands(pool):
@@ -380,6 +391,21 @@ class SolveRequest(BaseModel):
 def health():
     return {"ok": True, "gw": _state["gw"],
             "pool_age_s": round(time.time() - _state["loaded_at"])}
+
+
+@app.get("/api/ready")
+def ready():
+    """Readiness probe, distinct from liveness: 200 only once a pool has
+    actually loaded; 503 with an actionable `reason` otherwise. Unlike
+    `/api/health`, this calls `_refresh()` and so may block on `_lock`."""
+    try:
+        _refresh()
+        return {"ready": True, "gw": _state["gw"],
+                "pool_age_s": round(time.time() - _state["loaded_at"])}
+    except Exception as exc:
+        return JSONResponse(status_code=503, content={
+            "ready": False, "reason": str(exc), "gw": None,
+            "pool_age_s": round(time.time() - _state["loaded_at"])})
 
 
 @app.get("/api/meta")

@@ -21,7 +21,7 @@ Run:
 from __future__ import annotations
 
 import argparse
-import json
+import logging
 import sys
 
 import joblib
@@ -32,17 +32,35 @@ import config
 from data import live_history, live_odds
 from data.ingest import fetch_fpl_live
 from models.train import predict_xp
+from ops.jsonio import PayloadError, read_json
+from ops.jsonlog import log_event
 from optimize.squad_ilp import pick_squad
 from optimize.transfers import optimize_gw
 
 _POS = {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}
 _HEADERS = {"User-Agent": "fpl-ml-project/0.1"}
+_LOGGER = logging.getLogger(__name__)
+
+
+_INGEST_REMEDY = "run `python -m data.ingest` to regenerate the live cache"
+
+
+def _read_live_json(path, *, what: str):
+    """read_json wrapped with the `payload.unreadable` structured log event
+    every CLI/API prediction flow chokes through on a missing/corrupt file."""
+    try:
+        return read_json(path, what=what, remedy=_INGEST_REMEDY)
+    except PayloadError:
+        log_event(_LOGGER, "payload.unreadable", level="error", path=str(path), what=what)
+        raise
 
 
 def _load_live(force: bool = True):
     fetch_fpl_live(force=force)
-    boot = json.load(open(config.RAW_DIR / "live" / "bootstrap-static.json"))
-    fixtures = json.load(open(config.RAW_DIR / "live" / "fixtures.json"))
+    boot = _read_live_json(config.RAW_DIR / "live" / "bootstrap-static.json",
+                           what="FPL bootstrap-static payload")
+    fixtures = _read_live_json(config.RAW_DIR / "live" / "fixtures.json",
+                               what="FPL fixtures payload")
     return boot, fixtures
 
 
@@ -193,7 +211,8 @@ def _fetch_entry(entry_id: int, gw: int):
     if r.status_code != 200:
         return None
     data = r.json()
-    boot = json.load(open(config.RAW_DIR / "live" / "bootstrap-static.json"))
+    boot = read_json(config.RAW_DIR / "live" / "bootstrap-static.json",
+                     what="FPL bootstrap-static payload", remedy=_INGEST_REMEDY)
     id2code = {e["id"]: e["code"] for e in boot["elements"]}
     codes = [id2code[p["element"]] for p in data["picks"]]
     bank = data["entry_history"]["bank"] / 10.0
@@ -271,7 +290,7 @@ def main(argv: list[str] | None = None) -> int:
         # {web_name: purchase_price_in_millions} for exact selling prices.
         squad = {c: held_meta.get(c, {}).get("price", 0.0) for c in codes}
         if args.purchase_prices:
-            overrides = json.load(open(args.purchase_prices))
+            overrides = read_json(args.purchase_prices, what="purchase-prices override file")
             by_name = {m["name"]: c for c, m in held_meta.items()}
             for nm, price in overrides.items():
                 if nm in by_name:
