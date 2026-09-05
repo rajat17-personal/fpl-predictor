@@ -217,7 +217,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The API emits structured JSON request logs and exposes distinct liveness and readiness endpoints
   5. A long-running API process leaks no file handles, and the solve cache is bounded with correct invalidation under concurrent requests
 
-**Plans**: 5/5 plans executed (3 waves)
+**Plans**: 5/5 executed, plus 1 gap-closure plan pending (4 waves)
 
 **Wave 1**
 
@@ -232,6 +232,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Wave 3** *(blocked on Wave 2)*
 
 - [x] 06-05-PLAN.md — `scripts/verify_hardening.sh` runtime proof against a real uvicorn boot on the frozen fixture set, wired into `scripts/preflight.sh` as a new gate
+
+**Wave 4** *(gap closure — from 06-VERIFICATION.md `status: gaps_found`)*
+
+- [ ] 06-06-PLAN.md — Close CR-01: restore the `import json` that 06-02 Task 3 removed from `e2e/scripts/capture_fixtures.py`, narrow `ruff.toml`'s blanket `data`/`e2e` exclusions so the CI lint step and preflight Gate 2/8 cover all 54 tracked Python files (10 were invisible), and add a self-tested lint-coverage gate plus a ruff-independent runtime-object gate over the capture path
 
 **User setup required**: a mode-600 `.env` (06-03) and the daily/weekly cron schedule plus a watched alert webhook (06-05) — `crontab -l` currently reports no crontab on this host.
 
