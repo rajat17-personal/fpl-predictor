@@ -31,11 +31,12 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 - ✓ FPL-style pitch renderer + team page: green-gradient pitch with neutral generated SVG kits, formation rows with continuous flex centering (any row size incl. 6-card ghost rows), Squad/Rate/Plan tabs, solver flow with numeric-code locks/excludes and stale-response guard — all 8 pages now rebuilt; UAT 4/4, 21 threats closed — Phase 3
 - ✓ Trademark posture for pitch visuals: neutral generated kits (no crests/sponsors/CDN imagery), sitewide disclaimer, committed decision doc (docs/decisions/pitch-kit-sourcing.md) signed off in UAT — Phase 3
 - ✓ Playwright E2E regression suite on frozen versioned fixtures (normal/blank/DGW) with a fixture-mode API server: team/pitch + solver flow, xP table + captains (exact cell values and sort order), rate-my-team incl. pitch visual diff, fixtures & prices pages — 42 specs, calendar-independent — Phase 4
+- ✓ CI/CD on GitHub Actions: hash-locked deps (uv --generate-hashes), ruff lint, 5-job chained ci.yml (lint-build → test → e2e → image → publish) with SHA-pinned actions, multi-stage Docker image + CBC smoke test, report-only Trivy scan, GHCR publish proven live (ghcr.io/rajat17-personal/fpl-predictor), branch protection on main, local preflight.sh mirror — Phase 5
+- ✓ Repo push hygiene: 140MB Chrome .deb removed, dispatch-only schedulers on py3.14 with hashed installs and bot identity, personal email redacted from tracked files, .gitignore reconciled — Phase 5
 
 ### Active
 
-- [ ] Hardened CI/CD on GitHub Actions: lint, pytest, API tests, Playwright, Docker image build + publish for the API (deploy step stubbed — no live hosting yet); note: pytest's SPA-fallback test needs a built `frontend/dist/` (gitignored) — CI must build the frontend before running the backend suite (04-REVIEW.md critical)
-- [ ] Security & config hardening: CORS restriction, pinned/locked dependencies, secrets via .env pattern, repo hygiene (remove 134MB Chrome .deb, proper .gitignore)
+- [ ] Security & config hardening (remaining after Phase 5): CORS restriction, secrets via .env pattern — deps pinning and repo hygiene shipped in Phase 5
 - [ ] Reliability fixes: file-handle leaks, cron error traps (remove `|| true`, add retries), FPL API schema validation, graceful JSON-load failures, solve-cache invalidation/LRU
 - [ ] Observability: structured logging, health/monitoring endpoints, failure visibility/alerting for crons and FPL API outages
 
@@ -75,7 +76,10 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 | Full React (Vite) rebuild, not incremental vanilla enhancement | Cleanest long-term base for a paid product; pitch UI wants componentization | — Pending |
 | React chosen directly (no framework research phase) | User preference; largest ecosystem for component/pitch libraries | — Pending |
 | Full parity: all 8 pages rebuilt this milestone | Avoid maintaining two frontends into launch | — Pending |
-| CI ends at build + test + published Docker image (no live deploy) | Hosting not purchased; keeps milestone unblocked by infra decisions | — Pending |
+| CI ends at build + test + published Docker image (no live deploy) | Hosting not purchased; keeps milestone unblocked by infra decisions | ✓ Good — Phase 5: main-branch run green through GHCR publish, deploy step stubbed |
+| Trivy scan report-only this milestone (D-10) | Gating on 187 base-image/dep CVEs would block launch prep on upstream fixes | — Pending: triage backlog for Phase 6 |
+| uv as lockfile compiler, kept out of runtime lockfiles (D-01) | Only tool producing hash-verified locks; pip freeze forbidden (D-02) | ✓ Good — Phase 5: clean-venv --require-hashes install proven |
+| Every push to GitHub is a human action (D-14); dispatch-only schedulers (D-12) | Pre-revenue repo safety; local WSL cron stays sole production scheduler | ✓ Good — Phase 5: first push caught 2 real CI bugs at the gate |
 | API test suite added before/alongside Playwright | E2E on an untested API inverts the pyramid; API tests are the missing base layer | ✓ Good — Phase 1 shipped the suite (contract, auth, concurrency) green |
 | Package-legitimacy gate: exact-pin installs against a human-approved list | Supply-chain hygiene for a pre-revenue solo project | ✓ Good — Phase 1: zero registry drift at install time |
 | TypeScript 6.x (not 7.x) + Vite 7.3.6/plugin-react 5.2.0 pins | ESLint support for TS 7.0 unstable; deliberate downgrade pins | ✓ Good — Phase 1 scaffold stable |
@@ -107,4 +111,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-04 after Phase 4*
+*Last updated: 2026-09-05 after Phase 5*

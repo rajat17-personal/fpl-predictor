@@ -20,10 +20,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-04)
+See: .planning/PROJECT.md (updated 2026-09-05)
 
 **Core value:** The weekly recommendations (xP table, squad, captains, transfers) must keep flowing reliably — every change must leave the pipeline, API, and site at least as correct and more trustworthy than before.
-**Current focus:** Phase 05 — Container Build & CI Pipeline
+**Current focus:** Phase 6 — Security, Reliability & Observability Hardening
 
 ## Current Position
 
@@ -32,7 +32,7 @@ Plan: Not started
 Status: Ready to plan
 Last activity: 2026-09-05 — Phase 05 complete, transitioned to Phase 6
 
-Progress: [██████░░░░] 57% (4/7 phases, 27 plans complete)
+Progress: [███████░░░] 71% (5/7 phases, 32 plans complete)
 
 ## Performance Metrics
 
