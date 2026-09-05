@@ -465,13 +465,19 @@ def test_unauthenticated_endpoints_stay_open(monkeypatch, env_value, header):
 
 # ---------------------------------------------------------------- concurrency
 #
-# api/main.py `solve()` reads/writes `_solve_cache` with NO `_lock` held, while
-# `_refresh()` clears it INSIDE `_lock` — a race a sequential loop of TestClient
-# calls cannot reproduce, because overlapping requests are what create it. This
-# test asserts only "no crash, no corrupted state" — NOT cache-hit rate or
-# byte-identical bodies across concurrent calls, which api/main.py does not
-# guarantee today (that guarantee, and fixing the race, is Phase 6 REL-05's
-# job; this test's job is to make the race observable, not to fix it).
+# REL-05 (closed): `_cache_get`/`_cache_put` are the only two doors into
+# `_solve_cache`, and both hold `_lock` for their entire body — there is no
+# read or write path outside it, including `_refresh()`'s own clear. Every
+# cache key also embeds `_state["pool_version"]`, the counter `_refresh()`
+# bumps under that same lock on every successful reload, so a payload
+# computed against pool version N can never be returned once the version has
+# advanced to N+1: no later request can construct a key containing N. This
+# test fires 20 concurrent `/api/solve` calls overlapping a forced
+# `_refresh()` and asserts the version bump landed exactly once under that
+# concurrent load and the cache stayed within its bound — not merely that
+# nothing crashed. (Direct proof that a pre-refresh entry is unreachable
+# after the bump — driving `_cache_get`/`_cache_put` deterministically rather
+# than through a race — lives in tests/test_api_hardening.py.)
 
 def test_concurrent_solve_and_refresh(monkeypatch):
     from fastapi.testclient import TestClient
@@ -487,17 +493,25 @@ def test_concurrent_solve_and_refresh(monkeypatch):
         return pool, 1, boot
 
     monkeypatch.setattr(m, "_pool", slow_pool)
+    monkeypatch.setattr(m, "_load_live", lambda force=True: (boot, []))
     monkeypatch.delenv("FPL_API_KEYS", raising=False)
 
     c = TestClient(m.app)
+    version_before = m._state["pool_version"]
 
     def worker(i: int):
         payload = {"horizon": 1 if i % 2 == 0 else 2, "free_transfers": i % 2}
         return c.post("/api/solve", json=payload)
 
-    with ThreadPoolExecutor(max_workers=8) as ex:
-        futures = [ex.submit(worker, i) for i in range(20)]
-        results = [f.result() for f in as_completed(futures)]
+    def refresher():
+        time.sleep(0.02)  # let some solve() calls start before the refresh lands
+        m._refresh(force=True)
+
+    with ThreadPoolExecutor(max_workers=9) as ex:
+        solve_futures = [ex.submit(worker, i) for i in range(20)]
+        refresh_future = ex.submit(refresher)
+        results = [f.result() for f in as_completed(solve_futures)]
+        refresh_future.result()
 
     assert len(results) == 20
     for r in results:
@@ -506,3 +520,9 @@ def test_concurrent_solve_and_refresh(monkeypatch):
         assert "gw" in body
         assert len(body["squad"]) > 0
     assert isinstance(m._state["pools"], dict)
+
+    # REL-05: the forced refresh bumped the version exactly once even though
+    # 20 solve() calls were reading/writing the cache concurrently, and the
+    # cache never grew past its configured ceiling.
+    assert m._state["pool_version"] == version_before + 1
+    assert len(m._solve_cache) <= m.SOLVE_CACHE_MAX

@@ -26,6 +26,7 @@ import logging
 import os
 import threading
 import time
+from collections import OrderedDict
 from pathlib import Path
 
 import joblib
@@ -50,6 +51,8 @@ from predict.live import (_gw_pool, _load_live, _next_gw, build_horizon_pool,
                           build_pool, _POS)
 
 POOL_TTL_S = 3600
+SOLVE_CACHE_MAX = 256      # hard entry ceiling on _solve_cache (REL-05)
+SOLVE_CACHE_TTL_S = POOL_TTL_S
 _HEADERS = {"User-Agent": "fpl-ml-project/0.1"}
 
 # --- E2E fixture-mode seam (Phase 4, E2E-01) --------------------------------
@@ -120,13 +123,60 @@ _lock = threading.Lock()
 
 def _initial_state() -> dict:
     """Factory for _state's pristine shape — single source of truth so tests
-    (and _refresh's cold-start check) never hardcode the dict's keys."""
+    (and _refresh's cold-start check) never hardcode the dict's keys.
+
+    `pool_version` is a monotonic counter bumped by `_refresh` on every
+    successful reload; it is folded into every solve-cache key so a payload
+    computed against an older pool can never be served after a refresh
+    (REL-05) — the version bump, not the cache clear, is what makes that
+    unreachable.
+    """
     return {"artifact": None, "boot": None, "fixtures": None, "gw": None,
-            "pools": {}, "loaded_at": 0.0, "ready": False, "last_error": None}
+            "pools": {}, "loaded_at": 0.0, "ready": False, "last_error": None,
+            "pool_version": 0}
 
 
 _state: dict = _initial_state()
-_solve_cache: dict = {}
+
+# Bounded LRU + TTL cache of solve/plan responses, keyed by a hash of the
+# request (including the pool version). Entries are `(stored_at, payload)`
+# tuples. `_cache_get`/`_cache_put` below are the ONLY two doors into this
+# structure — every access happens under `_lock` (REL-05).
+_solve_cache: "OrderedDict[str, tuple[float, dict]]" = OrderedDict()
+
+
+def _cache_get(key: str):
+    """The only read door into `_solve_cache`.
+
+    Locked for its whole body. Returns None on a miss. An entry older than
+    SOLVE_CACHE_TTL_S is discarded and treated as a miss. A live hit is moved
+    to the end of the ordering before being returned — that move is what
+    makes eviction least-recently-*used* rather than least-recently-inserted.
+    """
+    with _lock:
+        entry = _solve_cache.get(key)
+        if entry is None:
+            return None
+        stored_at, payload = entry
+        if time.time() - stored_at > SOLVE_CACHE_TTL_S:
+            _solve_cache.pop(key, None)
+            return None
+        _solve_cache.move_to_end(key)
+        return payload
+
+
+def _cache_put(key: str, payload) -> None:
+    """The only write door into `_solve_cache`.
+
+    Locked for its whole body. Stores the entry, moves it to the end, then
+    evicts from the front with `popitem(last=False)` while the cache exceeds
+    SOLVE_CACHE_MAX — per-entry eviction, never a full clear.
+    """
+    with _lock:
+        _solve_cache.update({key: (time.time(), payload)})
+        _solve_cache.move_to_end(key)
+        while len(_solve_cache) > SOLVE_CACHE_MAX:
+            _solve_cache.popitem(last=False)
 
 
 def _load_live_fixture(force: bool = True):
@@ -211,7 +261,8 @@ def _refresh(force: bool = False) -> None:
                     config.ROOT / "models" / "artifacts" / "xp_model.joblib"))
             boot, fixtures = _load_live()
             _state.update(boot=boot, fixtures=fixtures, gw=_next_gw(boot),
-                          pools={}, loaded_at=time.time(), ready=True, last_error=None)
+                          pools={}, loaded_at=time.time(), ready=True, last_error=None,
+                          pool_version=_state["pool_version"] + 1)
             _solve_cache.clear()
         except Exception as exc:
             _state["ready"] = False
@@ -480,10 +531,14 @@ def _squad_rows(pool, squad_codes, starters, captain_code):
 @app.post("/api/solve", dependencies=[Depends(require_key)])
 def solve(req: SolveRequest):
     pool, gw, boot = _pool(req.horizon)
-    key = hashlib.sha1(json.dumps({"gw": gw, **req.model_dump()},
+    with _lock:
+        pool_version = _state["pool_version"]
+    key = hashlib.sha1(json.dumps({"gw": gw, "pool_version": pool_version,
+                                  **req.model_dump()},
                                   sort_keys=True, default=str).encode()).hexdigest()
-    if key in _solve_cache:
-        return _solve_cache[key]
+    cached = _cache_get(key)
+    if cached is not None:
+        return cached
     locks = _resolve(pool, req.locks)
     excludes = _resolve(pool, req.excludes)
 
@@ -524,7 +579,7 @@ def solve(req: SolveRequest):
                "xi_xp": r["xi_xp"],
                "squad": _squad_rows(pool, r["squad"], r["starters"],
                                     r["captain_code"])}
-    _solve_cache[key] = out
+    _cache_put(key, out)
     return out
 
 
@@ -540,10 +595,14 @@ def plan(req: PlanRequest):
     free transfer, or take a hit over the horizon. Week 0 is the executable
     decision; later weeks are the current plan (re-solve each week)."""
     pools, gw, boot = _gw_pools_meta(req.horizon)
-    key = hashlib.sha1(json.dumps({"plan": True, "gw": gw, **req.model_dump()},
+    with _lock:
+        pool_version = _state["pool_version"]
+    key = hashlib.sha1(json.dumps({"plan": True, "gw": gw, "pool_version": pool_version,
+                                  **req.model_dump()},
                                   sort_keys=True).encode()).hexdigest()
-    if key in _solve_cache:
-        return _solve_cache[key]
+    cached = _cache_get(key)
+    if cached is not None:
+        return cached
     t = _fetch_team(req.entry, gw, boot)
     ft = req.free_transfers
     if ft is None:
@@ -561,7 +620,7 @@ def plan(req: PlanRequest):
     out = {"entry": req.entry, "gw": gw, "horizon": req.horizon,
            "free_transfers_used": ft, "manager": t["manager"],
            "weeks": weeks}
-    _solve_cache[key] = out
+    _cache_put(key, out)
     return out
 
 
