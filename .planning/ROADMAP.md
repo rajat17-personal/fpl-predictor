@@ -217,11 +217,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The API emits structured JSON request logs and exposes distinct liveness and readiness endpoints
   5. A long-running API process leaks no file handles, and the solve cache is bounded with correct invalidation under concurrent requests
 
-**Plans**: 5 plans (3 waves)
+**Plans**: 1/5 plans executed (3 waves)
 
 **Wave 1**
 
-- [ ] 06-01-PLAN.md — Fail-loudly tracer: the `ops/` package (jsonio, jsonlog, payloads), `predict.live._load_live` reading and validating through it, and `/api/ready` as the operator-visible far end of a corrupt FPL payload
+- [x] 06-01-PLAN.md — Fail-loudly tracer: the `ops/` package (jsonio, jsonlog, payloads), `predict.live._load_live` reading and validating through it, and `/api/ready` as the operator-visible far end of a corrupt FPL payload
 
 **Wave 2** *(blocked on Wave 1; the three run in parallel — zero file overlap)*
 
@@ -264,7 +264,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Pitch Renderer & Squad Views | 5/5 | Complete    | 2026-09-03 |
 | 4. E2E Regression Suite | 8/8 | Complete    | 2026-09-04 |
 | 5. Container Build & CI Pipeline | 5/5 | Complete    | 2026-09-05 |
-| 6. Security, Reliability & Observability Hardening | 0/5 | Planned     | - |
+| 6. Security, Reliability & Observability Hardening | 1/5 | In Progress|  |
 | 7. Parity Validation & Cutover | 0/TBD | Not started | - |
 
 ## Requirement Coverage

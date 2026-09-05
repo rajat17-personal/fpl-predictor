@@ -1,18 +1,18 @@
 ---
 gsd_state_version: 1.0
-current_phase: 6
+current_phase: 06
 current_phase_name: Security, Reliability & Observability Hardening
 status: executing
-stopped_at: Phase 05 complete, ready to plan Phase 6
-last_updated: "2026-09-05T10:43:54.217Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-09-05T11:41:19.430Z"
 last_activity: 2026-09-05
-last_activity_desc: Phase 05 complete, transitioned to Phase 6
-state_head: 2840bbac06e9b74ab96f562a8392c5cf8ebbe1c3
+last_activity_desc: Phase 06 execution started
+state_head: 5664c5e002b77e97b1bfde28c7a6fca1780ac45f
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 37
-  completed_plans: 32
+  completed_plans: 33
   percent: 71
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-05)
 
 **Core value:** The weekly recommendations (xP table, squad, captains, transfers) must keep flowing reliably — every change must leave the pipeline, API, and site at least as correct and more trustworthy than before.
-**Current focus:** Phase 6 — Security, Reliability & Observability Hardening
+**Current focus:** Phase 06 — Security, Reliability & Observability Hardening
 
 ## Current Position
 
-Phase: 6 (Security, Reliability & Observability Hardening) — READY TO EXECUTE
-Plan: Not started
+Phase: 06 (Security, Reliability & Observability Hardening) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-09-05 — Phase 05 complete, transitioned to Phase 6
+Last activity: 2026-09-05 — Phase 06 execution started
 
 Progress: [███████░░░] 71% (5/7 phases, 32 plans complete)
 
@@ -94,6 +94,7 @@ Progress: [███████░░░] 71% (5/7 phases, 32 plans complete)
 | Phase 05 P04 | 12min | 2 tasks | 3 files |
 | Phase 05 P03 | 18min | 3 tasks | 1 files |
 | Phase 05 P05 | 153min | 2 tasks | 7 files |
+| Phase 06 P01 | 30min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -166,6 +167,8 @@ Recent decisions affecting current work:
 - [Phase 05]: [Phase 05-03] Built ci.yml in three additive stages (lint-build+test, then +e2e, then +image+publish) with a commit after each task's own <verify> block passed, rather than one commit for the whole 257-line file. — Preserves per-task atomic-commit discipline even though all three tasks share the same single files_modified entry.
 - [Phase 05]: [Phase 05] [Phase 05-05] Redacted (not waived) the personal email found in 05-PATTERNS.md before the first push, per developer decision -- closed WINDOWS.md entry 3.
 - [Phase 05]: [Phase 05] [Phase 05-05] First real CI push surfaced two genuine environment bugs invisible to local preflight: bare pytest omitting CWD from sys.path (fixed via python -m pytest, 11cd68e) and missing libgomp1 in the runtime image for LightGBM's dlopen (fixed 65cd2e7) -- third PR run and the main-branch run (incl. publish) both went green.
+- [Phase 06]: [Phase 06-01]: Task 2 (tdd="true") implementation and its behavior tests were committed together in a single feat(06-01) commit rather than a separate RED test(06-01) commit followed by a GREEN feat(06-01) commit — ops/payloads.py and its Task 2 tests were designed together as one new module with no pre-existing production code to characterize a RED phase against; documented as a TDD Gate Compliance flag in 06-01-SUMMARY.md rather than silently omitted.
+- [Phase 06]: [Phase 06-01]: Added direct unit tests for ops.jsonlog.redact() beyond the plan's explicit acceptance criteria — T-06-01-03's threat mitigation (no secret in a log line) had implementation from Task 1 but no test proving it until this close-out pass (Rule 2 deviation — missing test coverage for a stated security mitigation).
 
 ### Pending Todos
 
@@ -194,6 +197,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-05T07:08:57.926Z
-Stopped at: Phase 05 complete, ready to plan Phase 6
+Last session: 2026-09-05T11:41:19.308Z
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None
