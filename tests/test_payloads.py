@@ -7,19 +7,15 @@ from __future__ import annotations
 import copy
 import json
 import logging
-import pathlib
-import sys
 
 import pytest
 
 import config
 from ops.jsonio import PayloadError, read_json, write_json
 from ops.payloads import validate_bootstrap, validate_fixtures
-
 # tests/ has no __init__.py -- pytest's default prepend import mode makes
 # `from test_api import fake_boot` resolve.
-sys.path.insert(0, str(pathlib.Path(__file__).parent))
-from test_api import fake_boot  # noqa: E402
+from test_api import fake_boot
 
 _NORMAL_FIXTURE_DIR = config.ROOT / "e2e" / "fixtures" / "v1" / "normal" / "api"
 

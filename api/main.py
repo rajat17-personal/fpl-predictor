@@ -40,6 +40,7 @@ from pydantic import BaseModel, Field
 import config
 import predict.live as live
 from models import intervals
+from ops.jsonio import read_json
 from ops.jsonlog import configure_logging, log_event
 from ops.payloads import validate_bootstrap, validate_fixtures
 from optimize.multi_period import solve_multi_period
@@ -74,7 +75,8 @@ if _FIXTURE_ROOT:
 
 
 def _fixture_json(*parts: str):
-    return json.load(open(_FIXTURE_API.joinpath(*parts)))
+    return read_json(_FIXTURE_API.joinpath(*parts), what="frozen fixture payload",
+                     remedy="see e2e/fixtures/v1/MANIFEST.md")
 
 
 app = FastAPI(title="FPL ML API", version="0.1")
@@ -121,7 +123,7 @@ def _gw_pool_fixture(boot: dict, fixtures: list, gw: int, artifact) -> pd.DataFr
     if not path.exists():
         raise HTTPException(503, f"no frozen pool for gw{gw} in fixture set "
                                  f"{_FIXTURE_API}")
-    return pd.DataFrame(json.load(open(path)))
+    return pd.DataFrame(read_json(path, what="frozen per-gameweek pool"))
 
 
 # CR-01 fix (04-VERIFICATION.md Gap 1): capture the production `_gw_pool`
@@ -274,7 +276,7 @@ def _fetch_entry_history(entry: int) -> dict | None:
     """
     if _FIXTURE_ROOT:
         path = _FIXTURE_API / "entries" / str(entry) / "history.json"
-        return json.load(open(path)) if path.exists() else None
+        return read_json(path, what="frozen entry history") if path.exists() else None
     try:
         r = requests.get(f"{config.FPL_API}/entry/{entry}/history/",
                          headers=_HEADERS, timeout=15)
@@ -307,7 +309,7 @@ def _fetch_entry_picks(entry: int, gw: int) -> dict:
         if not path.exists():
             raise HTTPException(404, f"entry {entry}: no picks for GW{gw - 1} "
                                      "(bad id, or the season hasn't started)")
-        return json.load(open(path))
+        return read_json(path, what="frozen entry picks")
     r = requests.get(f"{config.FPL_API}/entry/{entry}/event/{gw - 1}/picks/",
                      headers=_HEADERS, timeout=30)
     if r.status_code == 404:
@@ -325,7 +327,7 @@ def _fetch_entry_summary(entry: int) -> dict | None:
     """
     if _FIXTURE_ROOT:
         path = _FIXTURE_API / "entries" / str(entry) / "summary.json"
-        return json.load(open(path)) if path.exists() else None
+        return read_json(path, what="frozen entry summary") if path.exists() else None
     try:
         s = requests.get(f"{config.FPL_API}/entry/{entry}/",
                          headers=_HEADERS, timeout=15)
