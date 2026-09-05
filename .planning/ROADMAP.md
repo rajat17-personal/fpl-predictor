@@ -183,7 +183,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. A multi-stage `python:3.14-slim` image builds, passes a smoke test proving the CBC solver is available and `/health` responds, and publishes to GHCR with SHA-pinned actions and a scoped `GITHUB_TOKEN` (deploy step stubbed)
   5. A Trivy vulnerability scan reports on the image on every build
 
-**Plans**: 4/5 plans executed (4 waves)
+**Plans**: 5/5 plans executed (4 waves)
 
 **Wave 1**
 
@@ -200,7 +200,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 4** *(blocked on Wave 3)*
 
-- [ ] 05-05-PLAN.md — `scripts/preflight.sh` local reproduction of the CI verification chain, then the D-14 blocking human checkpoint: private repo, first push, branch protection, and the first real CI run + GHCR image
+- [x] 05-05-PLAN.md — `scripts/preflight.sh` local reproduction of the CI verification chain, then the D-14 blocking human checkpoint: private repo, first push, branch protection, and the first real CI run + GHCR image
 
 **Research flags**: ~~verify `cp314` wheel availability on PyPI for LightGBM, scikit-learn, PyArrow and PuLP~~ — **closed in `05-RESEARCH.md`.** A real `pip install --require-hashes` round trip in a clean Python 3.14.3 venv succeeded for the entire ML+API stack with zero source compilation; D-03's builder-stage fallback stays pre-authorized but is not expected to be needed. Two research findings change the plan: `understatapi` must be pinned exactly (a floating constraint drags in a browser-automation dependency chain) and `pulp` needs an upper bound below 4.0 (which removes the bundled CBC binary all three solver call sites use). Original flag text: verify `cp314` wheel availability on PyPI for LightGBM, scikit-learn, PyArrow, and PuLP before finalizing the lockfile — scikit-learn lacked 3.14 wheels as of Oct 2025. Pin from a clean pip venv, not `pip freeze` inside the conda env. Watch image size (multi-stage; ML deps can balloon past 1.5GB).
 
@@ -247,7 +247,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 2. Data Layer & Non-Pitch Pages | 8/8 | Complete    | 2026-09-02 |
 | 3. Pitch Renderer & Squad Views | 5/5 | Complete    | 2026-09-03 |
 | 4. E2E Regression Suite | 8/8 | Complete    | 2026-09-04 |
-| 5. Container Build & CI Pipeline | 4/5 | In Progress|  |
+| 5. Container Build & CI Pipeline | 5/5 | In Progress|  |
 | 6. Security, Reliability & Observability Hardening | 0/TBD | Not started | - |
 | 7. Parity Validation & Cutover | 0/TBD | Not started | - |
 

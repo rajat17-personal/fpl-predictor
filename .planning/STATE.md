@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 current_phase: 05
 current_phase_name: Container Build & CI Pipeline
-status: executing
-stopped_at: Completed 05-03-PLAN.md
-last_updated: "2026-09-04T13:55:12.966Z"
+status: verifying
+stopped_at: Completed 05-05-PLAN.md (Phase 5 complete)
+last_updated: "2026-09-05T07:08:58.028Z"
 last_activity: 2026-09-04
 last_activity_desc: Phase 05 execution started
-state_head: 0d3ba9ecf2636976451a82d9bbb24572db52d2fd
+state_head: ca09033eab8d237c993e3adc07545c77b9401bf3
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 32
-  completed_plans: 31
+  completed_plans: 32
   percent: 57
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 
 Phase: 05 (Container Build & CI Pipeline) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-04 — Phase 05 execution started
 
 Progress: [██████░░░░] 57% (4/7 phases, 27 plans complete)
@@ -92,6 +92,7 @@ Progress: [██████░░░░] 57% (4/7 phases, 27 plans complete)
 | Phase 05 P02 | 5min | 2 tasks | 3 files |
 | Phase 05 P04 | 12min | 2 tasks | 3 files |
 | Phase 05 P03 | 18min | 3 tasks | 1 files |
+| Phase 05 P05 | 153min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -162,6 +163,8 @@ Recent decisions affecting current work:
 - [Phase 05]: [Phase 05-04] github-actions[bot] identity (41898282+github-actions[bot]@users.noreply.github.com) adopted for both daily.yml and weekly.yml commit-outputs steps, replacing fpl-bot placeholder and a hardcoded personal identity baked into HEAD by commit 6b54d5a. — D-11 modernization requirement.
 - [Phase 05]: [Phase 05-03] Re-resolved all 12 distinct actions (26 uses: lines) live against the GitHub API at execution time; every SHA matched 05-RESEARCH.md's published table exactly, zero drift. — Plan mandates re-resolving every SHA, not trusting prior research, since a tag can be repointed between research and execution.
 - [Phase 05]: [Phase 05-03] Built ci.yml in three additive stages (lint-build+test, then +e2e, then +image+publish) with a commit after each task's own <verify> block passed, rather than one commit for the whole 257-line file. — Preserves per-task atomic-commit discipline even though all three tasks share the same single files_modified entry.
+- [Phase 05]: [Phase 05] [Phase 05-05] Redacted (not waived) the personal email found in 05-PATTERNS.md before the first push, per developer decision -- closed WINDOWS.md entry 3.
+- [Phase 05]: [Phase 05] [Phase 05-05] First real CI push surfaced two genuine environment bugs invisible to local preflight: bare pytest omitting CWD from sys.path (fixed via python -m pytest, 11cd68e) and missing libgomp1 in the runtime image for LightGBM's dlopen (fixed 65cd2e7) -- third PR run and the main-branch run (incl. publish) both went green.
 
 ### Pending Todos
 
@@ -190,6 +193,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-04T13:55:04.180Z
-Stopped at: Completed 05-03-PLAN.md
+Last session: 2026-09-05T07:08:57.926Z
+Stopped at: Completed 05-05-PLAN.md (Phase 5 complete)
 Resume file: None
