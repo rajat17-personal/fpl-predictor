@@ -3,10 +3,11 @@ model dataset, solver locks/excludes, the API, and the digest."""
 from __future__ import annotations
 
 import datetime as dt
-import json
 
 import numpy as np
 import pandas as pd
+
+from ops.jsonio import write_json
 
 # ---------------------------------------------------------------- fixtures
 
@@ -210,9 +211,9 @@ def test_digest_render(tmp_path, monkeypatch):
     table = [{"name": f"P{i}", "team_short": "AAA", "team": "AAA", "price_m": 5.0,
               "xp": 5.0 - i * 0.1, "xp_capt": 6.0 - i * 0.1, "p10": 1.0,
               "p90": 9.0, "ownership": 5.0 + i, "status": "a"} for i in range(8)]
-    json.dump(meta, open(tmp_path / "meta.json", "w"))
-    json.dump(table, open(tmp_path / "xp_table.json", "w"))
-    json.dump(table[:3], open(tmp_path / "captains.json", "w"))
+    write_json(meta, tmp_path / "meta.json")
+    write_json(table, tmp_path / "xp_table.json")
+    write_json(table[:3], tmp_path / "captains.json")
     monkeypatch.setattr(dg, "WEB_DATA", tmp_path)
     d = dg.build_digest()
     txt, html = dg.to_text(d), dg.to_html(d)

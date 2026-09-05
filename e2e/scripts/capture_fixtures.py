@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
-import json
 import shutil
 import sys
 from pathlib import Path
@@ -26,6 +25,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_REPO_ROOT))
 
 import config  # noqa: E402
+from ops.jsonio import read_json, write_json  # noqa: E402
 from predict.export import (build_captains, build_chips, build_meta,  # noqa: E402
                             build_squad, build_standings, build_table,
                             build_ticker, build_leaders)
@@ -102,7 +102,7 @@ def _trim_history(data: dict) -> dict:
 
 def _write_json(path: Path, payload) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    json.dump(payload, open(path, "w"), indent=1)
+    write_json(payload, path, indent=1)
 
 
 def _capture() -> int:
@@ -110,8 +110,12 @@ def _capture() -> int:
     import requests
 
     print("[capture] reading cached upstream payloads from data/raw/live/")
-    boot = json.load(open(config.RAW_DIR / "live" / "bootstrap-static.json"))
-    fixtures = json.load(open(config.RAW_DIR / "live" / "fixtures.json"))
+    boot_path = config.RAW_DIR / "live" / "bootstrap-static.json"
+    fixtures_path = config.RAW_DIR / "live" / "fixtures.json"
+    boot = read_json(boot_path, what="FPL bootstrap-static payload (capture)",
+                     remedy="python -m data.ingest")
+    fixtures = read_json(fixtures_path, what="FPL fixtures payload (capture)",
+                         remedy="python -m data.ingest")
     gw = _next_gw(boot)
     print(f"[capture] derived gw={gw} from data/raw/live/bootstrap-static.json")
 
@@ -225,10 +229,10 @@ def _verify() -> int:
             print(f"[verify] {e}")
         return 1
 
-    boot = json.load(open(boot_path))
+    boot = read_json(boot_path, what="captured api/bootstrap-static.json fixture")
     gw = _next_gw(boot)
-    capture = json.load(open(capture_path))
-    meta = json.load(open(meta_path))
+    capture = read_json(capture_path, what="captured api/capture.json fixture")
+    meta = read_json(meta_path, what="captured web-data/meta.json fixture")
 
     if meta.get("gw") != gw:
         errors.append(f"web-data/meta.json gw={meta.get('gw')} != "
@@ -240,7 +244,7 @@ def _verify() -> int:
         pool_path = API_DIR / "pools" / f"gw{g}.json"
         if not require_file(pool_path):
             continue
-        records = json.load(open(pool_path))
+        records = read_json(pool_path, what="captured api/pools fixture")
         if not isinstance(records, list) or len(records) == 0:
             errors.append(f"pool file gw{g}.json is empty or not a list")
             continue
@@ -249,13 +253,14 @@ def _verify() -> int:
             errors.append(f"pool file gw{g}.json first record missing keys: "
                           f"{sorted(missing_keys)}")
 
-    xp_table = json.load(open(WEB_DATA_DIR / "xp_table.json"))
+    xp_table_path = WEB_DATA_DIR / "xp_table.json"
+    xp_table = read_json(xp_table_path, what="captured web-data/xp_table.json fixture")
     if not isinstance(xp_table, list) or len(xp_table) == 0:
         errors.append("web-data/xp_table.json is empty or not a list")
 
     picks_path = API_DIR / "entries" / str(ENTRY) / f"picks_event{gw - 1}.json"
     if require_file(picks_path):
-        picks = json.load(open(picks_path))
+        picks = read_json(picks_path, what="captured picks fixture")
         if len(picks.get("picks", [])) != 15:
             errors.append(f"{picks_path.name} has "
                           f"{len(picks.get('picks', []))} picks, expected 15")
