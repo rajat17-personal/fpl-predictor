@@ -13,12 +13,12 @@ Run:
 """
 from __future__ import annotations
 
-import json
 import sys
 
 import pandas as pd
 
 import config
+from ops.jsonio import read_json
 
 _OUT = config.PROCESSED_DIR / "id_map.parquet"
 _COLS = ["season", "player_id", "player_code", "web_name",
@@ -50,7 +50,9 @@ def _from_live_bootstrap(season: str) -> pd.DataFrame | None:
     path = config.RAW_DIR / "live" / "bootstrap-static.json"
     if not path.exists():
         return None
-    df = pd.DataFrame(json.load(open(path))["elements"])
+    boot = read_json(path, what="FPL bootstrap-static payload (id map)",
+                      remedy="python -m data.ingest")
+    df = pd.DataFrame(boot["elements"])
     keep = ["id", "code", "web_name", "first_name", "second_name", "element_type"]
     keep += [c for c in config.SET_PIECE_COLS if c in df.columns]
     return _finalise(df[keep], season)

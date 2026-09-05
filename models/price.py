@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
-import json
 import sys
 
 import joblib
@@ -27,6 +26,7 @@ import pandas as pd
 
 import config
 from data.snapshot import load_snapshots
+from ops.jsonio import write_json
 
 ARTIFACT = config.ROOT / "models" / "artifacts" / "price_model.joblib"
 WATCHLIST = config.ROOT / "web" / "data" / "watchlist.json"
@@ -179,7 +179,7 @@ def emit_watchlist(top: int = 15) -> dict:
         out = _emit_official(latest, top)
         out["date"] = str(snaps.date.max())
         WATCHLIST.parent.mkdir(parents=True, exist_ok=True)
-        json.dump(out, open(WATCHLIST, "w"))
+        write_json(out, WATCHLIST)
         print(f"[price] watchlist (official predictor) -> {WATCHLIST}")
         return out
     art = joblib.load(ARTIFACT) if ARTIFACT.exists() else None
@@ -203,7 +203,7 @@ def emit_watchlist(top: int = 15) -> dict:
                "fallers": [_entry(r, None) for _, r in ranked.head(top).iterrows()]}
     out["date"] = str(snaps.date.max())
     WATCHLIST.parent.mkdir(parents=True, exist_ok=True)
-    json.dump(out, open(WATCHLIST, "w"))
+    write_json(out, WATCHLIST)
     print(f"[price] watchlist ({out['mode']}) -> {WATCHLIST}")
     return out
 
