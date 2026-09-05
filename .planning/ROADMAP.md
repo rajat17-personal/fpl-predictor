@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Data Layer & Non-Pitch Pages** - Seven pages rebuilt at verified parity from the JSON export contract (completed 2026-09-02)
 - [x] **Phase 3: Pitch Renderer & Squad Views** - FPL-style pitch, team page solving, and rate-my-team (completed 2026-09-03)
 - [x] **Phase 4: E2E Regression Suite** - Deterministic Playwright coverage of the critical flows on frozen fixtures (completed 2026-09-04)
-- [ ] **Phase 5: Container Build & CI Pipeline** - Locked deps, multi-stage Docker image, GitHub Actions verification and publish
+- [x] **Phase 5: Container Build & CI Pipeline** - Locked deps, multi-stage Docker image, GitHub Actions verification and publish (completed 2026-09-05)
 - [ ] **Phase 6: Security, Reliability & Observability Hardening** - Close the CONCERNS.md production-readiness gaps
 - [ ] **Phase 7: Parity Validation & Cutover** - Full gameweek cycle side-by-side, then retire the vanilla site
 
@@ -247,7 +247,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 2. Data Layer & Non-Pitch Pages | 8/8 | Complete    | 2026-09-02 |
 | 3. Pitch Renderer & Squad Views | 5/5 | Complete    | 2026-09-03 |
 | 4. E2E Regression Suite | 8/8 | Complete    | 2026-09-04 |
-| 5. Container Build & CI Pipeline | 5/5 | In Progress|  |
+| 5. Container Build & CI Pipeline | 5/5 | Complete    | 2026-09-05 |
 | 6. Security, Reliability & Observability Hardening | 0/TBD | Not started | - |
 | 7. Parity Validation & Cutover | 0/TBD | Not started | - |
 
