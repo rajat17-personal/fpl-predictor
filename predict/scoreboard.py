@@ -12,7 +12,6 @@ Run (post-GW cron, or manually after a gameweek ends):
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 
 import pandas as pd
@@ -20,6 +19,7 @@ import requests
 from scipy.stats import spearmanr
 
 import config
+from ops.jsonio import read_json, write_json
 from predict.export import WEB_DATA
 
 SCOREBOARD = WEB_DATA / "scoreboard.json"
@@ -81,13 +81,15 @@ def update(*, force: bool = False) -> list[int]:
     boot = requests.get(f"{config.FPL_API}/bootstrap-static/",
                         headers=_HEADERS, timeout=30).json()
     finished = {e["id"] for e in boot["events"] if e["finished"]}
-    board = (json.load(open(SCOREBOARD)) if SCOREBOARD.exists()
-             else {"entries": [], "summary": {}})
+    board_remedy = "delete web/data/scoreboard.json to rebuild it from web/data/history/"
+    board = (read_json(SCOREBOARD, what="accuracy scoreboard", remedy=board_remedy)
+             if SCOREBOARD.exists() else {"entries": [], "summary": {}})
     have = {e["gw"] for e in board["entries"]}
 
     added = []
     for f in sorted((WEB_DATA / "history").glob("gw*.json")):
-        frozen = json.load(open(f))
+        frozen = read_json(f, what="frozen gameweek prediction file",
+                           remedy="python -m predict.export")
         gw = frozen["gw"]
         if gw not in finished or (gw in have and not force):
             continue
@@ -97,7 +99,7 @@ def update(*, force: bool = False) -> list[int]:
     if added or force:
         board["entries"].sort(key=lambda e: e["gw"])
         board["summary"] = running_summary(board["entries"]) if board["entries"] else {}
-        json.dump(board, open(SCOREBOARD, "w"))
+        write_json(board, SCOREBOARD)
     print(f"[scoreboard] scored GWs {added or 'none'} "
           f"({len(board['entries'])} total on the board)")
     return added

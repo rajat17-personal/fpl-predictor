@@ -226,8 +226,9 @@ def _fetch_entry(entry_id: int, gw: int):
     if r.status_code != 200:
         return None
     data = r.json()
-    boot = read_json(config.RAW_DIR / "live" / "bootstrap-static.json",
-                     what="FPL bootstrap-static payload", remedy=_INGEST_REMEDY)
+    boot_path = config.RAW_DIR / "live" / "bootstrap-static.json"
+    boot = read_json(boot_path, what="FPL bootstrap-static payload (entry fetch)",
+                     remedy=_INGEST_REMEDY)
     id2code = {e["id"]: e["code"] for e in boot["elements"]}
     codes = [id2code[p["element"]] for p in data["picks"]]
     bank = data["entry_history"]["bank"] / 10.0
@@ -305,7 +306,10 @@ def main(argv: list[str] | None = None) -> int:
         # {web_name: purchase_price_in_millions} for exact selling prices.
         squad = {c: held_meta.get(c, {}).get("price", 0.0) for c in codes}
         if args.purchase_prices:
-            overrides = read_json(args.purchase_prices, what="purchase-prices override file")
+            price_remedy = ("expected shape: {web_name: purchase_price_in_millions} "
+                            "— check the --purchase-prices file path")
+            overrides = read_json(args.purchase_prices, what="purchase-price overrides",
+                                  remedy=price_remedy)
             by_name = {m["name"]: c for c, m in held_meta.items()}
             for nm, price in overrides.items():
                 if nm in by_name:
