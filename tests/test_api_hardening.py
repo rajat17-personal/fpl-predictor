@@ -10,7 +10,9 @@ module and tests/conftest.py's autouse state reset keeps working afterwards.
 """
 from __future__ import annotations
 
+import ast
 import importlib
+import inspect
 import threading
 import time as time_mod
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -450,3 +452,85 @@ def test_the_window_hook_opens_a_real_gap_for_a_two_acquisition_reader(monkeypat
 
     assert later_version == snap.version + 1, (snap.version, later_version)
     assert later_boot is not snap.boot
+
+
+def test_gw_pools_meta_returns_the_version_its_pools_were_built_under(monkeypatch):
+    """The `/api/plan` path's atomicity proof -- the multi-gameweek analogue
+    of the control above. Confirms `_gw_pools_meta()`'s single critical
+    section really produces one atomic (pools, gw, boot, version) tuple: the
+    pools, the bootstrap payload and the version it hands back all describe
+    the SAME pre-refresh instant, even though the multi-gameweek path calls
+    its per-gameweek builder more than once per invocation.
+    """
+    from test_api import fake_pool
+
+    import api.main as m
+
+    window = _install_race_window(monkeypatch, m)
+    monkeypatch.setattr(m, "_gw_pool", _arming_pool_builder(window, fake_pool))
+
+    # Establish a generation-0 pool state BEFORE arming the window, so the
+    # injected refresh fires only once -- from the exit of _gw_pools_meta's
+    # own critical section -- rather than being conflated with this
+    # cold-start load.
+    m._refresh(force=True)
+
+    snap = m._gw_pools_meta(2)
+
+    assert len(snap.pools) == 2, snap.pools
+    first_names = list(snap.pools[0]["name"])
+    assert first_names and all(n.startswith("G0-") for n in first_names), first_names
+
+    # Deliberately reproduce the pre-fix two-acquisition read shape.
+    with m._lock:
+        later_version = m._state["pool_version"]
+        later_boot = m._state["boot"]
+
+    assert later_version == snap.version + 1, (snap.version, later_version)
+    assert later_boot is not snap.boot
+
+
+def test_snapshot_consumers_hold_no_lock_and_touch_no_state_dict():
+    """The structural gate that stops the REL-05 two-acquisition shape from
+    silently returning. 06-04-SUMMARY.md recorded reading
+    `_state['pool_version']` under a SEPARATE, later `with _lock` block
+    inside `solve()`/`plan()` as a deliberate decision; 06-VERIFICATION.md
+    recorded the resulting silent staleness as a gap against REL-05.
+
+    This parses the syntax tree, not the source text, so no comment can trip
+    it and no comment can satisfy it: any future edit that re-acquires the
+    pool lock or reaches into the shared state dictionary from `team`,
+    `solve`, `rate` or `plan` turns this test red and names the offending
+    handler.
+    """
+    import api.main as m
+
+    tree = ast.parse(inspect.getsource(m))
+    functions = {n.name: n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
+
+    def _is_lock_with(node) -> bool:
+        return (isinstance(node, ast.With)
+                and any(isinstance(item.context_expr, ast.Name)
+                        and item.context_expr.id == "_lock"
+                        for item in node.items))
+
+    def _is_state_subscript(node) -> bool:
+        return (isinstance(node, ast.Subscript)
+                and isinstance(node.value, ast.Name)
+                and node.value.id == "_state")
+
+    findings = []
+    for name in ("team", "solve", "rate", "plan"):
+        for node in ast.walk(functions[name]):
+            if _is_lock_with(node):
+                findings.append((name, "lock"))
+            if _is_state_subscript(node):
+                findings.append((name, "state_subscript"))
+    findings.sort()
+    assert findings == [], findings
+
+    census = {
+        name: sum(1 for node in ast.walk(functions[name]) if _is_lock_with(node))
+        for name in ("_pool", "_gw_pools_meta", "_gw_pools_locked")
+    }
+    assert census == {"_pool": 1, "_gw_pools_meta": 1, "_gw_pools_locked": 0}, census
