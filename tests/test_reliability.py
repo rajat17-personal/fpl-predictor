@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -82,6 +83,35 @@ def _tracked_python_files() -> dict[str, str]:
         with open(_REPO_ROOT / rel, encoding="utf-8") as f:
             files[rel] = f.read()
     return files
+
+
+def _ruff(*args: str) -> subprocess.CompletedProcess:
+    """Run ruff as a module of the currently-running interpreter (never a
+    bare `ruff` resolved off `PATH`), scoped explicitly to this repository's
+    own `ruff.toml` so a control file living outside the repository tree
+    still evaluates under this project's `select` list."""
+    return subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "--no-cache",
+         "--output-format", "concise",
+         "--config", str(_REPO_ROOT / "ruff.toml"), *args],
+        cwd=_REPO_ROOT, capture_output=True, text=True, check=False,
+    )
+
+
+def _ruff_inspected_python_files(*extra: str) -> list[str]:
+    """Every `.py` path ruff actually inspects under the current exclusion
+    configuration (plus any `extra` args), relative to `_REPO_ROOT`, sorted.
+
+    `--show-files` also prints `ruff.toml` itself (a config artifact, not a
+    linted Python file), so results are filtered to paths ending in `.py`.
+    """
+    result = _ruff("--show-files", *extra, ".")
+    files = []
+    for line in result.stdout.splitlines():
+        if not line.endswith(".py"):
+            continue
+        files.append(str(Path(line).resolve().relative_to(_REPO_ROOT)))
+    return sorted(files)
 
 
 # --------------------------------------------------------------- positive/negative controls
@@ -165,3 +195,56 @@ def test_every_tracked_read_json_call_has_a_what_label():
         "read_json call(s) missing a what label (path, lineno, line):\n"
         + "\n".join(f"  {p}:{ln}: {code}" for p, ln, code in missing)
     )
+
+
+# ------------------------------------------------------------- lint-coverage gate (CR-01)
+
+def test_ruff_detects_an_undefined_name(tmp_path):
+    """Positive control for the *rule*: the configured `select` list really
+    does report the CR-01 defect class (a name used without ever being
+    imported) as F821, rather than the coverage gate below passing because
+    ruff never found anything to say."""
+    target = tmp_path / "undefined_name.py"
+    target.write_text("def f():\n    return json.dumps({})\n")
+    result = _ruff(str(target))
+    assert result.returncode != 0, result.stdout
+    assert "F821" in result.stdout, result.stdout
+
+
+def test_ruff_reports_nothing_for_a_clean_module(tmp_path):
+    """Negative control: the same module with the missing import restored
+    exits 0 and reports no finding."""
+    target = tmp_path / "clean_module.py"
+    target.write_text("import json\n\n\ndef f():\n    return json.dumps({})\n")
+    result = _ruff(str(target))
+    assert result.returncode == 0, result.stdout
+    assert "F821" not in result.stdout, result.stdout
+
+
+def test_ruff_check_covers_every_tracked_python_file():
+    """The real gate: ruff's inspected file set must exactly equal the
+    tracked Python file set. Both collections must be non-empty first — an
+    empty scan set would otherwise pass this comparison vacuously."""
+    inspected = set(_ruff_inspected_python_files())
+    tracked = set(_tracked_python_files().keys())
+    assert inspected, "ruff inspected zero python files — vacuous gate"
+    assert tracked, "git ls-files '*.py' returned zero files — vacuous gate"
+    missing_from_lint = sorted(tracked - inspected)
+    extra_in_lint = sorted(inspected - tracked)
+    assert inspected == tracked, (
+        "lint gate coverage mismatch:\n"
+        f"  tracked but invisible to the lint gate: {missing_from_lint}\n"
+        f"  inspected by the lint gate but untracked: {extra_in_lint}"
+    )
+
+
+def test_coverage_gate_notices_a_reinstated_blanket_exclude():
+    """Positive control for the *gate*: passing --exclude e2e must remove
+    e2e/scripts/capture_fixtures.py from the inspected set, proving the
+    coverage gate reads a real exclusion rather than returning a constant —
+    so it will actually fire if someone re-adds a blanket entry to
+    ruff.toml."""
+    with_exclude = _ruff_inspected_python_files("--exclude", "e2e")
+    without_exclude = _ruff_inspected_python_files()
+    assert "e2e/scripts/capture_fixtures.py" not in with_exclude
+    assert "e2e/scripts/capture_fixtures.py" in without_exclude
