@@ -235,7 +235,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 4** *(gap closure — from 06-VERIFICATION.md `status: gaps_found`)*
 
-- [ ] 06-06-PLAN.md — Close CR-01: restore the `import json` that 06-02 Task 3 removed from `e2e/scripts/capture_fixtures.py`, narrow `ruff.toml`'s blanket `data`/`e2e` exclusions so the CI lint step and preflight Gate 2/8 cover all 54 tracked Python files (10 were invisible), and add a self-tested lint-coverage gate plus a ruff-independent runtime-object gate over the capture path
+- [x] 06-06-PLAN.md — Close CR-01: restore the `import json` that 06-02 Task 3 removed from `e2e/scripts/capture_fixtures.py`, narrow `ruff.toml`'s blanket `data`/`e2e` exclusions so the CI lint step and preflight Gate 2/8 cover all 54 tracked Python files (10 were invisible), and add a self-tested lint-coverage gate plus a ruff-independent runtime-object gate over the capture path
 
 **User setup required**: a mode-600 `.env` (06-03) and the daily/weekly cron schedule plus a watched alert webhook (06-05) — `crontab -l` currently reports no crontab on this host.
 
@@ -268,7 +268,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Pitch Renderer & Squad Views | 5/5 | Complete    | 2026-09-03 |
 | 4. E2E Regression Suite | 8/8 | Complete    | 2026-09-04 |
 | 5. Container Build & CI Pipeline | 5/5 | Complete    | 2026-09-05 |
-| 6. Security, Reliability & Observability Hardening | 5/5 | In Progress|  |
+| 6. Security, Reliability & Observability Hardening | 6/6 | In Progress|  |
 | 7. Parity Validation & Cutover | 0/TBD | Not started | - |
 
 ## Requirement Coverage

@@ -1,18 +1,18 @@
 ---
 gsd_state_version: 1.0
-current_phase: 6
+current_phase: 06
 current_phase_name: Security, Reliability & Observability Hardening
 status: executing
-stopped_at: Completed 06-05-PLAN.md
-last_updated: "2026-09-05T14:27:34.353Z"
-last_activity: 2026-09-05
+stopped_at: Completed 06-06-PLAN.md
+last_updated: "2026-09-06T05:13:47.954Z"
+last_activity: 2026-09-06
 last_activity_desc: Phase 06 execution started
-state_head: bdc4cfedfa86ec5cd3ac63ff279136c8e684d14c
+state_head: 4f5da63f1baa6a534fddb55614c5f16a23ffe95e
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 38
-  completed_plans: 37
+  completed_plans: 38
   percent: 71
 ---
 
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-09-05)
 
 ## Current Position
 
-Phase: 6 (Security, Reliability & Observability Hardening) — READY TO EXECUTE
-Plan: 5 of 5
+Phase: 06 (Security, Reliability & Observability Hardening) — EXECUTING
+Plan: 2 of 6
 Status: Ready to execute
-Last activity: 2026-09-05 — Phase 06 execution started
+Last activity: 2026-09-06 — Phase 06 execution started
 
 Progress: [███████░░░] 71% (5/7 phases, 32 plans complete)
 
@@ -99,6 +99,7 @@ Progress: [███████░░░] 71% (5/7 phases, 32 plans complete)
 | Phase 06 P03 | 25min | 3 tasks | 11 files |
 | Phase 06 P04 | 35min | 3 tasks | 4 files |
 | Phase 06 P05 | 20min | 2 tasks | 3 files |
+| Phase 06 P06 | 8min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -184,6 +185,7 @@ Recent decisions affecting current work:
 - [Phase 06]: [Phase 06]: [Phase 06-04]: The plan's own literal subscript-check grep command fails under this environment's grep-to-ugrep shim (empty-stdin -qv semantics differ from GNU grep); verified correctness with 'command grep' instead of changing the implementation -- mirrors the Phase 06-03 bash-negation precedent of a plan-authored verify command that doesn't hold in this shell.
 - [Phase 06]: [Phase 06]: [Phase 06-05]: scripts/verify_hardening.sh sends the SEC-03 sentinel X-API-Key header on the SEC-01 allowed-origin CORS preflight OPTIONS request rather than a separate dedicated request -- an OPTIONS preflight never reaches a route handler, so this satisfies 'sent on one of the requests above' at zero solve-path cost.
 - [Phase 06]: [Phase 06]: [Phase 06-05]: Reworded scripts/preflight.sh's two skip-path announce lines to lowercase 'skipped' -- the SKIPPED-count acceptance check (<=2 for two real skips) only holds if each skip is recorded by name exactly once via the summary table row; first implementation double-counted (4, not 2) until caught and fixed.
+- [Phase 06]: [Phase 06]: [Phase 06-06]: Closed CR-01 by restoring capture_fixtures.py's missing `import json` and narrowing ruff.toml's exclusions from whole directories (`data`, `e2e`) to 13 regenerable subtrees, bringing all tracked Python files inside the CI lint gate. — The two blanket exclusions hid 10 of 54 tracked Python files from ruff's already-selected F rule set, which is how a NameError on the fixture-capture tool's primary action shipped unnoticed; subtree-scoped exclusions preserve the intended skip of regenerable output without hiding source.
 
 ### Pending Todos
 
@@ -212,6 +214,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-05T13:04:05.599Z
-Stopped at: Completed 06-05-PLAN.md
+Last session: 2026-09-06T05:13:47.821Z
+Stopped at: Completed 06-06-PLAN.md
 Resume file: None
