@@ -125,7 +125,7 @@ def test_solve_squad_contract(monkeypatch):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
     monkeypatch.delenv("FPL_API_KEYS", raising=False)
     c = TestClient(m.app)
 
@@ -176,7 +176,7 @@ def test_solve_request_bounds(monkeypatch, payload, expected_status):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
     monkeypatch.delenv("FPL_API_KEYS", raising=False)
     c = TestClient(m.app)
 
@@ -191,7 +191,7 @@ def test_solve_resolution_and_rounding(monkeypatch):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
     monkeypatch.delenv("FPL_API_KEYS", raising=False)
     c = TestClient(m.app)
 
@@ -249,7 +249,7 @@ def test_team_endpoint_contract(monkeypatch):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
 
     picks_url, summary_url, _ = _team_urls(TEAM_ENTRY, 1)
     responses.add(responses.GET, picks_url, json=fake_picks(boot), status=200)
@@ -276,7 +276,7 @@ def test_team_endpoint_missing_picks(monkeypatch):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
 
     picks_url, _, _ = _team_urls(TEAM_ENTRY, 1)
     responses.add(responses.GET, picks_url, status=404)
@@ -296,7 +296,7 @@ def test_team_endpoint_summary_failure_is_best_effort(monkeypatch):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
 
     picks_url, summary_url, _ = _team_urls(TEAM_ENTRY, 1)
     responses.add(responses.GET, picks_url, json=fake_picks(boot), status=200)
@@ -315,7 +315,7 @@ def test_rate_endpoint_contract(monkeypatch):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
     monkeypatch.delenv("FPL_API_KEYS", raising=False)
 
     picks_url, summary_url, history_url = _team_urls(TEAM_ENTRY, 1)
@@ -343,7 +343,7 @@ def test_rate_endpoint_missing_history_leaves_free_transfers_null(monkeypatch):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
     monkeypatch.delenv("FPL_API_KEYS", raising=False)
 
     picks_url, summary_url, history_url = _team_urls(TEAM_ENTRY, 1)
@@ -387,7 +387,7 @@ def test_require_key_three_modes(monkeypatch, env_value, header, expected_status
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
 
     if env_value is None:
         monkeypatch.delenv("FPL_API_KEYS", raising=False)
@@ -412,7 +412,7 @@ def test_rate_endpoint_require_key_modes(monkeypatch):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
 
     picks_url, summary_url, history_url = _team_urls(TEAM_ENTRY, 1)
     responses.add(responses.GET, picks_url, json=fake_picks(boot), status=200)
@@ -490,7 +490,7 @@ def test_concurrent_solve_and_refresh(monkeypatch):
     def slow_pool(horizon=1):
         calls["n"] += 1
         time.sleep(0.05)   # widen the overlap window deterministically
-        return pool, 1, boot
+        return m.PoolSnapshot(pool, 1, boot, 0)
 
     monkeypatch.setattr(m, "_pool", slow_pool)
     monkeypatch.setattr(m, "_load_live", lambda force=True: (boot, []))

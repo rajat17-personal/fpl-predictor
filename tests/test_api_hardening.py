@@ -250,7 +250,7 @@ def test_concurrent_solve_overlapping_refresh_stays_within_bound(monkeypatch):
 
     def slow_pool(horizon=1):
         time_mod.sleep(0.02)   # widen the overlap window deterministically
-        return pool, 1, boot
+        return m.PoolSnapshot(pool, 1, boot, 0)
 
     monkeypatch.setattr(m, "_pool", slow_pool)
     monkeypatch.setattr(m, "_load_live", lambda force=True: (boot, []))

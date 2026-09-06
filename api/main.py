@@ -29,6 +29,7 @@ import time
 import uuid
 from collections import OrderedDict
 from pathlib import Path
+from typing import NamedTuple
 
 import joblib
 import pandas as pd
@@ -186,6 +187,35 @@ def _initial_state() -> dict:
             "pool_version": 0}
 
 
+class PoolSnapshot(NamedTuple):
+    """The pool `_pool()` built plus the gameweek, bootstrap payload and
+    `pool_version` it was built under -- all four read inside the SAME
+    critical section. 06-VERIFICATION.md recorded pairing any one of these
+    with a separately-read `version` (a second, later lock acquisition) as
+    the REL-05 TOCTOU defect: a refresh landing between the two reads tags a
+    pre-refresh pool with a post-refresh version, serving stale data under a
+    key that claims to be current. Consume this as one value, never split
+    across two lock acquisitions.
+    """
+    pool: object
+    gw: int
+    boot: dict
+    version: int
+
+
+class GwPoolsSnapshot(NamedTuple):
+    """The multi-gameweek analogue of `PoolSnapshot`, for the `/api/plan`
+    path: the per-gameweek pools plus the gameweek, bootstrap payload and
+    `pool_version` they were built under, all read inside the SAME critical
+    section. Same rule as `PoolSnapshot` -- pairing any field here with a
+    separately-read version is the REL-05 defect re-introduced.
+    """
+    pools: list
+    gw: int
+    boot: dict
+    version: int
+
+
 _state: dict = _initial_state()
 
 # Bounded LRU + TTL cache of solve/plan responses, keyed by a hash of the
@@ -327,7 +357,7 @@ def _with_bands(pool):
     return pool if art is None else intervals.apply_intervals(pool, art)
 
 
-def _pool(horizon: int = 1):
+def _pool(horizon: int = 1) -> PoolSnapshot:
     _refresh()
     with _lock:
         key = horizon
@@ -337,23 +367,29 @@ def _pool(horizon: int = 1):
                     _state["artifact"])
             _state["pools"][key] = _with_bands(build(*args, horizon)
                                                if horizon > 1 else build(*args))
-        return _state["pools"][key], _state["gw"], _state["boot"]
+        return PoolSnapshot(_state["pools"][key], _state["gw"], _state["boot"],
+                            _state["pool_version"])
 
 
-def _gw_pools(start_gw: int, horizon: int) -> list:
-    """One pool per gameweek in [start_gw, start_gw+horizon), cached."""
-    _refresh()
-    with _lock:
-        out = []
-        for g in range(start_gw, start_gw + horizon):
-            key = f"gw{g}"
-            if key not in _state["pools"]:
-                p = _gw_pool(_state["boot"], _state["fixtures"], g,
-                             _state["artifact"])
-                p["actual"] = 0.0
-                _state["pools"][key] = _with_bands(p)
-            out.append(_state["pools"][key])
-        return out
+def _gw_pools_locked(start_gw: int, horizon: int) -> list:
+    """One pool per gameweek in [start_gw, start_gw+horizon), cached.
+
+    Caller must already hold `_lock`. This function takes no lock of its own
+    -- `_lock` is a plain `threading.Lock` (not reentrant), and this now runs
+    entirely inside `_gw_pools_meta`'s single critical section so the pools,
+    the gameweek, the bootstrap payload and the pool version all come from
+    one atomic read (REL-05).
+    """
+    out = []
+    for g in range(start_gw, start_gw + horizon):
+        key = f"gw{g}"
+        if key not in _state["pools"]:
+            p = _gw_pool(_state["boot"], _state["fixtures"], g,
+                         _state["artifact"])
+            p["actual"] = 0.0
+            _state["pools"][key] = _with_bands(p)
+        out.append(_state["pools"][key])
+    return out
 
 
 def _xi_band(pool, starters, captain_code, xi_xp) -> tuple[float, float] | None:
@@ -559,8 +595,8 @@ def meta():
 
 @app.get("/api/team/{entry}")
 def team(entry: int):
-    _, gw, boot = _pool()
-    return _fetch_team(entry, gw, boot)
+    snap = _pool()
+    return _fetch_team(entry, snap.gw, snap.boot)
 
 
 def _squad_rows(pool, squad_codes, starters, captain_code):
@@ -580,9 +616,8 @@ def _squad_rows(pool, squad_codes, starters, captain_code):
 
 @app.post("/api/solve", dependencies=[Depends(require_key)])
 def solve(req: SolveRequest):
-    pool, gw, boot = _pool(req.horizon)
-    with _lock:
-        pool_version = _state["pool_version"]
+    snap = _pool(req.horizon)
+    pool, gw, boot, pool_version = snap.pool, snap.gw, snap.boot, snap.version
     key = hashlib.sha1(json.dumps({"gw": gw, "pool_version": pool_version,
                                   **req.model_dump()},
                                   sort_keys=True, default=str).encode()).hexdigest()
@@ -644,9 +679,8 @@ def plan(req: PlanRequest):
     """True multi-week transfer plan: jointly optimises when to move, bank a
     free transfer, or take a hit over the horizon. Week 0 is the executable
     decision; later weeks are the current plan (re-solve each week)."""
-    pools, gw, boot = _gw_pools_meta(req.horizon)
-    with _lock:
-        pool_version = _state["pool_version"]
+    snap = _gw_pools_meta(req.horizon)
+    pools, gw, boot, pool_version = snap.pools, snap.gw, snap.boot, snap.version
     key = hashlib.sha1(json.dumps({"plan": True, "gw": gw, "pool_version": pool_version,
                                   **req.model_dump()},
                                   sort_keys=True).encode()).hexdigest()
@@ -674,14 +708,25 @@ def plan(req: PlanRequest):
     return out
 
 
-def _gw_pools_meta(horizon: int):
+def _gw_pools_meta(horizon: int) -> GwPoolsSnapshot:
+    """Read the gameweek, build/fetch the per-gameweek pools, and read the
+    bootstrap payload and pool version -- all inside ONE locked block. Prior
+    to this fix, the gameweek and bootstrap reads happened with NO lock held
+    at all, on either side of a `_gw_pools()` call that took the lock for
+    itself: three separate views of `_state` in one expression. This is the
+    single critical section `/api/plan`'s cache key now depends on (REL-05).
+    """
     _refresh()
-    return _gw_pools(_state["gw"], horizon), _state["gw"], _state["boot"]
+    with _lock:
+        gw = _state["gw"]
+        pools = _gw_pools_locked(gw, horizon)
+        return GwPoolsSnapshot(pools, gw, _state["boot"], _state["pool_version"])
 
 
 @app.get("/api/rate/{entry}", dependencies=[Depends(require_key)])
 def rate(entry: int):
-    pool, gw, boot = _pool()
+    snap = _pool()
+    pool, gw, boot = snap.pool, snap.gw, snap.boot
     t = _fetch_team(entry, gw, boot)
     squad = {p["player_code"]: p["price_m"] for p in t["picks"]}
     held_meta = {p["player_code"]: p for p in t["picks"]}

@@ -239,7 +239,7 @@ def test_team_endpoint_logs_the_route_template_not_the_entry_id(monkeypatch, log
     entry = 6980093  # PROJECT.md: user's own FPL team id, used across fixtures
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
 
     picks_url, summary_url, _ = _team_urls(entry, 1)
     responses.add(responses.GET, picks_url, json=fake_picks(boot), status=200)

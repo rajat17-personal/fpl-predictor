@@ -158,7 +158,7 @@ def test_api_solve_and_resolve(monkeypatch):
     import api.main as m
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
     monkeypatch.delenv("FPL_API_KEYS", raising=False)
     c = TestClient(m.app)
 
