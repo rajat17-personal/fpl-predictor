@@ -1,17 +1,30 @@
 # Python lint configuration for CI-01's lint step (05-01-PLAN.md Task 3).
 # No pyproject.toml exists in this repo (no packaging metadata) — a standalone
 # ruff.toml avoids implying packaging semantics that aren't there.
+#
+# Exclusions are subtree-scoped, not directory-scoped (06-06-PLAN.md CR-01
+# gap closure). The previous `data` and `e2e` blanket entries hid 10 of this
+# repository's 54 tracked Python files (all nine `data/*.py` modules plus
+# `e2e/scripts/capture_fixtures.py`) from the CI lint step and from preflight
+# Gate 2/8 — which is how a NameError on the fixture-capture tool's primary
+# action shipped unnoticed. Each entry below names only a regenerable or
+# vendored subtree, never a source directory.
 target-version = "py314"
 line-length = 100
 exclude = [
-    "data",
+    "data/raw",
+    "data/processed",
+    "data/snapshots",
     "models/artifacts",
     "frontend",
-    "e2e",
     "web",
     "downloaded_files",
     ".planning",
     ".gsd",
+    "e2e/node_modules",
+    "e2e/fixtures",
+    "e2e/playwright-report",
+    "e2e/test-results",
 ]
 
 [lint]
