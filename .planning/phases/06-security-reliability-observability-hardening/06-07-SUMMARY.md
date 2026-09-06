@@ -164,3 +164,9 @@ No new security-relevant surface was introduced (no new endpoint, auth path, fil
 ---
 *Phase: 06-security-reliability-observability-hardening*
 *Completed: 2026-09-06*
+
+## Self-Check: PASSED
+
+- All key files confirmed present on disk: `api/main.py`, `tests/test_api_hardening.py`, `tests/test_api.py`, `tests/test_obs.py`, `tests/test_product.py`, this SUMMARY.md.
+- All three task commits confirmed in `git log`: `aae7503`, `4932b84`, `c0b4f7a`.
+- Re-ran all `<acceptance_criteria>` and the plan-level `<verification>` block: `python -m pytest -q` reports `170 passed, 1 skipped`; `python -m pytest -q tests/test_api_hardening.py` reports `20 passed`; `ruff check .` reports `All checks passed!`; `bash scripts/preflight.sh` reports `PREFLIGHT PASSED`; the snapshot-type/AST inline checks all print their expected OK strings.
