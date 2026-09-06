@@ -217,7 +217,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The API emits structured JSON request logs and exposes distinct liveness and readiness endpoints
   5. A long-running API process leaks no file handles, and the solve cache is bounded with correct invalidation under concurrent requests
 
-**Plans**: 5/5 executed, plus 1 gap-closure plan pending (4 waves)
+**Plans**: 6/7 executed, plus 1 gap-closure plan pending (5 waves)
 
 **Wave 1**
 
@@ -236,6 +236,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Wave 4** *(gap closure — from 06-VERIFICATION.md `status: gaps_found`)*
 
 - [x] 06-06-PLAN.md — Close CR-01: restore the `import json` that 06-02 Task 3 removed from `e2e/scripts/capture_fixtures.py`, narrow `ruff.toml`'s blanket `data`/`e2e` exclusions so the CI lint step and preflight Gate 2/8 cover all 54 tracked Python files (10 were invisible), and add a self-tested lint-coverage gate plus a ruff-independent runtime-object gate over the capture path
+
+**Wave 5** *(gap closure — from the re-verified 06-VERIFICATION.md `status: gaps_found`, REL-05)*
+
+- [ ] 06-07-PLAN.md — Close the REL-05 TOCTOU race: return the `pool_version` from inside `_pool()`/`_gw_pools_meta()`'s own locked block so `solve()`/`plan()` key their cache on one atomic (pool, version) pair instead of two separate lock acquisitions, and prove it with a deterministic, stub-free regression test that drives the real `_pool()`/`_refresh()` interleaving plus a syntax-tree gate that stops the two-acquisition shape returning
 
 **User setup required**: a mode-600 `.env` (06-03) and the daily/weekly cron schedule plus a watched alert webhook (06-05) — `crontab -l` currently reports no crontab on this host.
 
