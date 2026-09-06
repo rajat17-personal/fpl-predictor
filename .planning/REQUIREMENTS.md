@@ -61,10 +61,10 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Reliability
 
-- [x] **REL-01**: All file handles closed via context managers (fixes the leak inventory in CONCERNS.md)
+- [ ] **REL-01**: All file handles closed via context managers (fixes the leak inventory in CONCERNS.md)
 - [ ] **REL-02**: Cron error traps — remove `|| true`, add retry/backoff to snapshot, failures visible
 - [ ] **REL-03**: Pydantic schema validation on FPL bootstrap/fixtures payloads
-- [x] **REL-04**: Graceful JSON-load failures in predict/* with actionable error messages
+- [ ] **REL-04**: Graceful JSON-load failures in predict/* with actionable error messages
 - [ ] **REL-05**: Solve cache bounded (LRU/TTL) with the invalidation race fixed
 
 ### Observability
@@ -145,10 +145,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEC-04 | Phase 5 | Complete |
 | SEC-01 | Phase 6 | Gaps Found |
 | SEC-03 | Phase 6 | Gaps Found |
-| REL-01 | Phase 6 | Complete |
+| REL-01 | Phase 6 | Gaps Found |
 | REL-02 | Phase 6 | Gaps Found |
 | REL-03 | Phase 6 | Gaps Found |
-| REL-04 | Phase 6 | Complete |
+| REL-04 | Phase 6 | Gaps Found |
 | REL-05 | Phase 6 | Gaps Found |
 | OBS-01 | Phase 6 | Gaps Found |
 | OBS-02 | Phase 6 | Gaps Found |
