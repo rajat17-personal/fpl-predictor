@@ -11,6 +11,7 @@ module and tests/conftest.py's autouse state reset keeps working afterwards.
 from __future__ import annotations
 
 import importlib
+import threading
 import time as time_mod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -274,3 +275,178 @@ def test_concurrent_solve_overlapping_refresh_stays_within_bound(monkeypatch):
     assert len(results) == 20
     assert all(r.status_code == 200 for r in results)
     assert len(m._solve_cache) <= m.SOLVE_CACHE_MAX
+
+
+# ------------------------------------------------ REL-05 TOCTOU regression (06-07)
+#
+# Every test above that touches `_pool` replaces it with a version-independent
+# stub -- exactly why none of them can see the race this section closes.
+# 06-04-SUMMARY.md recorded reading `_state['pool_version']` under a SEPARATE,
+# later `with _lock` block inside `solve()`/`plan()` as a deliberate decision;
+# 06-VERIFICATION.md confirmed that shape lets a refresh landing in the gap
+# tag a pre-refresh payload with the post-refresh version. These tests drive
+# the REAL `_pool()`/`_gw_pools_meta()`/`_refresh()` interleaving instead of
+# replacing any of them with a stub.
+
+
+class _WindowLock:
+    """Wraps a real `threading.Lock`, exposing exactly the `__enter__`/
+    `__exit__` protocol `api/main.py` uses on `_lock` -- nothing else is
+    added to the interface `_pool()`/`_gw_pools_meta()`/`_refresh()` rely on.
+
+    Reproduces the interleaving the pre-fix, two-acquisition handler was
+    vulnerable to, deterministically and with no sleep: `on_window` fires at
+    the exact instant the old code had its window open -- the lock just
+    released, a second reader about to re-acquire it. The `fired` latch
+    stops the callback recursing when `on_window` itself takes this same
+    lock (as `_refresh` does): the first firing sets `fired`, so every later
+    `__exit__` -- including ones nested inside `on_window` -- computes
+    `armed and not fired` as `False` and never fires again.
+    """
+
+    def __init__(self, on_window):
+        self._real = threading.Lock()
+        self.on_window = on_window
+        self.armed = False
+        self.fired = False
+
+    def __enter__(self):
+        self._real.acquire()
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        fire = self.armed and not self.fired
+        if fire:
+            self.fired = True
+        self._real.release()
+        if fire:
+            self.on_window()
+        return False
+
+
+def _install_race_window(monkeypatch, m):
+    """Shared setup for this section's tests. Patches exactly three names on
+    `api.main` and returns the installed `_WindowLock`:
+
+      - `_load_live`: a generation-tagged loader. Each call increments a
+        counter and rewrites every element's `web_name` to `f"G{gen}-
+        {code}"`, so a pool's generation is visible in a response body.
+        Generation 0 is what a request starts with; generation 1 is what
+        the window's injected refresh installs.
+      - `_intervals_artifact`: returns None, so `_with_bands` is a no-op and
+        the response body never depends on whether a developer machine
+        happens to have a real intervals artifact on disk.
+      - `_lock`: a fresh `_WindowLock` whose `on_window` calls
+        `m._refresh(force=True)`.
+
+    Deliberately does NOT monkeypatch `_pool`, `_gw_pools_meta`,
+    `_gw_pools_locked`, `_refresh`, `_cache_get` or `_cache_put` -- those are
+    the code paths under test. A test that replaces the module's own pool
+    accessor with a version-independent stub proves nothing about the code
+    path this bug lives in, which is exactly why five pre-existing
+    concurrency tests in this repository never saw it.
+    """
+    from test_api import fake_boot
+
+    n = {"gen": -1}
+
+    def _generation_tagged_load_live(force=True):
+        n["gen"] += 1
+        boot = fake_boot()
+        for el in boot["elements"]:
+            el["web_name"] = f"G{n['gen']}-{el['code']}"
+        return boot, []
+
+    monkeypatch.setattr(m, "_load_live", _generation_tagged_load_live)
+    monkeypatch.setattr(m, "_intervals_artifact", lambda: None)
+    window = _WindowLock(lambda: m._refresh(force=True))
+    monkeypatch.setattr(m, "_lock", window)
+    return window
+
+
+def _arming_pool_builder(window, fake_pool):
+    """A wrapper around a pool builder (`build_pool`/`_gw_pool`) that arms
+    `window` on its first call while the window has not yet fired -- a
+    dependency of `_pool()`/`_gw_pools_locked()`, never `_pool`,
+    `_gw_pools_meta` or `_gw_pools_locked` themselves. Arming from inside the
+    builder is what guarantees the callback fires on the exit of the
+    snapshot helper's own critical section, not some earlier one."""
+    def build(boot, fixtures, gw, artifact):
+        if not window.fired:
+            window.armed = True
+        return fake_pool(boot)
+    return build
+
+
+def test_solve_never_serves_a_pre_refresh_payload_under_a_post_refresh_key(monkeypatch):
+    """The stub-free REL-05 regression proof. Two byte-identical /api/solve
+    requests, with a refresh injected exactly where the pre-fix, two-
+    acquisition handler left its window open between fetching the pool and
+    separately re-reading `_state['pool_version']` for the cache key.
+
+    Run against the pre-fix implementation, this test failed with:
+      STALE PAYLOAD SERVED AFTER A REFRESH: ['G0-1001', 'G0-1002', ...]
+    -- the first request's generation-0 payload was cached under the
+    post-refresh (generation-1) version, so the second, byte-identical
+    request hit that stale entry instead of computing generation 1. Post-fix,
+    the first request's payload is tagged with the PRE-refresh version, the
+    second request's key misses, and generation 1 is computed and returned.
+    """
+    from fastapi.testclient import TestClient
+    from test_api import fake_pool
+
+    import api.main as m
+
+    window = _install_race_window(monkeypatch, m)
+    monkeypatch.setattr(m, "build_pool", _arming_pool_builder(window, fake_pool))
+    monkeypatch.delenv("FPL_API_KEYS", raising=False)
+
+    # The gate's own guarantee that it is driving the real accessor, not a
+    # stub replacing it -- the difference between this test and every
+    # concurrency test that came before it.
+    assert m._pool.__name__ == "_pool"
+    assert m._pool.__module__ == "api.main"
+
+    c = TestClient(m.app)
+    body = {"horizon": 1}
+
+    first = c.post("/api/solve", json=body)
+    assert first.status_code == 200, first.text
+    first_names = [p["name"] for p in first.json()["squad"]]
+    assert first_names and all(n.startswith("G0-") for n in first_names), first_names
+
+    second = c.post("/api/solve", json=body)
+    assert second.status_code == 200, second.text
+    second_names = [p["name"] for p in second.json()["squad"]]
+    assert all(n.startswith("G1-") for n in second_names), (
+        f"STALE PAYLOAD SERVED AFTER A REFRESH: {second_names}"
+    )
+
+
+def test_the_window_hook_opens_a_real_gap_for_a_two_acquisition_reader(monkeypatch):
+    """Non-vacuity control. The window hook is proven to genuinely open the
+    race window: a reader that deliberately performs the OLD two-acquisition
+    shape the production code no longer performs -- read the pool via
+    `_pool()`, then separately re-acquire the lock to read `pool_version` and
+    `boot` from `_state` -- observes a version exactly one greater than the
+    snapshot's and a different bootstrap object. If this test ever stops
+    observing a difference, the gate above has gone vacuous: the window
+    never opened, and a green result there would mean nothing.
+    """
+    from test_api import fake_pool
+
+    import api.main as m
+
+    window = _install_race_window(monkeypatch, m)
+    monkeypatch.setattr(m, "build_pool", _arming_pool_builder(window, fake_pool))
+
+    snap = m._pool(1)
+
+    # Deliberately reproduce the pre-fix two-acquisition read shape the
+    # production code no longer performs.
+    with m._lock:
+        later_version = m._state["pool_version"]
+        later_boot = m._state["boot"]
+
+    assert later_version == snap.version + 1, (snap.version, later_version)
+    assert later_boot is not snap.boot
