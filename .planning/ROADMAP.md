@@ -239,7 +239,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 5** *(gap closure — from the re-verified 06-VERIFICATION.md `status: gaps_found`, REL-05)*
 
-- [ ] 06-07-PLAN.md — Close the REL-05 TOCTOU race: return the `pool_version` from inside `_pool()`/`_gw_pools_meta()`'s own locked block so `solve()`/`plan()` key their cache on one atomic (pool, version) pair instead of two separate lock acquisitions, and prove it with a deterministic, stub-free regression test that drives the real `_pool()`/`_refresh()` interleaving plus a syntax-tree gate that stops the two-acquisition shape returning
+- [x] 06-07-PLAN.md — Close the REL-05 TOCTOU race: return the `pool_version` from inside `_pool()`/`_gw_pools_meta()`'s own locked block so `solve()`/`plan()` key their cache on one atomic (pool, version) pair instead of two separate lock acquisitions, and prove it with a deterministic, stub-free regression test that drives the real `_pool()`/`_refresh()` interleaving plus a syntax-tree gate that stops the two-acquisition shape returning
 
 **User setup required**: a mode-600 `.env` (06-03) and the daily/weekly cron schedule plus a watched alert webhook (06-05) — `crontab -l` currently reports no crontab on this host.
 
@@ -272,7 +272,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Pitch Renderer & Squad Views | 5/5 | Complete    | 2026-09-03 |
 | 4. E2E Regression Suite | 8/8 | Complete    | 2026-09-04 |
 | 5. Container Build & CI Pipeline | 5/5 | Complete    | 2026-09-05 |
-| 6. Security, Reliability & Observability Hardening | 6/6 | In Progress|  |
+| 6. Security, Reliability & Observability Hardening | 7/7 | In Progress|  |
 | 7. Parity Validation & Cutover | 0/TBD | Not started | - |
 
 ## Requirement Coverage

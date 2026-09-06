@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 06
 current_phase_name: Security, Reliability & Observability Hardening
 status: executing
-stopped_at: Completed 06-06-PLAN.md
-last_updated: "2026-09-06T09:47:23.192Z"
+stopped_at: Completed 06-07-PLAN.md
+last_updated: "2026-09-06T10:22:24.421Z"
 last_activity: 2026-09-06
 last_activity_desc: Phase 06 execution started
-state_head: fe293c834c0bdbc790b50bfc4a0d2b5e329915b6
+state_head: e4de21d852c8c42bb4e3c862663bfb3677d6502a
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 39
-  completed_plans: 38
+  completed_plans: 39
   percent: 71
 ---
 
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-09-05)
 
 ## Current Position
 
-Phase: 06 (Security, Reliability & Observability Hardening) — READY TO EXECUTE
-Plan: 2 of 6
+Phase: 06 (Security, Reliability & Observability Hardening) — EXECUTING
+Plan: 2 of 7
 Status: Ready to execute
 Last activity: 2026-09-06 — Phase 06 execution started
 
@@ -100,6 +100,7 @@ Progress: [███████░░░] 71% (5/7 phases, 32 plans complete)
 | Phase 06 P04 | 35min | 3 tasks | 4 files |
 | Phase 06 P05 | 20min | 2 tasks | 3 files |
 | Phase 06 P06 | 8min | 3 tasks | 5 files |
+| Phase 06 P07 | 35min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -186,6 +187,8 @@ Recent decisions affecting current work:
 - [Phase 06]: [Phase 06]: [Phase 06-05]: scripts/verify_hardening.sh sends the SEC-03 sentinel X-API-Key header on the SEC-01 allowed-origin CORS preflight OPTIONS request rather than a separate dedicated request -- an OPTIONS preflight never reaches a route handler, so this satisfies 'sent on one of the requests above' at zero solve-path cost.
 - [Phase 06]: [Phase 06]: [Phase 06-05]: Reworded scripts/preflight.sh's two skip-path announce lines to lowercase 'skipped' -- the SKIPPED-count acceptance check (<=2 for two real skips) only holds if each skip is recorded by name exactly once via the summary table row; first implementation double-counted (4, not 2) until caught and fixed.
 - [Phase 06]: [Phase 06]: [Phase 06-06]: Closed CR-01 by restoring capture_fixtures.py's missing `import json` and narrowing ruff.toml's exclusions from whole directories (`data`, `e2e`) to 13 regenerable subtrees, bringing all tracked Python files inside the CI lint gate. — The two blanket exclusions hid 10 of 54 tracked Python files from ruff's already-selected F rule set, which is how a NameError on the fixture-capture tool's primary action shipped unnoticed; subtree-scoped exclusions preserve the intended skip of regenerable output without hiding source.
+- [Phase 06]: [Phase 06]: [Phase 06-07]: Reversed 06-04's own recorded decision to read pool_version under a separate, later with-_lock block inside solve()/plan() -- made _pool()/_gw_pools_meta() return the pool and its version from ONE critical section as a PoolSnapshot/GwPoolsSnapshot NamedTuple, closing the REL-05 TOCTOU race 06-VERIFICATION.md flagged. — 06-VERIFICATION.md confirmed a refresh landing between _pool()'s return and a separate pool_version read could tag a stale payload as fresh for up to SOLVE_CACHE_TTL_S with zero error signal -- the exact silent-failure class this phase exists to eliminate.
+- [Phase 06]: [Phase 06]: [Phase 06-07]: Empirically confirmed the new stub-free race gate's pre-fix failure by checking out a detached git worktree at the pre-Task-1 commit and running the test there, observing "STALE PAYLOAD SERVED AFTER A REFRESH: ['G0-1001', 'G0-1002', ...]" exactly as the plan predicted, then removing the worktree. — The plan's own acceptance criteria required SUMMARY.md to quote the observed pre-fix stale-generation assertion message, not merely assert it from code-reading.
 
 ### Pending Todos
 
@@ -214,6 +217,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-06T05:13:47.821Z
-Stopped at: Completed 06-06-PLAN.md
+Last session: 2026-09-06T10:22:24.279Z
+Stopped at: Completed 06-07-PLAN.md
 Resume file: None
