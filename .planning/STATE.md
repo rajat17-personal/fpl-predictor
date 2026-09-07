@@ -1,18 +1,18 @@
 ---
 gsd_state_version: 1.0
 current_phase: 07
-current_phase_name: parity-validation-cutover
+current_phase_name: Parity Validation & Cutover
 status: executing
-stopped_at: Phase 7 context gathered
-last_updated: "2026-09-07T11:19:55.985Z"
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-09-07T11:55:33.097Z"
 last_activity: 2026-09-07
-last_activity_desc: Phase 06 complete, transitioned to Phase 7
-state_head: 04fb0dbf7ae30f4a73c0034985b3217d44f5822f
+last_activity_desc: Phase 07 execution started
+state_head: 8c3e19b7528c73984587f44d68b1adfb0e17b04f
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 45
-  completed_plans: 39
+  completed_plans: 40
   percent: 86
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-07)
 
 **Core value:** The weekly recommendations (xP table, squad, captains, transfers) must keep flowing reliably — every change must leave the pipeline, API, and site at least as correct and more trustworthy than before.
-**Current focus:** Phase 7 — Parity Validation & Cutover
+**Current focus:** Phase 07 — Parity Validation & Cutover
 
 ## Current Position
 
-Phase: 07 (parity-validation-cutover) — READY TO EXECUTE
-Plan: Not started
+Phase: 07 (Parity Validation & Cutover) — EXECUTING
+Plan: 2 of 6
 Status: Ready to execute
-Last activity: 2026-09-07 — Phase 06 complete, transitioned to Phase 7
+Last activity: 2026-09-07 — Phase 07 execution started
 
 Progress: [█████████░] 86% (6/7 phases, 39 plans complete)
 
@@ -102,6 +102,7 @@ Progress: [█████████░] 86% (6/7 phases, 39 plans complete)
 | Phase 06 P05 | 20min | 2 tasks | 3 files |
 | Phase 06 P06 | 8min | 3 tasks | 5 files |
 | Phase 06 P07 | 35min | 3 tasks | 5 files |
+| Phase 07 P01 | 46min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -190,6 +191,8 @@ Recent decisions affecting current work:
 - [Phase 06]: [Phase 06]: [Phase 06-06]: Closed CR-01 by restoring capture_fixtures.py's missing `import json` and narrowing ruff.toml's exclusions from whole directories (`data`, `e2e`) to 13 regenerable subtrees, bringing all tracked Python files inside the CI lint gate. — The two blanket exclusions hid 10 of 54 tracked Python files from ruff's already-selected F rule set, which is how a NameError on the fixture-capture tool's primary action shipped unnoticed; subtree-scoped exclusions preserve the intended skip of regenerable output without hiding source.
 - [Phase 06]: [Phase 06]: [Phase 06-07]: Reversed 06-04's own recorded decision to read pool_version under a separate, later with-_lock block inside solve()/plan() -- made _pool()/_gw_pools_meta() return the pool and its version from ONE critical section as a PoolSnapshot/GwPoolsSnapshot NamedTuple, closing the REL-05 TOCTOU race 06-VERIFICATION.md flagged. — 06-VERIFICATION.md confirmed a refresh landing between _pool()'s return and a separate pool_version read could tag a stale payload as fresh for up to SOLVE_CACHE_TTL_S with zero error signal -- the exact silent-failure class this phase exists to eliminate.
 - [Phase 06]: [Phase 06]: [Phase 06-07]: Empirically confirmed the new stub-free race gate's pre-fix failure by checking out a detached git worktree at the pre-Task-1 commit and running the test there, observing "STALE PAYLOAD SERVED AFTER A REFRESH: ['G0-1001', 'G0-1002', ...]" exactly as the plan predicted, then removing the worktree. — The plan's own acceptance criteria required SUMMARY.md to quote the observed pre-fix stale-generation assertion message, not merely assert it from code-reading.
+- [Phase 07]: Verified scripts/dual_site.sh against a real occupied port-8000 process instead of a synthetic one; the pre-existing vanilla uvicorn was never touched
+- [Phase 07]: scripts/smoke_test.sh react-mode branch verified statically only (no container runtime on this host); real gate is the CI image job's SMOKE_REACT_MODE=1 step on next push
 
 ### Pending Todos
 
@@ -216,6 +219,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-07T10:30:52.316Z
-Stopped at: Phase 7 context gathered
-Resume file: .planning/phases/07-parity-validation-cutover/07-CONTEXT.md
+Last session: 2026-09-07T11:55:32.936Z
+Stopped at: Completed 07-01-PLAN.md
+Resume file: None
