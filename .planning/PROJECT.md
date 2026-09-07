@@ -33,12 +33,13 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 - ✓ Playwright E2E regression suite on frozen versioned fixtures (normal/blank/DGW) with a fixture-mode API server: team/pitch + solver flow, xP table + captains (exact cell values and sort order), rate-my-team incl. pitch visual diff, fixtures & prices pages — 42 specs, calendar-independent — Phase 4
 - ✓ CI/CD on GitHub Actions: hash-locked deps (uv --generate-hashes), ruff lint, 5-job chained ci.yml (lint-build → test → e2e → image → publish) with SHA-pinned actions, multi-stage Docker image + CBC smoke test, report-only Trivy scan, GHCR publish proven live (ghcr.io/rajat17-personal/fpl-predictor), branch protection on main, local preflight.sh mirror — Phase 5
 - ✓ Repo push hygiene: 140MB Chrome .deb removed, dispatch-only schedulers on py3.14 with hashed installs and bot identity, personal email redacted from tracked files, .gitignore reconciled — Phase 5
+- ✓ Security & config hardening: CORS restricted to a configured allowlist (wildcard = boot failure, live-browser verified), mode-600 `.env` secrets pattern with loud-warning loader, secret redaction on every log/alert egress — Phase 6
+- ✓ Reliability fixes: all bare file handles routed through ops.jsonio (self-tested repo-wide gate), atomic writes everywhere, cron per-step accounting with zero shell suppression, snapshot retry/backoff, pydantic validation of FPL payloads, bounded LRU+TTL solve cache with pool-version invalidation and the TOCTOU race closed via atomic snapshots — Phase 6
+- ✓ Observability: structured JSON logging with X-Request-ID correlation, distinct liveness/readiness endpoints, never-raising ops.notify alerting spine — cron + webhook confirmed live in UAT — Phase 6
 
 ### Active
 
-- [ ] Security & config hardening (remaining after Phase 5): CORS restriction, secrets via .env pattern — deps pinning and repo hygiene shipped in Phase 5
-- [ ] Reliability fixes: file-handle leaks, cron error traps (remove `|| true`, add retries), FPL API schema validation, graceful JSON-load failures, solve-cache invalidation/LRU
-- [ ] Observability: structured logging, health/monitoring endpoints, failure visibility/alerting for crons and FPL API outages
+- [ ] Parity validation & cutover (Phase 7, CUT-01): React and vanilla sites side by side through a full gameweek cycle; retire vanilla only after zero unexplained deltas
 
 ### Out of Scope
 
@@ -83,7 +84,10 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 | API test suite added before/alongside Playwright | E2E on an untested API inverts the pyramid; API tests are the missing base layer | ✓ Good — Phase 1 shipped the suite (contract, auth, concurrency) green |
 | Package-legitimacy gate: exact-pin installs against a human-approved list | Supply-chain hygiene for a pre-revenue solo project | ✓ Good — Phase 1: zero registry drift at install time |
 | TypeScript 6.x (not 7.x) + Vite 7.3.6/plugin-react 5.2.0 pins | ESLint support for TS 7.0 unstable; deliberate downgrade pins | ✓ Good — Phase 1 scaffold stable |
-| All three hardening areas in scope (security, reliability, observability) | These are the "production ready" bar the user asked for pre-monetization | — Pending |
+| All three hardening areas in scope (security, reliability, observability) | These are the "production ready" bar the user asked for pre-monetization | ✓ Good — Phase 6: all 10 requirements shipped, 49 threats closed, UAT 2/2 |
+| ops.jsonio as the single JSON I/O chokepoint, gated by a self-tested repo-wide scanner | A sweep without a regression gate decays; scanner has positive/negative controls so it can never silently stop detecting | ✓ Good — Phase 6: leak inventory gated at zero in CI |
+| Runtime proof as a real-uvicorn script (verify_hardening.sh), not more TestClient tests | CORS enforcement and log redaction are properties of a genuinely running process TestClient cannot exercise | ✓ Good — Phase 6: wired into preflight Gate 7/8 |
+| Atomic snapshot types (PoolSnapshot/GwPoolsSnapshot) + AST structural gate for cache concurrency | The REL-05 TOCTOU race survived four verification passes because tests stubbed the accessor; the guarantee is now structural, not observational | ✓ Good — Phase 6 wave 5 gap closure |
 | PARITY-DEVIATIONS.md ledger records every intentional vanilla→React delta | Phase 7 cutover must distinguish approved changes from regressions without relying on memory | ✓ Good — Phase 2 seeded all 8 known deviations |
 | Lockstep palette edits (React + vanilla in one commit) until CUT-01; fonts self-hosted via @fontsource, CDN removed | Vanilla stays authoritative pre-cutover; no third-party font requests leaking visitor IPs | ✓ Good — Phase 2, guarded by check-tokens.mjs on every test run |
 | Neutral generated SVG kits, not FPL CDN shirt imagery | Trademark/passing-off exposure; no third-party origin dependency; posture documented in a committed decision doc | ✓ Good — Phase 3, UAT-signed-off; revisit at payment-gateway legal review |
@@ -111,4 +115,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-05 after Phase 5*
+*Last updated: 2026-09-07 after Phase 6*

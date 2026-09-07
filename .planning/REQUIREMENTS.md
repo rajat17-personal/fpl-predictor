@@ -54,24 +54,24 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Security & Config
 
-- [ ] **SEC-01**: CORS restricted from `["*"]` to configured origins
+- [x] **SEC-01**: CORS restricted from `["*"]` to configured origins
 - [x] **SEC-02**: Dependencies pinned/locked (uv lock or equivalent), verified installable in a fresh environment with cp314 wheels
-- [ ] **SEC-03**: Secrets via `.env` pattern (mode 600), never in code, logs, or workflows
+- [x] **SEC-03**: Secrets via `.env` pattern (mode 600), never in code, logs, or workflows
 - [x] **SEC-04**: Repo hygiene — Chrome .deb removed, proper `.gitignore`, workflows tracked in git
 
 ### Reliability
 
-- [ ] **REL-01**: All file handles closed via context managers (fixes the leak inventory in CONCERNS.md)
-- [ ] **REL-02**: Cron error traps — remove `|| true`, add retry/backoff to snapshot, failures visible
-- [ ] **REL-03**: Pydantic schema validation on FPL bootstrap/fixtures payloads
-- [ ] **REL-04**: Graceful JSON-load failures in predict/* with actionable error messages
+- [x] **REL-01**: All file handles closed via context managers (fixes the leak inventory in CONCERNS.md)
+- [x] **REL-02**: Cron error traps — remove `|| true`, add retry/backoff to snapshot, failures visible
+- [x] **REL-03**: Pydantic schema validation on FPL bootstrap/fixtures payloads
+- [x] **REL-04**: Graceful JSON-load failures in predict/* with actionable error messages
 - [x] **REL-05**: Solve cache bounded (LRU/TTL) with the invalidation race fixed
 
 ### Observability
 
-- [ ] **OBS-01**: Structured (JSON) request logging in the API
-- [ ] **OBS-02**: Health/readiness endpoints with liveness vs readiness semantics
-- [ ] **OBS-03**: Cron and FPL-API-outage failures surfaced/alertable (not buried in cron.log)
+- [x] **OBS-01**: Structured (JSON) request logging in the API
+- [x] **OBS-02**: Health/readiness endpoints with liveness vs readiness semantics
+- [x] **OBS-03**: Cron and FPL-API-outage failures surfaced/alertable (not buried in cron.log)
 
 ### Cutover
 
@@ -143,16 +143,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CI-05 | Phase 5 | Complete |
 | SEC-02 | Phase 5 | Complete |
 | SEC-04 | Phase 5 | Complete |
-| SEC-01 | Phase 6 | Gaps Found |
-| SEC-03 | Phase 6 | Gaps Found |
-| REL-01 | Phase 6 | Gaps Found |
-| REL-02 | Phase 6 | Gaps Found |
-| REL-03 | Phase 6 | Gaps Found |
-| REL-04 | Phase 6 | Gaps Found |
+| SEC-01 | Phase 6 | Complete |
+| SEC-03 | Phase 6 | Complete |
+| REL-01 | Phase 6 | Complete |
+| REL-02 | Phase 6 | Complete |
+| REL-03 | Phase 6 | Complete |
+| REL-04 | Phase 6 | Complete |
 | REL-05 | Phase 6 | Complete |
-| OBS-01 | Phase 6 | Gaps Found |
-| OBS-02 | Phase 6 | Gaps Found |
-| OBS-03 | Phase 6 | Gaps Found |
+| OBS-01 | Phase 6 | Complete |
+| OBS-02 | Phase 6 | Complete |
+| OBS-03 | Phase 6 | Complete |
 | CUT-01 | Phase 7 | Pending |
 
 **Coverage:**

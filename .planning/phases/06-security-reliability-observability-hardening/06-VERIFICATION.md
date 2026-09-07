@@ -1,7 +1,7 @@
 ---
 phase: 06-security-reliability-observability-hardening
 verified: 2026-09-06T11:00:00Z
-status: human_needed
+status: passed
 score: 5/5 roadmap success criteria verified
 behavior_unverified: 0
 overrides_applied: 0
@@ -15,6 +15,7 @@ re_verification:
 gaps: []
 deferred: []
 human_verification:
+
   - test: "Open the React dev server (http://localhost:5173) with the API running and exercise the team page's solve button end to end."
     expected: "The solve request succeeds under the FPL_CORS_ORIGINS-restricted CORS policy (default dev origins allow localhost:5173/8000 on both localhost and 127.0.0.1)."
     why_human: "Carried forward unchanged from every prior verification pass — none of 06-06/06-07 touched CORS code (confirmed: `_cors_origins()`/`CORSMiddleware` wiring unchanged; test_api_hardening.py's 8 CORS tests still pass). A restricted CORS list is the one Phase 6 change that can break the real browser path in a way no TestClient/uvicorn-script assertion can reproduce — only an actual browser enforces CORS preflight semantics end to end."

@@ -1,44 +1,44 @@
 ---
 gsd_state_version: 1.0
-current_phase: 06
-current_phase_name: Security, Reliability & Observability Hardening
-status: executing
-stopped_at: Completed 06-07-PLAN.md
-last_updated: "2026-09-06T10:22:24.421Z"
-last_activity: 2026-09-06
-last_activity_desc: Phase 06 execution started
-state_head: e4de21d852c8c42bb4e3c862663bfb3677d6502a
+current_phase: 7
+current_phase_name: Parity Validation & Cutover
+status: planning
+stopped_at: Phase 06 complete, ready to plan Phase 7
+last_updated: "2026-09-07T06:47:40.998Z"
+last_activity: 2026-09-07
+last_activity_desc: Phase 06 complete, transitioned to Phase 7
+state_head: a5852c904ffbca4d67e5bf0a1c46bcfc1092e12e
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 39
   completed_plans: 39
-  percent: 71
+  percent: 86
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-05)
+See: .planning/PROJECT.md (updated 2026-09-07)
 
 **Core value:** The weekly recommendations (xP table, squad, captains, transfers) must keep flowing reliably — every change must leave the pipeline, API, and site at least as correct and more trustworthy than before.
-**Current focus:** Phase 06 — Security, Reliability & Observability Hardening
+**Current focus:** Phase 7 — Parity Validation & Cutover
 
 ## Current Position
 
-Phase: 06 (Security, Reliability & Observability Hardening) — EXECUTING
-Plan: 2 of 7
-Status: Ready to execute
-Last activity: 2026-09-06 — Phase 06 execution started
+Phase: 7 — Parity Validation & Cutover
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-09-07 — Phase 06 complete, transitioned to Phase 7
 
-Progress: [███████░░░] 71% (5/7 phases, 32 plans complete)
+Progress: [█████████░] 86% (6/7 phases, 39 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 32
+- Total plans completed: 39
 - Average duration: —
 - Total execution time: 0.0 hours
 
@@ -51,6 +51,7 @@ Progress: [███████░░░] 71% (5/7 phases, 32 plans complete)
 | 03 | 5 | - | - |
 | 04 | 8 | - | - |
 | 05 | 5 | - | - |
+| 06 | 7 | - | - |
 
 **Recent Trend:**
 
@@ -200,12 +201,10 @@ None yet.
 
 [Issues that affect future work]
 
-- **Time-critical, independent of this milestone:** the daily snapshot cron must run every day — price-model history cannot be backfilled (first snapshot 2026-08-31; model unlocks at 14 days). Phase 6 cron changes must not interrupt it.
-- **Phase 5 unknown:** Python 3.14 (`cp314`) wheel availability for LightGBM, scikit-learn, PyArrow, PuLP is in flux. Verify on PyPI before finalizing the lockfile.
-- **Milestone invariant:** the vanilla site stays live and authoritative until CUT-01 completes.
+- **Time-critical, independent of this milestone:** the daily snapshot cron must run every day — price-model history cannot be backfilled (first snapshot 2026-08-31). Phase 6 closed the loop: cron lines installed and the FPL_ALERT_WEBHOOK failure alert confirmed live (06-UAT.md, 2026-09-07) — a failed run is now noticed same-day.
+- **Milestone invariant:** the vanilla site stays live and authoritative until CUT-01 completes. Phase 7 is calendar-gated on one full real gameweek cycle (deadline → live → finished).
 - Payment gateway / merchant-of-record choice still pending with the user — out of scope here, but PITCH-01's trademark disclaimer feeds the eventual gateway review.
-- **[Phase 4 → Phase 5]:** pytest's SPA-fallback test (`tests/test_fixture_mode.py`) requires a built `frontend/dist/` (gitignored, never built by the pytest path) — CI must build the frontend before the backend suite or the test 500s (04-REVIEW.md critical finding). Also: bare `open()` calls in `api/main.py` fixture reads and `e2e/scripts/capture_fixtures.py` (04-REVIEW.md warning; folds into the Phase 6 file-handle-leak work).
-- **[Phase 4]:** Security enforcement is on but no 04-SECURITY.md exists — run `/gsd-secure-phase 4` before advancing past Phase 5 planning.
+- **[Phase 4]:** Security enforcement is on but no 04-SECURITY.md exists — run `/gsd-secure-phase 4` to backfill the threat verification (03 and 05 also lack SECURITY.md; 06-SECURITY.md now exists).
 
 ## Deferred Items
 
@@ -217,6 +216,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-06T10:22:24.279Z
-Stopped at: Completed 06-07-PLAN.md
+Last session: 2026-09-07
+Stopped at: Phase 06 complete, ready to plan Phase 7
 Resume file: None
