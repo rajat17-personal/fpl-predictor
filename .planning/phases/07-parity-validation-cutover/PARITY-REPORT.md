@@ -58,6 +58,23 @@ be run against a different gameweek.
 | Differentials | 4 fields compared, 1 explained, 0 defects | ledger #3 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
 | Methodology | 4 fields compared, 2 explained, 0 defects (re-compared after closing 1 defect, see below) | ledger #3, #10 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
 
+**Manual passes (D-05/D-08).** Both sites are up for the duration of this handover:
+vanilla `http://127.0.0.1:8010`, react `http://127.0.0.1:8011` (override ports — port 8000 is
+held by the same pre-existing, unrelated vanilla process, PID 2914). Entry **6980093** is the
+D-08 comparison ID (numeric only — no manager name is recorded here or anywhere in this report).
+
+| Item | Verdict |
+| --- | --- |
+| Manual eyeball pass (D-05, `PARITY-CHECKLIST.md` Part 1 — all 8 pages, desktop + mobile, light + dark) | _(unfilled — awaiting the user's verdict: "matched" for every checklist item, or a description of what differed, to be recorded here as either a clean pass or a new defect row below)_ |
+| D-08 same-session solver comparison (`PARITY-CHECKLIST.md` Part 2 — entry 6980093, rate my team / one solve with identical locks / one two-gameweek plan, performed identically on both sites in one session) | _(unfilled — awaiting the user's verdict: "matched" for all three flows, or a description of what differed, to be recorded here as either a clean pass or a new defect row below)_ |
+
+**D-02 handover.** For the rest of GW4, the React site (`http://127.0.0.1:8011`, or the
+production `FPL_FRONTEND=react` seam once deployed) is the daily driver for the user's real FPL
+week, with vanilla (`http://127.0.0.1:8010`) standing by as the reference. Any dogfooding finding
+is recorded exactly like a scripted finding — a defect row in "Defects found and how they were
+closed" below with a fixing commit SHA or a new `PARITY-DEVIATIONS.md` ledger row — never from
+memory.
+
 ### Mid-gameweek
 
 **Run:** _(not yet run)_ | GW _ | generated_utc: _ | command: _(paste the exact `parity-diff`
