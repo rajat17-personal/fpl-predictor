@@ -50,13 +50,13 @@ be run against a different gameweek.
 | Page | Verdict | Delta detail | Cron-green citation |
 | --- | --- | --- | --- |
 | xP table | 5 fields compared, 1 explained, 0 defects | ledger #3 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent — no failure records to cite either way). `web/data` git history: commit `ac489ca` (2026-09-07) landed this stage's GW4 export, the first export commit since the initial tracking commit `1ee176a`. |
-| Rate my team | 3 fields compared, 1 explained, 2 defects | ledger #3; UNRESOLVED — 2 defect(s), needs a fixing commit SHA or a new PARITY-DEVIATIONS.md row | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
+| Rate my team | 3 fields compared, 3 explained, 0 defects (re-compared after closing 2 defects, see below) | ledger #3, #9 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
 | Fixture ticker | 4 fields compared, 1 explained, 0 defects | ledger #3 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
 | Price watch | 5 fields compared, 1 explained, 0 defects | ledger #3 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
 | League table & leaders | 4 fields compared, 1 explained, 0 defects | ledger #3 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
 | Scoreboard | 5 fields compared, 1 explained, 0 defects | ledger #3 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
 | Differentials | 4 fields compared, 1 explained, 0 defects | ledger #3 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
-| Methodology | 4 fields compared, 1 explained, 1 defects | ledger #3; UNRESOLVED — 1 defect(s), needs a fixing commit SHA or a new PARITY-DEVIATIONS.md row | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
+| Methodology | 4 fields compared, 2 explained, 0 defects (re-compared after closing 1 defect, see below) | ledger #3, #10 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
 
 ### Mid-gameweek
 
@@ -98,7 +98,8 @@ re-comparison, not just the fix.
 
 | Page | What was wrong | Disposition (fixed forward / new ledger row) | Commit SHA | Stage re-compared |
 | --- | --- | --- | --- | --- |
-| _(none recorded yet)_ | | | | |
+| Rate my team | `heading`/`formHelper` deltas: `/team`'s default Squad tab ("Model squad GW4") shows the Load-your-own-team helper copy, not vanilla's rate-ID form ("Rate my team" / "Enter your FPL team ID…") | New ledger row — deliberate default-view difference, Phase 3's 03-01 view-only Squad tab decision | New ledger row — `PARITY-DEVIATIONS.md` #9 (this commit) | pre-deadline (`node e2e/parity/parity-diff.mjs --page /team` → 3 fields, 3 explained, 0 defects) |
+| Methodology | `creditLine` delta: the body credit-line paragraph ends after "…odds." and does not repeat the "Not affiliated…" disclaimer sentence vanilla's single combined footer paragraph carries | New ledger row — PageShell's unified sitewide footer (entry 6) already states the disclaimer once for every page; restating it in the body would duplicate it | New ledger row — `PARITY-DEVIATIONS.md` #10 (this commit) | pre-deadline (`node e2e/parity/parity-diff.mjs --page /methodology` → 4 fields, 2 explained, 0 defects) |
 
 ## Cutover readiness
 

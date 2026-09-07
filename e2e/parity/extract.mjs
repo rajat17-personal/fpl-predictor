@@ -79,20 +79,24 @@ export const PAGES = [
     vanillaPath: "/team.html",
     label: "Rate my team",
     fields: [
-      { name: "heading", kind: "text", vanilla: "h1", react: "h1" },
+      // React's /team defaults to the Squad tab (h1 "Model squad GW{n}"),
+      // not vanilla's rate-ID entry form (h1 "Rate my team") -- ledger #9
+      // (Phase 3's 03-01 view-only default Squad tab decision).
+      { name: "heading", kind: "text", vanilla: "h1", react: "h1", knownDeviations: [9] },
       BANNER_FIELD,
       // Vanilla's default view is the "Rate my team" ID-entry form; React's
       // default Squad tab renders the model squad first (Phase 3's pitch
       // redesign) and only shows this helper text once a team is loaded.
       // The two selectors intentionally point at each side's own
       // load/entry-form helper copy rather than assert byte-identical text
-      // -- the structural divergence is real and, as of this plan, not yet
-      // recorded in PARITY-DEVIATIONS.md; see this plan's SUMMARY.
+      // -- the structural divergence is recorded as PARITY-DEVIATIONS.md
+      // ledger #9 (07-03).
       {
         name: "formHelper",
         kind: "text",
         vanilla: "text=Enter your FPL team ID",
         react: "text=Your ID is in the URL on the official site",
+        knownDeviations: [9],
       },
     ],
   },
@@ -235,11 +239,16 @@ export const PAGES = [
       // The data-source credit line (ledger entry 6: React moves this line
       // from the per-page footer into the page body). A plain substring
       // match finds it in either DOM location without asserting a location.
+      // Ledger #10: the body paragraph ends after "...odds." and does not
+      // repeat the "Not affiliated..." disclaimer sentence inline, since
+      // PageShell's unified sitewide footer (also entry 6) already carries
+      // it once for every page.
       {
         name: "creditLine",
         kind: "text",
         vanilla: "text=Data: official FPL API",
         react: "text=Data: official FPL API",
+        knownDeviations: [10],
       },
     ],
   },
