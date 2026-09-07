@@ -36,19 +36,27 @@ export — no joining mid-week (D-13).
 
 ### Pre-deadline
 
-**Run:** _(not yet run)_ | GW _ | generated_utc: _ | command: _(paste the exact `parity-diff`
-invocation that produced this stage's fragment)_
+**This stage starts the cycle (D-13).** Validation gameweek: **GW4**, deadline_utc
+`2026-09-12T12:30:00Z` (future at run time), export generated_utc `2026-09-07T16:04:03+00:00`
+(landed via commit `ac489ca`, after `e2e/parity/`'s last tooling commit `81c4fca`,
+2026-09-07T12:29:35Z — satisfying the pre-deadline precondition). No later pass in this cycle may
+be run against a different gameweek.
+
+**Run:** 2026-09-07T16:06:46.408Z | GW4 | generated_utc: 2026-09-07T16:04:03+00:00 | command:
+`node e2e/parity/parity-diff.mjs --all --stage pre-deadline --out .planning/phases/07-parity-validation-cutover/PARITY-REPORT.md --vanilla-origin http://127.0.0.1:8010 --react-origin http://127.0.0.1:8011`
+(override ports — port 8000 is held by a pre-existing, unrelated vanilla `uvicorn` process, PID
+2914, documented in 07-01/07-02's SUMMARYs and left untouched)
 
 | Page | Verdict | Delta detail | Cron-green citation |
 | --- | --- | --- | --- |
-| xP table | | | |
-| Rate my team | | | |
-| Fixture ticker | | | |
-| Price watch | | | |
-| League table & leaders | | | |
-| Scoreboard | | | |
-| Differentials | | | |
-| Methodology | | | |
+| xP table | 5 fields compared, 1 explained, 0 defects | ledger #3 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent — no failure records to cite either way). `web/data` git history: commit `ac489ca` (2026-09-07) landed this stage's GW4 export, the first export commit since the initial tracking commit `1ee176a`. |
+| Rate my team | 3 fields compared, 1 explained, 2 defects | ledger #3; UNRESOLVED — 2 defect(s), needs a fixing commit SHA or a new PARITY-DEVIATIONS.md row | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
+| Fixture ticker | 4 fields compared, 1 explained, 0 defects | ledger #3 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
+| Price watch | 5 fields compared, 1 explained, 0 defects | ledger #3 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
+| League table & leaders | 4 fields compared, 1 explained, 0 defects | ledger #3 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
+| Scoreboard | 5 fields compared, 1 explained, 0 defects | ledger #3 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
+| Differentials | 4 fields compared, 1 explained, 0 defects | ledger #3 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
+| Methodology | 4 fields compared, 1 explained, 1 defects | ledger #3; UNRESOLVED — 1 defect(s), needs a fixing commit SHA or a new PARITY-DEVIATIONS.md row | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent). `web/data` git history: commit `ac489ca` (2026-09-07). |
 
 ### Mid-gameweek
 
