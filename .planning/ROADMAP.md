@@ -256,7 +256,31 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Every page's output is compared against the vanilla site across that cycle, with each difference either explained as an intended improvement or fixed; no unexplained deltas remain
   3. The vanilla site is retired only after that cycle passes, and the weekly recommendations flow uninterrupted throughout
 
-**Plans**: TBD
+**Plans**: 6 plans (6 waves — strictly sequential; waves 3-6 are calendar-gated on the validation gameweek)
+
+**Wave 1**
+
+- [ ] 07-01-PLAN.md — Production `FPL_FRONTEND=react` serving seam, the `dual_site.sh` two-process runner, a one-page live cross-origin parity tracer, mount-branch tests, and the react-mode container assertion in CI
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 07-02-PLAN.md — All eight page extractors, `PARITY-DEVIATIONS.md`-aware delta classification, and the `PARITY-REPORT.md` / `PARITY-CHECKLIST.md` evidence artifacts
+
+**Wave 3** *(blocked on Wave 2; gated on the pre-deadline weekly export)*
+
+- [ ] 07-03-PLAN.md — Validation pass 1: pre-deadline eight-page comparison, defect closure by fixing forward, and the entry-6980093 same-session solver handover
+
+**Wave 4** *(blocked on Wave 3; gated on the deadline passing)*
+
+- [ ] 07-04-PLAN.md — Validation pass 2: mid-gameweek comparison while matches are live or settling, and defect closure
+
+**Wave 5** *(blocked on Wave 4; gated on the gameweek finishing and the scoreboard scoring it)*
+
+- [ ] 07-05-PLAN.md — Validation pass 3: post-finish comparison, final defect closure, and the derived cutover-readiness block
+
+**Wave 6** *(blocked on Wave 5; human-gated)*
+
+- [ ] 07-06-PLAN.md — Cutover: the D-15 human approval gate, flipping the serving default to React with a CI-proven vanilla rollback, closing the deviation ledger and the palette lockstep, and updating the README
 
 **Research flags**: none — this is an execution checklist, not a research problem. Its completion is gated on real calendar time (a full gameweek), so it cannot be compressed.
 
