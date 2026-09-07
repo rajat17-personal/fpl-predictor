@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 07
 current_phase_name: Parity Validation & Cutover
 status: executing
-stopped_at: Completed 07-01-PLAN.md
-last_updated: "2026-09-07T11:55:33.097Z"
+stopped_at: Completed 07-02-PLAN.md
+last_updated: "2026-09-07T12:42:59.844Z"
 last_activity: 2026-09-07
 last_activity_desc: Phase 07 execution started
-state_head: 8c3e19b7528c73984587f44d68b1adfb0e17b04f
+state_head: e562fa84f4a0c531d588e85a1b5fbca1115800e1
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 45
-  completed_plans: 40
+  completed_plans: 41
   percent: 86
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-07)
 ## Current Position
 
 Phase: 07 (Parity Validation & Cutover) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-09-07 — Phase 07 execution started
 
@@ -103,6 +103,7 @@ Progress: [█████████░] 86% (6/7 phases, 39 plans complete)
 | Phase 06 P06 | 8min | 3 tasks | 5 files |
 | Phase 06 P07 | 35min | 3 tasks | 5 files |
 | Phase 07 P01 | 46min | 3 tasks | 7 files |
+| Phase 07 P02 | 39min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -193,6 +194,10 @@ Recent decisions affecting current work:
 - [Phase 06]: [Phase 06]: [Phase 06-07]: Empirically confirmed the new stub-free race gate's pre-fix failure by checking out a detached git worktree at the pre-Task-1 commit and running the test there, observing "STALE PAYLOAD SERVED AFTER A REFRESH: ['G0-1001', 'G0-1002', ...]" exactly as the plan predicted, then removing the worktree. — The plan's own acceptance criteria required SUMMARY.md to quote the observed pre-fix stale-generation assertion message, not merely assert it from code-reading.
 - [Phase 07]: Verified scripts/dual_site.sh against a real occupied port-8000 process instead of a synthetic one; the pre-existing vanilla uvicorn was never touched
 - [Phase 07]: scripts/smoke_test.sh react-mode branch verified statically only (no container runtime on this host); real gate is the CI image job's SMOKE_REACT_MODE=1 step on next push
+- [Phase 07]: [Phase 07-02]: extractPage(page, pageSpec, origin) takes origin as { base, flavour } rather than a bare URL string, resolving both which path to visit and which selector half to use from one value.
+- [Phase 07]: [Phase 07-02]: Ledger binding is field-level (extract.mjs's knownDeviations array on a field), never inferred from delta text -- ledger.mjs's isKnownDelta() throws if a declared number no longer resolves against the live PARITY-DEVIATIONS.md.
+- [Phase 07]: [Phase 07-02]: Team page (/team) structural divergence and methodology's relocated credit line left as real, not-yet-ledgered defects rather than pre-emptively ledgered -- adjudicating what the diff finds is a future validation-pass plan's job, not this plan's (which built the tool).
+- [Phase 07]: [Phase 07-02]: Verified against override ports 8010/8011, not the plan's literal default 8000/8001, because port 8000 is held by the same pre-existing, unrelated vanilla uvicorn (PID 2914) 07-01's SUMMARY already documented and left running untouched.
 
 ### Pending Todos
 
@@ -219,6 +224,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-07T11:55:32.936Z
-Stopped at: Completed 07-01-PLAN.md
+Last session: 2026-09-07T12:42:59.684Z
+Stopped at: Completed 07-02-PLAN.md
 Resume file: None
