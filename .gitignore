@@ -15,6 +15,9 @@ data/raw/
 data/processed/
 data/cron.log
 data/alerts.jsonl
+data/dual_site.pids
+data/dual_site.vanilla.log
+data/dual_site.react.log
 
 # --- Regenerable model output (rebuilt by models/train.py, models/price.py) ---
 models/artifacts/

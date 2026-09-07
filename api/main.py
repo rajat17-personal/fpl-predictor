@@ -78,6 +78,21 @@ if _FIXTURE_ROOT:
           "no live FPL API calls, no model artifact load. This must never be "
           "set in a production/deploy configuration.")
 
+# --- Production react-mode seam (Phase 7, CUT-01 / D-01) --------------------
+# FPL_FRONTEND=react switches the production mount (the "else" branch at the
+# bottom of this file) from vanilla web/ to the built React app at
+# frontend/dist, with the live web/data export mounted at /data. This seam is
+# deliberately independent of _FIXTURE_ROOT above: it never reads
+# FPL_FIXTURE_DIR/FPL_FIXTURE_DATA_DIR, and the fixture branch always wins
+# when both are set (see the three-way mount split at the bottom of this
+# file). D-09 will later make this branch's directory the unconditional
+# default once the Phase 7 parity validation cycle completes.
+_REACT_MODE = os.environ.get("FPL_FRONTEND") == "react"
+if _REACT_MODE:
+    print("[frontend-seam] FPL_FRONTEND=react -- serving the built React app "
+          "(frontend/dist) at / and the live web/data export at /data. Real "
+          "production data, no fixtures.")
+
 
 def _fixture_json(*parts: str):
     return read_json(_FIXTURE_API.joinpath(*parts), what="frozen fixture payload",
@@ -766,6 +781,16 @@ def rate(entry: int):
 if _FIXTURE_ROOT:
     app.mount("/data", StaticFiles(directory=_FIXTURE_DATA, check_dir=False),
               name="fixture-data")
+    app.mount("/", StaticFiles(directory=config.ROOT / "frontend" / "dist",
+                               html=True, check_dir=False), name="site")
+elif _REACT_MODE:
+    # Production react branch (Phase 7, D-01): the live web/data export,
+    # never a fixture directory. /data MUST be registered before the
+    # catch-all "/" mount below -- same Starlette registration-order hazard
+    # the fixture branch above documents. D-09 will later fold this branch's
+    # directory choice into the unconditional default.
+    app.mount("/data", StaticFiles(directory=config.ROOT / "web" / "data",
+                                   check_dir=False), name="data")
     app.mount("/", StaticFiles(directory=config.ROOT / "frontend" / "dist",
                                html=True, check_dir=False), name="site")
 else:
