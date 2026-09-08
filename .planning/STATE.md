@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 09
 current_phase_name: xP Model & Optimizer Improvement Experiments
 status: executing
-stopped_at: Completed 09-01-PLAN.md
-last_updated: "2026-09-08T11:31:49.176Z"
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-09-08T12:21:13.654Z"
 last_activity: 2026-09-08
 last_activity_desc: Phase 09 execution started
-state_head: 8e353928e18564270ee66810b3d3e1fd0d3ca732
+state_head: 1f3c081bf324a844f29089abd07e332a7c467439
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 55
-  completed_plans: 43
+  completed_plans: 44
   percent: 67
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-07)
 ## Current Position
 
 Phase: 09 (xP Model & Optimizer Improvement Experiments) — EXECUTING
-Plan: 2 of 10
+Plan: 3 of 10
 Status: Ready to execute
 Last activity: 2026-09-08 — Phase 09 execution started
 
@@ -106,6 +106,7 @@ Progress: [███████░░░] 67% (6/7 phases, 39 plans complete)
 | Phase 07 P02 | 39min | 3 tasks | 5 files |
 | Phase 07 P03 | 28min | 1 tasks | 10 files |
 | Phase 09 P01 | 25min | 3 tasks | 6 files |
+| Phase 09 P02 | 22min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -210,6 +211,8 @@ Recent decisions affecting current work:
 - [Phase 07]: [Phase 07]: [Phase 07-03]: Treated three manual-pass UAT defects (pitch-card stat-text contrast, missing outgoing red dashed outline, desktop nav-row wrap) as plain React code fixes, not PARITY-DEVIATIONS.md ledger rows -- they are visual/UX bugs found by eyeball, not deliberate React/vanilla behavioral divergences the ledger tracks.
 - [Phase 09]: [Phase 09] [Phase 09-01]: captaincy ceiling artifact refit per test season on its own immediately-prior validation season (matching _preds_for's train/val split), never the shipped 2025-26 intervals.json, to avoid leaking future residuals into an earlier season's captaincy decision
 - [Phase 09]: [Phase 09] [Phase 09-01]: the measured 2262 model+chips 6-season baseline (not D-05's inherited ~2,256 or 09-RESEARCH.md's ~2,263 from the cached CSV) is the number the >=2,280 adoption bar is judged against for the rest of this phase
+- [Phase 09]: [Phase 09-02]: id_crosswalk.py is add-alongside data/id_map.py, not a replacement -- player_code stays the sole canonical join key everywhere; the crosswalk only maps foreign names/ids onto it
+- [Phase 09]: [Phase 09-02]: theFPLkiwi's projection CSV column-block position is a fixed non-numeric-header index (11), not label text or a fixed 13-column count -- 2021-22's own FPL_GW1.csv omits the trailing Goals block (12 columns), so the plan's own measured_facts undercounted layout variance even within one season
 
 ### Pending Todos
 
@@ -236,6 +239,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-08T11:31:49.001Z
-Stopped at: Completed 09-01-PLAN.md
+Last session: 2026-09-08T12:21:13.482Z
+Stopped at: Completed 09-02-PLAN.md
 Resume file: None
