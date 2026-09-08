@@ -26,7 +26,9 @@ import pandas as pd
 
 import config
 from backtest.season import run_season
+from models import captaincy
 from models.train import load_features, predict_xp, train_predict
+from ops.jsonio import write_json
 
 # Schedule-derived context known ahead of time — safe to graft onto a frozen-form row.
 FIXTURE_CTX = ["fdr_self", "fdr_opp", "was_home", "is_dgw", "gw", "days_rest"]
@@ -130,20 +132,46 @@ def _jitter(te: pd.DataFrame, xp_col: str, seed: int) -> pd.DataFrame:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--replicas", type=int, default=5, help="jittered teams per season")
+    ap.add_argument("--experiments", default=None,
+                    help="comma-separated experiment flags to force on (see config.EXPERIMENTS); "
+                         "falls back to $FPL_EXPERIMENTS, then all-off")
+    ap.add_argument("--seasons", default=None,
+                    help="comma-separated subset of TEST_SEASONS to run (default: all 6)")
+    ap.add_argument("--tag", default=None,
+                    help="write a tagged data/processed/experiments/wf_<tag>.csv/.json result "
+                         "instead of overwriting walk_forward_results.csv")
     args = ap.parse_args(argv)
+
+    exp = config.resolve_experiments(args.experiments)
+    capt_col_active = "xp_capt_ceiling" if exp["capt_ceiling"] else None
+
+    if args.seasons:
+        seasons = [s.strip() for s in args.seasons.split(",") if s.strip()]
+        unknown = [s for s in seasons if s not in TEST_SEASONS]
+        if unknown:
+            raise SystemExit(f"unknown season(s) {unknown} -- valid: {TEST_SEASONS}")
+    else:
+        seasons = list(TEST_SEASONS)
 
     df = load_features()
     rows, chip_recs = [], []
-    for T in TEST_SEASONS:
+    for T in seasons:
         te, models, cols = _preds_for(df, T)
+        if exp["capt_ceiling"]:
+            # Leakage-safe: fit the ceiling artifact on the validation season
+            # immediately prior to T, never on the shipped 2025-26 artifact.
+            val_season = DATA_SEASONS[DATA_SEASONS.index(T) - 1]
+            artifact = captaincy.fit_ceiling_artifact(models, df, val_season, cols)
+            te = captaincy.add_ceiling_ev(te, artifact)
         # Multiple teams: jittered replicas of the core model config.
         totals = [int(run_season(_jitter(te, "xp_med", s), "xp_med",
                                  use_chips=False).points.sum())
                   for s in range(args.replicas)]
         # Full system (chips) — replica 0, and harvest isolated chip values.
-        chips_df = run_season(te, "xp_med", use_chips=True, record_chips=True)
+        chips_df = run_season(te, "xp_med", use_chips=True, record_chips=True,
+                              capt_col=capt_col_active)
         chip_recs.extend({"season": T, **d} for d in chips_df.attrs["chip_deltas"])
-        cdf = run_season(te, "xp_med", capt_col="xp_mean", use_chips=False)
+        cdf = run_season(te, "xp_med", capt_col=capt_col_active or "xp_mean", use_chips=False)
         capt_mean = int(cdf.points.sum())
         capt_capture = cdf.capt_pts.sum() / max(cdf.best_pts.sum(), 1)
         m_safe = int(run_season(leakage_safe_plan(te, models, cols), "xp_plan",
@@ -163,12 +191,17 @@ def main(argv=None) -> int:
     print("\n=== Walk-forward season totals ===")
     print(res.to_string())
 
-    n = len(TEST_SEASONS)
+    n = len(seasons)
     gm = res.mean().round(0).astype(int)
-    se_model = res["model_mean"].std() / np.sqrt(n)
+    # pandas' default ddof=1 std is NaN for a single-row Series (n=1) -- a real
+    # possibility now that --seasons can select a subset for fast iteration
+    # (D-14). 0.0 is the honest answer: there is no season-to-season spread to
+    # report from one season.
+    season_std = float(res["model_mean"].std()) if n > 1 else 0.0
+    se_model = season_std / np.sqrt(n)
     print(f"\nAveraged over {n} seasons (season-to-season std in brackets):")
     print(f"  model (core, L1) : {gm['model_mean']}  "
-          f"(±{int(res['model_mean'].std())}/season, SE {se_model:.0f})")
+          f"(±{int(season_std)}/season, SE {se_model:.0f})")
     print(f"  capt-by-mean     : {gm['capt_mean']}   -> vs core "
           f"{gm['capt_mean']-gm['model_mean']:+d} (captain slot uses E[pts])")
     print(f"  multi-GW (SAFE)  : {gm['multi_safe']}   -> vs myopic core "
@@ -186,8 +219,34 @@ def main(argv=None) -> int:
         print(agg.to_string())
         print("(positive = the chip added points on the week it was played)")
 
-    res.to_csv(config.PROCESSED_DIR / "walk_forward_results.csv")
-    print("\nsaved data/processed/walk_forward_results.csv")
+    active_flags = sorted(k for k, v in exp.items() if v)
+    capt_capture_avg = round(float(res["capt_capture"].mean()), 3)
+    if args.tag:
+        config.EXPERIMENTS_DIR.mkdir(parents=True, exist_ok=True)
+        res.to_csv(config.EXPERIMENTS_DIR / f"wf_{args.tag}.csv")
+        summary = {
+            "tag": args.tag,
+            "seasons": seasons,
+            "replicas": args.replicas,
+            "experiments": exp,
+            "model_mean": int(gm["model_mean"]),
+            "model_std": int(season_std),
+            "model+chips": int(gm["model+chips"]),
+            "capt_mean": int(gm["capt_mean"]),
+            "capt_capture": capt_capture_avg,
+            "multi_safe": int(gm["multi_safe"]),
+            "form": int(gm["form"]),
+            "hold": int(gm["hold"]),
+        }
+        write_json(summary, config.EXPERIMENTS_DIR / f"wf_{args.tag}.json", indent=1)
+        print(f"\nsaved data/processed/experiments/wf_{args.tag}.csv/.json")
+    else:
+        res.to_csv(config.PROCESSED_DIR / "walk_forward_results.csv")
+        print("\nsaved data/processed/walk_forward_results.csv")
+
+    print(f"[wf] tag={args.tag or 'none'} seasons={len(seasons)} replicas={args.replicas} "
+          f"experiments={','.join(active_flags) or 'none'} model_mean={gm['model_mean']} "
+          f"model+chips={gm['model+chips']} capt_capture={capt_capture_avg}", flush=True)
     return 0
 
 

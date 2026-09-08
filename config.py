@@ -11,8 +11,9 @@ ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"          # cached downloads (vaastav CSVs, FPL API JSON)
 PROCESSED_DIR = DATA_DIR / "processed"  # canonical parquet tables
+EXPERIMENTS_DIR = PROCESSED_DIR / "experiments"  # Phase 9 tagged walk-forward run artifacts
 
-for _d in (RAW_DIR, PROCESSED_DIR):
+for _d in (RAW_DIR, PROCESSED_DIR, EXPERIMENTS_DIR):
     _d.mkdir(parents=True, exist_ok=True)
 
 
@@ -128,6 +129,55 @@ TRAIN_SEASONS = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21",
                  "2021-22", "2022-23", "2023-24"]
 VAL_SEASON = "2024-25"     # chronological validation (early stopping)
 TEST_SEASONS = ["2025-26"]  # untouched during training
+
+# --- Phase 9: xP model & optimizer improvement experiments ------------------
+# Every experiment lands opt-in behind a flag, defaulted off (D-07/D-08): an
+# unflagged `backtest/walk_forward.py` run reproduces the pre-phase-9 baseline
+# exactly. A later plan adds an experiment by adding one key here and one
+# branch in `backtest/walk_forward.py::main` -- never a bespoke ad-hoc switch.
+EXPERIMENTS: dict[str, bool] = {
+    "capt_ceiling": False,
+    "capt_mc": False,
+    "chips_v2": False,
+    "team_strength": False,
+    "rl_strategy": False,
+    "understat": False,
+    "fotmob": False,
+    "fbref_v2": False,
+}
+
+CAPT_CEILING_LAMBDA = 0.5       # captaincy ceiling-EV upside weight (models/captaincy.py)
+CHIPS_V2_HYSTERESIS = 0.0       # chip scheduler v2 fire-now-vs-wait margin (optimize/chips.py)
+
+
+def resolve_experiments(spec: str | None = None) -> dict[str, bool]:
+    """Resolve a flag spec into a fresh copy of `EXPERIMENTS` with named flags forced on.
+
+    `spec` is a comma-separated list of flag names (whitespace around commas is
+    tolerated). `None` falls back to the `FPL_EXPERIMENTS` environment variable
+    (also unset -> every flag stays at its `EXPERIMENTS` default, i.e. off). The
+    token "none" forces every flag off; the token "all" forces every flag on.
+    Any other unrecognised token raises `ValueError` naming the bad token and
+    listing the valid keys. The module-level `EXPERIMENTS` dict is never mutated
+    -- callers always get back a fresh copy.
+    """
+    if spec is None:
+        spec = os.environ.get("FPL_EXPERIMENTS")
+    result = dict(EXPERIMENTS)
+    tokens = [t.strip() for t in spec.split(",")] if spec else []
+    tokens = [t for t in tokens if t]
+    if not tokens:
+        return result
+    if "none" in tokens:
+        return {k: False for k in result}
+    if "all" in tokens:
+        return {k: True for k in result}
+    for t in tokens:
+        if t not in result:
+            raise ValueError(f"unknown experiment flag '{t}' -- valid keys: {sorted(result)}")
+        result[t] = True
+    return result
+
 
 # --- Canonical player_gw schema --------------------------------------------
 # Columns pulled from vaastav merged_gw.csv (renamed on the right where useful).
