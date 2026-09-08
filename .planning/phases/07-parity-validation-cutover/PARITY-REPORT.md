@@ -47,6 +47,13 @@ be run against a different gameweek.
 (override ports — port 8000 is held by a pre-existing, unrelated vanilla `uvicorn` process, PID
 2914, documented in 07-01/07-02's SUMMARYs and left untouched)
 
+**Re-run after the manual-pass fixes (Task 3 close-out):** 2026-09-08 | GW4 | command:
+`node e2e/parity/parity-diff.mjs --all --vanilla-origin http://127.0.0.1:8010 --react-origin http://127.0.0.1:8011`
+→ `TOTAL: 8 pages, 34 fields compared, 11 explained, 0 defects`, exit 0 — proves the three
+fix-forward commits closing G-07-1/G-07-2/G-07-3 (`a2839a8`, `86aba31`, `6a39d64`) introduced no
+new scripted delta. The page table below is unchanged from the original run (field/delta counts
+identical); this line is the re-verification citation for the "Cutover readiness" total below.
+
 | Page | Verdict | Delta detail | Cron-green citation |
 | --- | --- | --- | --- |
 | xP table | 5 fields compared, 1 explained, 0 defects | ledger #3 | No `data/cron.log` on this host as of 2026-09-07 (file absent). No `data/alerts.jsonl` on this host as of 2026-09-07 (file absent — no failure records to cite either way). `web/data` git history: commit `ac489ca` (2026-09-07) landed this stage's GW4 export, the first export commit since the initial tracking commit `1ee176a`. |
@@ -65,15 +72,15 @@ D-08 comparison ID (numeric only — no manager name is recorded here or anywher
 
 | Item | Verdict |
 | --- | --- |
-| Manual eyeball pass (D-05, `PARITY-CHECKLIST.md` Part 1 — all 8 pages, desktop + mobile, light + dark) | _(unfilled — awaiting the user's verdict: "matched" for every checklist item, or a description of what differed, to be recorded here as either a clean pass or a new defect row below)_ |
-| D-08 same-session solver comparison (`PARITY-CHECKLIST.md` Part 2 — entry 6980093, rate my team / one solve with identical locks / one two-gameweek plan, performed identically on both sites in one session) | _(unfilled — awaiting the user's verdict: "matched" for all three flows, or a description of what differed, to be recorded here as either a clean pass or a new defect row below)_ |
+| Manual eyeball pass (D-05, `PARITY-CHECKLIST.md` Part 1 — all 8 pages, desktop + mobile, light + dark) | Passed overall, per the user's verbatim report ("It overall matches, but a few issues to look into on the React site"), with 3 visual defects found on the Team page's pitch renderer and nav chrome. All 3 fixed forward on the React side (see "Defects found and how they were closed" below) — commits `a2839a8`, `86aba31`, `6a39d64`. Re-verified post-fix: `npm --prefix frontend run build`/`test` green (374/374), `npm --prefix e2e run test` green (42/42, including the frozen-fixture banner-text assertions updated for the G-07-3 fix), and a live Playwright measurement at 1280px/375px in both themes confirmed the header no longer wraps and the pitch stat text/outgoing outline render correctly (light and dark). |
+| D-08 same-session solver comparison (`PARITY-CHECKLIST.md` Part 2 — entry 6980093, rate my team / one solve with identical locks / one two-gameweek plan, performed identically on both sites in one session) | Matched overall, per the user's verbatim report — no numeric or move discrepancy called out across rate my team, the one-solve comparison, or the two-gameweek plan for entry 6980093. |
 
 **D-02 handover.** For the rest of GW4, the React site (`http://127.0.0.1:8011`, or the
 production `FPL_FRONTEND=react` seam once deployed) is the daily driver for the user's real FPL
-week, with vanilla (`http://127.0.0.1:8010`) standing by as the reference. Any dogfooding finding
-is recorded exactly like a scripted finding — a defect row in "Defects found and how they were
-closed" below with a fixing commit SHA or a new `PARITY-DEVIATIONS.md` ledger row — never from
-memory.
+week, with vanilla (`http://127.0.0.1:8010`) standing by as the reference. Dogfooding continues
+through the remainder of GW4; any further finding is recorded exactly like a scripted finding — a
+defect row in "Defects found and how they were closed" below with a fixing commit SHA or a new
+`PARITY-DEVIATIONS.md` ledger row — never from memory.
 
 ### Mid-gameweek
 
@@ -117,17 +124,20 @@ re-comparison, not just the fix.
 | --- | --- | --- | --- | --- |
 | Rate my team | `heading`/`formHelper` deltas: `/team`'s default Squad tab ("Model squad GW4") shows the Load-your-own-team helper copy, not vanilla's rate-ID form ("Rate my team" / "Enter your FPL team ID…") | New ledger row — deliberate default-view difference, Phase 3's 03-01 view-only Squad tab decision | New ledger row — `PARITY-DEVIATIONS.md` #9 (this commit) | pre-deadline (`node e2e/parity/parity-diff.mjs --page /team` → 3 fields, 3 explained, 0 defects) |
 | Methodology | `creditLine` delta: the body credit-line paragraph ends after "…odds." and does not repeat the "Not affiliated…" disclaimer sentence vanilla's single combined footer paragraph carries | New ledger row — PageShell's unified sitewide footer (entry 6) already states the disclaimer once for every page; restating it in the body would duplicate it | New ledger row — `PARITY-DEVIATIONS.md` #10 (this commit) | pre-deadline (`node e2e/parity/parity-diff.mjs --page /methodology` → 4 fields, 2 explained, 0 defects) |
+| Team (pitch renderer, manual pass G-07-1) | `PlayerCard`'s price/xP and range-line text rendered `--color-ink-2` (grey) directly on the pitch-1/pitch-2 green gradient — fails WCAG AA against both gradient stops in either theme; user reported "the xP score text is grey on the green pitch background and is hard to read" | Fixed forward — added theme-invariant `--color-pitch-stat-bg`/`-ink` tokens (dark backdrop + white text), applied only to real cards on a grass row (GK/DEF/MID/FWD), never Bench or a GhostCard | `a2839a8` | pre-deadline (full 374/374 frontend suite green; live Playwright screenshot at 1280px, light+dark, confirms readable stat chips on every pitch row) |
+| Team (pitch renderer, manual pass G-07-2) | The suggested-out player in a best-XI swap carried no visible marking (opacity-50 only) while the incoming player got a green dashed outline — user asked for a matching red dashed outline on the outgoing card, "mirrors the existing green-dashed idiom" | Fixed forward — `diff="out"` now gets the same dashed-outline idiom as `GhostCard`, in the `bad` (red) token instead of `accent` (green) | `a2839a8` | pre-deadline (full 374/374 frontend suite green; live Playwright screenshot of the O'Reilly → Virgil swap confirms the red/green dashed pair) |
+| Team / sitewide nav (manual pass G-07-3) | The GW deadline pill and theme toggle wrapped onto a second header row below the nav tabs at desktop width (~1280px) — a real layout defect, not viewport-specific: natural row content measured ~1289px against the 68rem/1088px inner cap, which never grows past that regardless of viewport | Fixed forward — tightened header spacing (18px section gaps → 4-8px, nav-link `px-3`→`px-1.5`) and re-split `GwBanner`'s two lines (line 1 `GW{gw} · {absolute deadline}`, line 2 `{countdown} · {freshness}`, nothing dropped); `PILL_CLASS`'s `px-3 py-1.5` substring left untouched since `extract.mjs`'s React banner selector matches on it | `86aba31`, `6a39d64` | pre-deadline (full 374/374 frontend suite green, 42/42 e2e suite green after updating `smoke.spec.ts`'s frozen banner-text constants; live Playwright measurement confirms one-line header at 1280px, 83px tall vs. 145px wrapped, in both themes; mobile 375px unaffected) |
 
 ## Cutover readiness
 
 Read by the D-15 human gate before the flip is ever staged. Every figure here must be
 computed from the stage tables and the defects table above — never estimated.
 
-- Pages compared: pre-deadline **_**, mid-gameweek **_**, post-finish **_** (8 expected per stage)
-- Total explained deltas (cite ledger #s): **_**
-- Total defects found: **_**
-- Total defects closed (see "Defects found and how they were closed" above): **_**
-- **Remaining unexplained deltas: `_` — must read zero before the flip is staged.**
+- Pages compared: pre-deadline **8**, mid-gameweek **0**, post-finish **0** (8 expected per stage)
+- Total explained deltas (cite ledger #s): **11** — the final scripted re-run (`node e2e/parity/parity-diff.mjs --all`, 2026-09-08) reports `TOTAL: 8 pages, 34 fields compared, 11 explained, 0 defects`, all cited to ledger #3 (banner, 8 occurrences), #9 (heading/formHelper, 2 occurrences) and #10 (creditLine, 1 occurrence)
+- Total defects found: **5** — 2 scripted (Task 1: Rate my team `heading`/`formHelper`, Methodology `creditLine`, both closed via new ledger rows in Task 2) + 3 manual (Task 3: pitch stat-text contrast G-07-1, missing outgoing outline G-07-2, nav-row desktop wrap G-07-3, all closed fix-forward in React code)
+- Total defects closed (see "Defects found and how they were closed" above): **5**
+- **Remaining unexplained deltas: `0` — reads zero; the pre-deadline stage is clean.**
 
 ## Appending an entry
 
