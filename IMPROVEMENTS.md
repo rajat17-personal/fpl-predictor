@@ -169,6 +169,41 @@ WC's isolated value is not separately recorded by the harness (it triggers a ful
 squad rebuild, not a same-team-with/without comparison); this baseline table is
 therefore the "currently unmeasured" state the adoption criteria call out for WC.
 
+### Benchmark: our xP vs theFPLkiwi (external-projection benchmark, D-01 experiment 1)
+
+Command: `python -m backtest.benchmark_external --tag phase9` (no network access;
+reads only the committed `data/external/kiwi/` snapshot plus
+`data/processed/features.parquet`). Result:
+`data/processed/experiments/benchmark_phase9.json`. Scored on played-only
+common rows (`y_minutes > 0`) at GW level (fixtures summed per player-GW so
+DGWs line up with theFPLkiwi's one-row-per-gameweek shape), joined on
+`(season, player_id == fpl_id, gw)`.
+
+2023-24 is explicitly **skipped, not silently dropped**: theFPLkiwi's committed
+snapshot for that season only carries 4 gameweeks (GW1/GW3/GW4/GW18) —
+too thin to score.
+
+| season | n rows (pre-join) | n common | join coverage | n played-only | MAE `xp_med` | Spearman `xp_med` | MAE `xp_mean` | Spearman `xp_mean` | MAE `xp_fpl` (FPL) | Spearman `xp_fpl` | MAE `proj_pts` (kiwi) | Spearman `proj_pts` |
+|--------|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 2021-22 | 23,230 | 19,603 | 84.4% | 9,772 | 2.064 | 0.380 | 2.090 | 0.380 | 2.107 | 0.591 | 2.114 | 0.380 |
+| 2022-23 | 24,957 | 14,342 | 57.5% | 7,716 | 1.869 | 0.386 | 1.928 | 0.390 | 1.808 | 0.558 | 1.988 | 0.389 |
+| **pooled (played-only)** | — | — | — | **17,488** | **1.978** | **0.383** | **2.018** | **0.386** | **1.975** | **0.579** | **2.059** | **0.383** |
+
+**Interpretation.** On these two historical seasons, our xP (`xp_med`/`xp_mean`)
+and theFPLkiwi's published pre-deadline projections (`proj_pts`) land in the
+same MAE/Spearman neighbourhood — neither model clearly beats the other on
+played-only common rows (pooled Spearman 0.383 vs 0.383, MAE 1.978 vs 2.059).
+The more striking part of this reading is that FPL's own `xp_fpl` baseline
+ranks players noticeably better than either of us here (pooled Spearman 0.579
+vs 0.383) despite a comparable MAE (1.975 vs 1.978) — on 2021-22/2022-23
+specifically, no candidate is dominant on both axes at once, and FPL's own
+official expected-points figure is the strongest ranker of the three. **Per
+D-01, this reading prunes nothing**: all six experiments in this phase still
+run in the fixed order regardless of this number — it is context for
+interpreting them (e.g. a later feature-accuracy experiment closing the
+ranking gap to `xp_fpl` on this same played-only basis would itself be a
+useful confirmation signal), not a gate on any of them.
+
 ### Experiment results
 
 | flag | criterion | measured | verdict | default |
