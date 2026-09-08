@@ -49,7 +49,7 @@ key-decisions:
 patterns-established:
   - "Pattern: a dark semi-opaque backdrop token pair (bg + ink) for text overlaid on a photographic/gradient background, applied conditionally via a boolean prop threaded down only to the render branch that actually sits on that background."
 
-requirements-completed: [CUT-01]
+requirements-completed: []  # CUT-01 is a phase-wide, multi-stage requirement (full gameweek cycle); this plan closes only its pre-deadline stage. See Deviation #4 -- do not mark CUT-01 complete until 07-06 (the cutover gate) finishes.
 
 coverage:
   - id: D1
@@ -175,10 +175,18 @@ This continuation session:
 - **Verification:** Full frontend suite (374/374) and e2e Playwright suite (42/42, including updated frozen banner-text assertions) both green; live Playwright measurement confirms one-line header at 1280px (both themes), 375px mobile unaffected.
 - **Committed in:** `86aba31`, `6a39d64`
 
+**4. [Rule 1 - Bug] Reverted a premature CUT-01 requirement completion**
+- **Found during:** the state_updates step
+- **Issue:** All six 07-0X plans (`07-01` through `07-06`) name `requirements: [CUT-01]` in their frontmatter, since CUT-01 is a single phase-wide, multi-stage requirement ("the React site completes a full gameweek cycle (deadline → live → finished) side-by-side with verified parity"). Running `gsd_run query requirements.mark-complete CUT-01` per the standard state_updates step flipped `REQUIREMENTS.md`'s CUT-01 checkbox and traceability-table row to Complete after only this plan's pre-deadline stage — before the mid-gameweek/post-finish stages (07-04/07-05) or the D-15 cutover gate (07-06) have run. That would have misrepresented CUT-01 as satisfied to any later gate (`/gsd-ship`, the D-15 human cutover checkpoint) that reads `REQUIREMENTS.md` for the milestone's true state.
+- **Fix:** Reverted `REQUIREMENTS.md` via `git checkout` before it was committed (the change was uncommitted at the time). Left CUT-01 as `[ ] Pending` for this SUMMARY's metadata commit. The correct plan to mark it complete is `07-06` (the cutover gate), once the full cycle and its verification actually finish.
+- **Files modified:** `.planning/REQUIREMENTS.md` (reverted, not committed)
+- **Verification:** `grep CUT-01 .planning/REQUIREMENTS.md` shows `[ ]` / `Pending` after the revert.
+- **Committed in:** N/A — this is a revert of an uncommitted, over-eager automatic step; no commit carries the premature completion.
+
 ---
 
-**Total deviations:** 3 auto-fixed (all Rule 1 — visual/contrast bugs reported during the manual UAT pass, not scope creep)
-**Impact on plan:** All three fixes were essential to close the manual-eyeball row with a genuine "passed" verdict rather than a deferred defect. No architectural changes; no new dependencies; no ledger rows (plain React code fixes).
+**Total deviations:** 4 auto-fixed (3 Rule 1 visual/contrast bugs from the manual UAT pass; 1 Rule 1 revert of a premature requirement-completion side effect). No scope creep.
+**Impact on plan:** All three UI fixes were essential to close the manual-eyeball row with a genuine "passed" verdict rather than a deferred defect. The requirements-completion revert is corrective, not additive — it prevents this plan's state_updates step from misrepresenting a later-plan gate as already satisfied. No architectural changes; no new dependencies; no ledger rows (plain React code fixes).
 
 ## Issues Encountered
 

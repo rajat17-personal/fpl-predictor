@@ -256,7 +256,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Every page's output is compared against the vanilla site across that cycle, with each difference either explained as an intended improvement or fixed; no unexplained deltas remain
   3. The vanilla site is retired only after that cycle passes, and the weekly recommendations flow uninterrupted throughout
 
-**Plans**: 2/6 plans executed (6 waves — strictly sequential; waves 3-6 are calendar-gated on the validation gameweek)
+**Plans**: 3/6 plans executed (6 waves — strictly sequential; waves 3-6 are calendar-gated on the validation gameweek)
 
 **Wave 1**
 
@@ -268,7 +268,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 3** *(blocked on Wave 2; gated on the pre-deadline weekly export)*
 
-- [ ] 07-03-PLAN.md — Validation pass 1: pre-deadline eight-page comparison, defect closure by fixing forward, and the entry-6980093 same-session solver handover
+- [x] 07-03-PLAN.md — Validation pass 1: pre-deadline eight-page comparison, defect closure by fixing forward, and the entry-6980093 same-session solver handover
 
 **Wave 4** *(blocked on Wave 3; gated on the deadline passing)*
 
@@ -297,7 +297,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 4. E2E Regression Suite | 8/8 | Complete    | 2026-09-04 |
 | 5. Container Build & CI Pipeline | 5/5 | Complete    | 2026-09-05 |
 | 6. Security, Reliability & Observability Hardening | 7/7 | Complete    | 2026-09-07 |
-| 7. Parity Validation & Cutover | 2/6 | In Progress|  |
+| 7. Parity Validation & Cutover | 3/6 | In Progress|  |
 
 ## Requirement Coverage
 
