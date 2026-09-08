@@ -27,12 +27,19 @@ import pandas as pd
 import config
 
 # Per-match performance stats we roll into form features.
+# config.UNDERSTAT_COLS is registered HERE, never in CONTEXT_COLS below: those
+# columns (us_npxg/us_xgchain/us_xgbuildup/us_shots/us_key_passes) describe the
+# MATCH THEY CAME FROM (a match outcome), exactly like xg/xa/xgi/xgc above --
+# using them raw as a feature for that same match would hand the model the
+# result. Registering them here means every one is only ever seen through
+# _roll's shift(1)-then-rolling windows, the same leakage-safety argument as
+# every other stat in this list.
 ROLL_STATS = [
     "minutes", "starts", "total_points", "xp_fpl",
     "goals_scored", "assists", "clean_sheets", "goals_conceded", "saves",
     "bonus", "bps", "xg", "xa", "xgi", "xgc",
     "influence", "creativity", "threat", "ict_index",
-]
+] + config.UNDERSTAT_COLS
 
 # Fixture-context features known BEFORE kickoff (safe to use as-is).
 # Optional cols (e.g. FBREF_COLS) are filtered to those actually present at runtime.
@@ -68,7 +75,12 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     feat = df[ID_COLS + ctx].copy()
 
     # --- rolling form over every horizon ---
-    for stat in ROLL_STATS:
+    # Skip a ROLL_STATS entry absent from df (e.g. config.UNDERSTAT_COLS when
+    # data/processed/understat.parquet doesn't exist / attach() never ran) --
+    # the same "optional col, no-op if missing" contract CONTEXT_COLS already
+    # has via `ctx` above; ROLL_STATS had no optional members before this.
+    roll_stats = [s for s in ROLL_STATS if s in df.columns]
+    for stat in roll_stats:
         for w in config.WINDOWS:
             feat[f"{stat}_r{w}"] = _roll(g, stat, w)
 

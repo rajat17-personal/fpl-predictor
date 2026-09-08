@@ -140,6 +140,19 @@ TEAM_STRENGTH_COLS = ["ts_attack_self", "ts_defence_self", "ts_attack_opp",
                       "ts_defence_opp", "ts_xg_for", "ts_xg_against",
                       "ts_pwin", "ts_pcs"]
 
+# Understat non-penalty xG + involvement-chain metrics (data/understat.py) --
+# OPTIONAL enrichment, computed UNCONDITIONALLY like FBREF_COLS/TEAM_STRENGTH_COLS
+# above: the pipeline no-ops without data/processed/understat.parquet, and once
+# it exists the join always runs so player_gw.parquet/features.parquet stay
+# stable across an A/B run (the EXPERIMENTS["understat"] feature-selection gate
+# lives in backtest/walk_forward.py). FPL's own feed already carries xG/xA/xGI;
+# these add the NON-PENALTY separation and involvement-IN-THE-MOVE metrics FPL's
+# feed lacks. CRITICAL: these are MATCH OUTCOMES describing the fixture they came
+# from, not pre-match context -- features/engineer.py registers them in
+# ROLL_STATS (never CONTEXT_COLS) so they only ever reach the model through the
+# shift(1)-then-rolling path, exactly like every other per-match performance stat.
+UNDERSTAT_COLS = ["us_npxg", "us_xgchain", "us_xgbuildup", "us_shots", "us_key_passes"]
+
 # --- Modelling (Phase 3): strict time-based split, never random ------------
 # Train on earlier seasons, hold out the most recent complete season as test.
 TRAIN_SEASONS = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21",
