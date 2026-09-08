@@ -146,7 +146,10 @@ EXPERIMENTS: dict[str, bool] = {
     "fbref_v2": False,
 }
 
-CAPT_CEILING_LAMBDA = 0.5       # captaincy ceiling-EV upside weight (models/captaincy.py)
+CAPT_CEILING_LAMBDA = 0.5       # captaincy ceiling-EV upside weight (models/captaincy.py);
+# swept over {0.0, 0.25, 0.5, 0.75, 1.0} in tags capt_lam_0.0..1.0 (2026-09-08,
+# 6 seasons/1 replica); 0.5 measured the highest 6-season-mean capt_capture
+# (0.578, vs 0.576/0.25, 0.572/0.75, 0.547/1.0, 0.563/0.0 control)
 CHIPS_V2_HYSTERESIS = 0.0       # chip scheduler v2 fire-now-vs-wait margin (optimize/chips.py)
 
 

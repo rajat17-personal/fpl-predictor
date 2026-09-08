@@ -140,10 +140,15 @@ def main(argv=None) -> int:
     ap.add_argument("--tag", default=None,
                     help="write a tagged data/processed/experiments/wf_<tag>.csv/.json result "
                          "instead of overwriting walk_forward_results.csv")
+    ap.add_argument("--capt-lambda", type=float, default=None,
+                    help="override config.CAPT_CEILING_LAMBDA for this run "
+                         "(only affects the capt_ceiling experiment)")
     args = ap.parse_args(argv)
 
     exp = config.resolve_experiments(args.experiments)
     capt_col_active = "xp_capt_ceiling" if exp["capt_ceiling"] else None
+    capt_lambda = (config.CAPT_CEILING_LAMBDA if args.capt_lambda is None
+                   else args.capt_lambda)
 
     if args.seasons:
         seasons = [s.strip() for s in args.seasons.split(",") if s.strip()]
@@ -162,7 +167,7 @@ def main(argv=None) -> int:
             # immediately prior to T, never on the shipped 2025-26 artifact.
             val_season = DATA_SEASONS[DATA_SEASONS.index(T) - 1]
             artifact = captaincy.fit_ceiling_artifact(models, df, val_season, cols)
-            te = captaincy.add_ceiling_ev(te, artifact)
+            te = captaincy.add_ceiling_ev(te, artifact, lam=capt_lambda)
         # Multiple teams: jittered replicas of the core model config.
         totals = [int(run_season(_jitter(te, "xp_med", s), "xp_med",
                                  use_chips=False).points.sum())
@@ -229,6 +234,7 @@ def main(argv=None) -> int:
             "seasons": seasons,
             "replicas": args.replicas,
             "experiments": exp,
+            "capt_lambda": capt_lambda,
             "model_mean": int(gm["model_mean"]),
             "model_std": int(season_std),
             "model+chips": int(gm["model+chips"]),
@@ -245,7 +251,8 @@ def main(argv=None) -> int:
         print("\nsaved data/processed/walk_forward_results.csv")
 
     print(f"[wf] tag={args.tag or 'none'} seasons={len(seasons)} replicas={args.replicas} "
-          f"experiments={','.join(active_flags) or 'none'} model_mean={gm['model_mean']} "
+          f"experiments={','.join(active_flags) or 'none'} capt_lambda={capt_lambda} "
+          f"model_mean={gm['model_mean']} "
           f"model+chips={gm['model+chips']} capt_capture={capt_capture_avg}", flush=True)
     return 0
 
