@@ -212,7 +212,7 @@ useful confirmation signal), not a gate on any of them.
 | capt_mc | capture improves ≥ +2 pts abs. over captain-by-mean | not run — gated on capt_ceiling capture delta of +0.015, below the +0.02 trigger | not triggered | off |
 | chips_v2 | model+chips improves over current default; no chip's isolated value regresses; WC value measured | model+chips −48 (2262→2214); bb regressed outside its CI (10.0→8.5); Wildcard measured for the first time (14.2±9.0/gw, n=4, `wf_wc_measure`) | rejected | off |
 | team_strength | `tests/test_leakage.py` leakage assertion passes; D-07: model+chips improves over the current default and multi_safe does not regress | leakage test passes; model+chips −2/season (2262→2260); multi_safe −12/season (2147→2135) | rejected | off |
-| rl_strategy | beats chips_v2 on the same harness (D-02) | pending | pending | off |
+| rl_strategy | beats chips_v2 on the same harness (D-02) | seed-mean model+chips 2020 (1847/2069/2144, spread 297) vs chips_v2's 2192 on the same 5 seasons — a −172/season regression, not an improvement | rejected | off |
 | understat | model+chips contribution measured via the harness | pending | pending | off |
 | fotmob | model+chips contribution measured via the harness | pending | pending | off |
 | fbref_v2 | model+chips contribution measured via the harness | pending | pending | off |
@@ -426,7 +426,88 @@ previously-recorded 6-season `chips_v2` figure (2214, which includes 2020-21).
 command if `scheduler="rl"` is ever requested for 2020-21 specifically — this
 is a permanent, structural constraint, not a bug to silently work around.
 
-<!-- rl_strategy: results filled by the training + adoption run below -->
+- ☑ **Box spent as declared.** All 15 policies (5 trainable seasons x 3 seeds)
+  hit the 30-minute wall-clock cap (`capped: true` in every sidecar JSON) —
+  none converged early on `--timesteps 200000`, confirming the cap, not the
+  timestep count, was the real budget enforcement (D-16):
+
+  | test season | seed 0 timesteps | seed 1 timesteps | seed 2 timesteps |
+  |---|---:|---:|---:|
+  | 2021-22 | 8373 | 8161 | 8361 |
+  | 2022-23 | 4588 | 4516 | 4662 |
+  | 2023-24 | 6934 | 6695 | 6920 |
+  | 2024-25 | 13645 | 13502 | 14093 |
+  | 2025-26 | 13079 | 12775 | 13339 |
+
+  Total spend: 15 x 30 min = 450 policy-minutes, executed as 3 parallel
+  per-seed runs (~2.5 real-clock hours, not the ~9-hour worst case of running
+  all 15 sequentially).
+- ☑ **5-season comparison, not 6 — apples-to-apples.** Both `chips_v2` and
+  `rl_strategy` were re-measured on the same 5 seasons this experiment can
+  train on (2021-22 through 2025-26, 5 replicas each), not the previously
+  recorded 6-season `chips_v2` figure (2214, which includes the untrainable
+  2020-21): `wf_chips_v2_5season.json` -> **`model+chips` 2192** (vs the
+  matching 5-season v1 baseline `wf_baseline_5season.json` -> 2272, an
+  internally consistent −80/season chips_v2 regression, the same direction
+  plan 09-04 already found over 6 seasons).
+- **Adoption-deciding runs, one per seed** (`wf_rl_adopt_seed{0,1,2}.json`,
+  5 seasons x 5 replicas, `rl_strategy` on, `chips_v2` off, `scheduler: rl`
+  confirmed in every summary):
+
+  | seed | model+chips |
+  |---:|---:|
+  | 0 | 1847 |
+  | 1 | 2069 |
+  | 2 | 2144 |
+  | **mean** | **2020** |
+  | spread (max−min) | 297 |
+
+  Seed-mean **2020** vs the same-5-season `chips_v2` figure **2192** — a
+  **−172/season regression**, not an improvement, and every individual seed
+  (even the best, 2144) already falls short of 2192. D-02's bar (beat the
+  solver-scored scheduler) is not met by any seed, let alone the mean.
+- ☑ **Isolated-chip comparison** (same 5-season basis; `chips_v2_5season`
+  vs the three `rl_adopt_seed*` runs):
+
+  | chip | chips_v2 (mean±std, n) | rl seed0 | rl seed1 | rl seed2 |
+  |------|----------------------------:|---:|---:|---:|
+  | bb | 8.7±6.6 (10) | — | — | 8.5±9.2 (2) |
+  | fh | 1.2±8.9 (6) | — | −5.5±19.1 (2) | 78.0 (1) |
+  | tc | 8.8±5.7 (10) | — | — | — |
+  | wc | 9.6±19.5 (10) | 20.0±28.3 (2) | −22.0±8.5 (2) | 7.5±0.7 (2) |
+
+  The RL policy plays far fewer chips overall than either heuristic scheduler
+  (most halves end with an unused chip rather than the v1/v2 end-of-half
+  forcing rule triggering, since the policy under-explores the chip actions
+  within its short training budget) — the sparse, noisy per-chip counts above
+  are a symptom of that, not a like-for-like isolated-value comparison; the
+  whole-season `model+chips` figures above are the decision-relevant number.
+- ☑ **Training-vs-held-out curve: no Pitfall-4 divergence observed.** Across
+  all 15 runs the training-episode reward was flat-to-slightly-declining
+  over the capped window (e.g. seed 0 / 2025-26: 2212 -> 2156 from t=1024 to
+  t=12288) while the held-out score stayed noisy around the same level
+  (2194 -> 2086, no monotonic trend either way) — the classic FPL-RL audit
+  smoking gun (training reward climbing while the held-out/harness score
+  plateaus or falls) did **not** appear. The honest reading is simpler and
+  less exotic: in a 30-minute, 2-4-training-season budget the policy did not
+  learn a materially better strategy than a random or heuristic one, and the
+  masked action space (chip x transfer-count) with dozens of legal actions
+  per gameweek needs far more experience than ~5,000-14,000 timesteps to
+  move meaningfully off its initialization.
+- **D-07/D-16 verdict: REJECTED.** `config.EXPERIMENTS['rl_strategy']` stays
+  `False` (already the default; no flip, so no change needed to
+  `tests/test_experiments.py`'s all-flags-default-off assertion). Per D-08
+  and D-16's stop rule, the box is exhausted and the code stays merged
+  behind the default-off flag — `optimize/rl_env.py` and
+  `optimize/rl_train.py` remain in the repository, nothing deleted, and no
+  additional seeds, extended timestep budget, or further tuning were spent
+  chasing this result. One explicit note per this plan's own instruction:
+  the audited FPL-RL project's headline 2,918-point figure was in-sample
+  (judged by a different, optimistic signal than an honest walk-forward
+  harness measures) and was never this experiment's target — this
+  experiment's own honest, leakage-safe number (seed-mean 2020, well below
+  both v1's 2272 and chips_v2's 2192 on the same 5 seasons) is the answer to
+  a different, harder question than that headline was ever measuring.
 
 ## Reference findings (why the priorities)
 
