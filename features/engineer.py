@@ -36,9 +36,15 @@ ROLL_STATS = [
 
 # Fixture-context features known BEFORE kickoff (safe to use as-is).
 # Optional cols (e.g. FBREF_COLS) are filtered to those actually present at runtime.
+# TEAM_STRENGTH_COLS is included unconditionally here (like every other optional
+# source) even though EXPERIMENTS["team_strength"] can be off -- the flag only
+# controls whether backtest/walk_forward.py's harness drops these columns before
+# handing the frame to train_predict, so an A/B is a flag away and never forces a
+# features.parquet rebuild. Do not "fix" this by gating inclusion here.
 CONTEXT_COLS = (["was_home", "fdr_self", "fdr_opp", "is_dgw", "price_m",
                  "selected", "transfers_balance"]
-                + config.SET_PIECE_COLS + config.ODDS_COLS + config.FBREF_COLS)
+                + config.SET_PIECE_COLS + config.ODDS_COLS + config.FBREF_COLS
+                + config.TEAM_STRENGTH_COLS)
 
 ID_COLS = ["season", "player_key", "player_code", "player_id", "name", "team",
            "position", "gw", "fixture_id", "kickoff_time"]

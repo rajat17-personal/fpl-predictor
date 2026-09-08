@@ -123,6 +123,23 @@ ODDS_COLS = ["odds_pwin", "odds_pdraw", "odds_plose", "odds_pover25"]
 FBREF_COLS = ["fb_tkl_int_90", "fb_blocks_90", "fb_clr_90",
               "fb_sca_90", "fb_gca_90", "fb_prog_90"]
 
+# Team attack/defence strength ratings from an expanding pre-gameweek
+# Dixon-Coles fit (data/team_strength.py) — OPTIONAL enrichment, computed
+# UNCONDITIONALLY (independent of EXPERIMENTS["team_strength"] below): the
+# pipeline no-ops without data/processed/team_strength.parquet, matching every
+# other optional source here, but once it exists the join always runs so
+# player_gw.parquet/features.parquet stay stable across an A/B run — the
+# feature-selection gate lives in backtest/walk_forward.py instead, so
+# flipping the experiment flag is never a pipeline rebuild. Fills the two
+# verified odds holes: ODDS_COLS is null for the whole 2016-19 training
+# window (bookmaker CSVs join on the `team` name column, which is 0%
+# populated those seasons), and a multi-gameweek horizon has no posted odds
+# for future fixtures either — ratings computed from results-to-date cover
+# both.
+TEAM_STRENGTH_COLS = ["ts_attack_self", "ts_defence_self", "ts_attack_opp",
+                      "ts_defence_opp", "ts_xg_for", "ts_xg_against",
+                      "ts_pwin", "ts_pcs"]
+
 # --- Modelling (Phase 3): strict time-based split, never random ------------
 # Train on earlier seasons, hold out the most recent complete season as test.
 TRAIN_SEASONS = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21",

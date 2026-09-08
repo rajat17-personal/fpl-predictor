@@ -14,7 +14,7 @@ import sys
 import pandas as pd
 
 import config
-from data import fbref as fbref_mod, id_map, odds as odds_mod
+from data import fbref as fbref_mod, id_map, odds as odds_mod, team_strength as ts_mod
 
 # Columns coerced to numeric (everything measurable); the rest stay as-is.
 _NUMERIC = {
@@ -144,6 +144,16 @@ def build() -> pd.DataFrame:
         full = fbref_mod.attach(full, id_map.load_id_map())
     except Exception as exc:
         print(f"  [fbref] skipped ({exc})")
+
+    # Optional team-strength (Dixon-Coles) ratings — no-op unless
+    # data/processed/team_strength.parquet exists. Always joined when present,
+    # independent of EXPERIMENTS["team_strength"]; see config.py's
+    # TEAM_STRENGTH_COLS comment for why the feature-selection gate lives in
+    # backtest/walk_forward.py instead.
+    try:
+        full = ts_mod.attach(full)
+    except Exception as exc:
+        print(f"  [team_strength] skipped ({exc})")
     print(f"  [pos]   position coverage after backfill: "
           f"{full['position'].notna().mean():.1%}")
 
