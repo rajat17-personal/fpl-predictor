@@ -4,9 +4,11 @@ import pandas as pd
 import pytest
 
 import config
+from data import team_strength
 
 FEATURES = config.PROCESSED_DIR / "features.parquet"
 RAW = config.PROCESSED_DIR / "player_gw.parquet"
+TEAM_STRENGTH = config.PROCESSED_DIR / "team_strength.parquet"
 needs_data = pytest.mark.skipif(not (FEATURES.exists() and RAW.exists()),
                                 reason="run the data pipeline first")
 
@@ -45,3 +47,43 @@ def test_zero_minutes_never_scores_positive(feat):
     zero = feat[feat.y_minutes == 0]
     assert (zero.y_points <= 0).all()
     assert (zero.y_points == 0).mean() > 0.999
+
+
+@pytest.mark.skipif(not TEAM_STRENGTH.exists(),
+                    reason="run `python -m data.team_strength` first")
+def test_team_strength_ratings_reproducible_from_prior_matches():
+    """D-06's explicit leakage requirement: a stored (season, gw, team) rating
+    row must be exactly reproducible from an independently rebuilt match table
+    truncated to matches strictly before that gameweek -- never from the whole
+    season (Pitfall 2, 09-RESEARCH.md)."""
+    ratings = pd.read_parquet(TEAM_STRENGTH)
+
+    # One row per (season, gw, team_id), never per (season, team_id) -- a
+    # season-level fit (Pitfall 2's own stated warning sign) would collapse
+    # every gameweek in a season onto a single row and fail this.
+    assert ratings.duplicated(["season", "gw", "team_id"]).sum() == 0
+
+    raw = pd.read_parquet(RAW)
+    matches = team_strength.build_matches(raw)
+
+    season, gw = "2022-23", 20
+    fitted = ratings[(ratings.season == season) & (ratings.gw == gw) & (~ratings.neutral)]
+    assert not fitted.empty, f"no fitted (non-neutral) ratings stored for {season} GW{gw}"
+
+    prior = matches[(matches.season == season) & (matches.gw < gw)]
+    recomputed = team_strength.fit_ratings_as_of(prior)
+
+    stored = fitted.set_index("team_id")
+    common = stored.index.intersection(recomputed.index)
+    assert len(common) == len(stored)
+    # atol=1e-4 is still >10x tighter than the optimizer's own convergence
+    # noise floor (observed: BLAS thread-count-dependent floating-point
+    # reduction order gives ~1e-6 absolute jitter between two runs of the
+    # identical fit) while remaining >1000x tighter than the attack/defence
+    # scale (sd ~0.4) -- a real leakage bug (fitting on the whole season, or
+    # on any match at/after gw) moves these values by orders of magnitude
+    # more than this, not by optimizer noise.
+    np.testing.assert_allclose(stored.loc[common, "attack"].to_numpy(),
+                               recomputed.loc[common, "attack"].to_numpy(), atol=1e-4)
+    np.testing.assert_allclose(stored.loc[common, "defence"].to_numpy(),
+                               recomputed.loc[common, "defence"].to_numpy(), atol=1e-4)
