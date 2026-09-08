@@ -211,7 +211,7 @@ useful confirmation signal), not a gate on any of them.
 | capt_ceiling | capture improves ≥ +2 pts abs. over captain-by-mean | +1.5 pts abs. (0.563→0.578); model+chips +16 (2262→2278) | rejected | off |
 | capt_mc | capture improves ≥ +2 pts abs. over captain-by-mean | not run — gated on capt_ceiling capture delta of +0.015, below the +0.02 trigger | not triggered | off |
 | chips_v2 | model+chips improves over current default; no chip's isolated value regresses; WC value measured | model+chips −48 (2262→2214); bb regressed outside its CI (10.0→8.5); Wildcard measured for the first time (14.2±9.0/gw, n=4, `wf_wc_measure`) | rejected | off |
-| team_strength | `tests/test_leakage.py` leakage assertion passes | pending | pending | off |
+| team_strength | `tests/test_leakage.py` leakage assertion passes; D-07: model+chips improves over the current default and multi_safe does not regress | leakage test passes; model+chips −2/season (2262→2260); multi_safe −12/season (2147→2135) | rejected | off |
 | rl_strategy | beats chips_v2 on the same harness (D-02) | pending | pending | off |
 | understat | model+chips contribution measured via the harness | pending | pending | off |
 | fotmob | model+chips contribution measured via the harness | pending | pending | off |
@@ -314,6 +314,80 @@ merged behind a default-off flag with its number recorded here — never deleted
   nothing deleted). No change to `tests/test_experiments.py`'s all-flags-
   default-off assertion was needed since the default set did not change. The
   heuristic v1 scheduler (`causal_schedule`) remains the shipped default.
+
+### team_strength: expanding-window Dixon-Coles ratings — leakage evidence, horizon graft, and adoption verdict (plan 09-05)
+
+- ☑ **Ratings cover every season including 2016-19, the seasons this option
+  exists to fix.** `data/team_strength.py::build_matches()` reconstructs each
+  fixture's numeric `(season, team_id)` sides from the two distinct
+  `opponent_team_id` values within it — the `team` name column (the odds join
+  key) is 0% populated for 2016-17 through 2019-20, so a name-keyed
+  reconstruction would inherit exactly the same hole. `data/build_table.py`'s
+  guarded join reports **100.0% `ts_attack_self` coverage across every
+  season**, including all four 2016-19 seasons, vs `odds_pwin`'s 64.3%
+  6-season-plus coverage (0% for 2016-19). `player_gw.parquet` stayed at
+  253,509 rows and `features.parquet` gained the 8 declared `ts_*` columns —
+  the join did not multiply or drop a single row.
+- ☑ **Leakage-safety, TESTED.** An unregularized fit at the 20-match minimum
+  diverged (`|attack|>1e3`, `rho>1e9`, overflowing `exp()` into inf/nan) — a
+  42-parameter fit over 20 matches (40 goal observations) is hopelessly
+  underdetermined. Fixed with a small L2 ridge shrinkage
+  (`data/team_strength.py::RIDGE`) toward zero, the correct behaviour for an
+  expanding-window fit that should get less regularized as the season
+  accumulates matches. `tests/test_leakage.py::test_team_strength_ratings_reproducible_from_prior_matches`
+  independently rebuilds the match table, refits GW20 2022-23's ratings from
+  matches `gw < 20` only, and reproduces the stored parquet row within
+  `atol=1e-4` (observed optimizer noise floor ≈1e-6, itself from BLAS
+  thread-count-dependent floating-point reduction order — not a leakage bug);
+  a second assertion confirms one row per `(season, gw, team_id)`, not per
+  `(season, team_id)` (Pitfall 2's own stated warning sign).
+- ☑ **Decision-time horizon graft, TESTED.** `backtest/walk_forward.py`'s
+  `leakage_safe_plan()` grafts the future fixture's **opponent identity**
+  (`opponent_team_id`, added to `FIXTURE_CTX` — knowable ahead, it is on the
+  published fixture list) but re-derives `ts_attack_opp`/`ts_defence_opp`/
+  `ts_xg_for`/`ts_xg_against`/`ts_pwin`/`ts_pcs` from
+  `team_strength.ratings_as_of(season, g)` — the ratings **as of the decision
+  gameweek g**, never the future gameweek's own rating row (which is fit on
+  matches up to `g+k-1`, results the decision-maker at `g` has not seen). No
+  `ts_*` name is in `FIXTURE_CTX` (verified) so nobody can graft one by
+  accident (T-09-05-02).
+- ☑ **Optimistic-vs-frozen A/B, D-06.** `--optimistic-plan` added; both arms
+  reported side by side on the adoption-deciding run
+  (`wf_team_strength_adopt.json`, 6 seasons/5 replicas, `team_strength` on):
+
+  | | multi_safe (honest) | multi_optimistic (peeks at future form) | gap |
+  |---|---:|---:|---:|
+  | 6-season mean | 2135 | 2527 | +392 |
+
+  The gap (+392) lands in the same neighbourhood as the project's own
+  previously-documented +337-optimistic-vs-+40-honest multi-GW leakage
+  finding (`PLAN.md` Refinements) — expected, not new: it is the same
+  structural trap (future-form-peeking looks far better than a frozen-form
+  plan can ever honestly claim), reproduced here on purpose rather than
+  assumed away, exactly as D-06 requires for any horizon-touching change.
+- **Adoption-deciding run** (`python -m backtest.walk_forward --experiments
+  team_strength --optimistic-plan`, the harness's default 6 seasons/5
+  replicas, `wf_team_strength_adopt.json`) against the plan 09-01 baseline
+  (`wf_baseline_phase9.json`):
+
+  | metric | baseline | team_strength on | delta |
+  |--------|---------:|------------------:|------:|
+  | model+chips | 2262 | 2260 | −2 |
+  | multi_safe (honest horizon) | 2147 | 2135 | −12 |
+
+  Both pre-declared D-07 conditions fail: `model+chips` did not improve (it
+  moved slightly down, well within the harness's own season-to-season noise
+  band, SE≈40) and `multi_safe` regressed rather than held. The leakage-test
+  criterion (D-06's own stated bar for this specific option) passes, but D-07's
+  mechanical model+chips/multi_safe rule — applied against the current default
+  configuration exactly as plan 09-03/09-04 applied it — does not.
+- **D-07 auto-adopt verdict: REJECTED.** `config.EXPERIMENTS['team_strength']`
+  stays `False` (already the default; no flip, so no change needed to
+  `tests/test_experiments.py`'s all-flags-default-off assertion). Per D-08 all
+  new code (`data/team_strength.py`, the guarded `build_table.py`/
+  `features/engineer.py` joins, the `leakage_safe_plan` decision-time graft,
+  `--optimistic-plan`) stays merged, nothing deleted — the columns are computed
+  unconditionally and simply unused as model features by default.
 
 ## Reference findings (why the priorities)
 
