@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 09
 current_phase_name: xP Model & Optimizer Improvement Experiments
 status: executing
-stopped_at: Completed 09-03-PLAN.md
-last_updated: "2026-09-08T12:58:48.969Z"
+stopped_at: Completed 09-04-PLAN.md
+last_updated: "2026-09-08T13:38:47.185Z"
 last_activity: 2026-09-08
 last_activity_desc: Phase 09 execution started
-state_head: 968c361ae303d05f44f9b820496d4b5d45b780a6
+state_head: 8a311dbd60231ccde17bc6a8486cfd879089eb80
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 55
-  completed_plans: 45
+  completed_plans: 46
   percent: 67
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-07)
 ## Current Position
 
 Phase: 09 (xP Model & Optimizer Improvement Experiments) — EXECUTING
-Plan: 4 of 10
+Plan: 5 of 10
 Status: Ready to execute
 Last activity: 2026-09-08 — Phase 09 execution started
 
@@ -108,6 +108,7 @@ Progress: [███████░░░] 67% (6/7 phases, 39 plans complete)
 | Phase 09 P01 | 25min | 3 tasks | 6 files |
 | Phase 09 P02 | 22min | 3 tasks | 9 files |
 | Phase 09 P03 | 40min | 3 tasks | 3 files |
+| Phase 09 P04 | 37min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -216,6 +217,8 @@ Recent decisions affecting current work:
 - [Phase 09]: [Phase 09-02]: theFPLkiwi's projection CSV column-block position is a fixed non-numeric-header index (11), not label text or a fixed 13-column count -- 2021-22's own FPL_GW1.csv omits the trailing Goals block (12 columns), so the plan's own measured_facts undercounted layout variance even within one season
 - [Phase 09]: capt_ceiling REJECTED: adoption run measured +1.5pt absolute capture improvement (0.563->0.578), below the pre-declared >=+2pt D-06 bar; flag stays default-off, code stays merged (D-08) — D-07's mechanical auto-adopt rule applied against the pre-declared criterion; model+chips improved +16/season but capture (the named criterion) did not clear the bar
 - [Phase 09]: capt_mc (Monte-Carlo captaincy variant) NOT built: Branch B taken since capt_ceiling's capture delta (+0.015) fell short of the +0.02 trigger for building models/simulate.py — Research doc's own sequencing rule gates the Monte-Carlo layer on the cheap quantile variant proving the ceiling direction pays first; recorded as a numbered non-decision, not a silent skip
+- [Phase 09]: [Phase 09] [Phase 09-04]: chips_v2 REJECTED: adoption run measured model+chips -48/season regression (2262->2214) against the plan 09-01 baseline, plus bb's isolated value regressed outside its v1 CI -- flag stays default-off, v1 heuristic scheduler stays shipped default (D-07/D-08)
+- [Phase 09]: [Phase 09] [Phase 09-04]: Wildcard's isolated chip value measured for the first time (+14.2+-9.0 pts/gw, n=4) via a zero-transfer-hold baseline, closing D-06's previously-unmeasured WC criterion regardless of chips_v2's own adoption outcome
 
 ### Pending Todos
 
@@ -242,6 +245,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-08T12:58:48.802Z
-Stopped at: Completed 09-03-PLAN.md
+Last session: 2026-09-08T13:38:37.138Z
+Stopped at: Completed 09-04-PLAN.md
 Resume file: None
