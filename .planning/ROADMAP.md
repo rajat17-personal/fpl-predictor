@@ -342,16 +342,44 @@ Plans:
 **Plans:** 10 plans
 
 Plans:
+**Wave 1**
 
 - [ ] 09-01-PLAN.md — Experiment flag seam + captaincy ceiling EV tracer + measured 6-season baseline
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 09-02-PLAN.md — External-projection benchmark, shared ID crosswalk, committed theFPLkiwi snapshot (D-10)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 09-03-PLAN.md — Captaincy ceiling EV: lambda sweep, adoption run, conditional Monte-Carlo variant
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 09-04-PLAN.md — Chip scheduler v2 (solver-scored, causal) + first measured Wildcard isolated value
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
 - [ ] 09-05-PLAN.md — Dixon-Coles team-strength features, leakage test, decision-time horizon graft
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
 - [ ] 09-06-PLAN.md — RL stack: package-legitimacy gate, dev-only lockfile (D-09), Gymnasium environment
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
 - [ ] 09-07-PLAN.md — RL training inside a declared time-box + the D-02 gate against chip scheduler v2
+
+**Wave 8** *(blocked on Wave 7 completion)*
+
 - [ ] 09-08-PLAN.md — Understat npxG/xGChain/xGBuildup enrichment as rolled features
+
+**Wave 9** *(blocked on Wave 8 completion)*
+
 - [ ] 09-09-PLAN.md — FotMob acquisition (D-11) + FBref spike gate (D-04), closing all enrichment rows
+
+**Wave 10** *(blocked on Wave 9 completion)*
+
 - [ ] 09-10-PLAN.md — Final combined run (D-13), D-05 verdict, product wiring, Phase F ledger close
 
 ---
