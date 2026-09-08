@@ -208,7 +208,7 @@ useful confirmation signal), not a gate on any of them.
 
 | flag | criterion | measured | verdict | default |
 |------|-----------|----------|---------|---------|
-| capt_ceiling | capture improves ≥ +2 pts abs. over captain-by-mean | pending | pending | off |
+| capt_ceiling | capture improves ≥ +2 pts abs. over captain-by-mean | +1.5 pts abs. (0.563→0.578); model+chips +16 (2262→2278) | rejected | off |
 | capt_mc | capture improves ≥ +2 pts abs. over captain-by-mean | pending | pending | off |
 | chips_v2 | no chip's isolated value regresses; WC value measured | pending | pending | off |
 | team_strength | `tests/test_leakage.py` leakage assertion passes | pending | pending | off |
@@ -220,6 +220,35 @@ useful confirmation signal), not a gate on any of them.
 Every row starts `pending`; later plans in this phase fill their own row as they
 measure it. Plan 09-10 finalises this table. A failed experiment keeps its code
 merged behind a default-off flag with its number recorded here — never deleted (D-08).
+
+### capt_ceiling: lambda sweep and adoption verdict (plan 09-03)
+
+- ☑ **Lambda sweep, TESTED, REJECTED at adoption.** `--capt-lambda` swept over
+  {0.0, 0.25, 0.5, 0.75, 1.0} at 6 seasons/1 replica (`wf_capt_lam_<value>`,
+  2026-09-08). Lambda 0.0 reproduced the captain-by-mean control exactly
+  (`capt_capture` 0.563, matching the baseline to within noise), confirming the
+  ceiling column is wired through the correct seam:
+
+  | lambda | capt_capture | model+chips |
+  |-------:|-------------:|------------:|
+  | 0.0 (control) | 0.563 | 2264 |
+  | 0.25 | 0.576 | 2283 |
+  | **0.5 (winner)** | **0.578** | 2278 |
+  | 0.75 | 0.572 | 2272 |
+  | 1.0 | 0.547 | 2270 |
+
+  Lambda 0.5 measured the highest 6-season-mean `capt_capture` and was pinned
+  to `config.CAPT_CEILING_LAMBDA`.
+- ☑ **Adoption-deciding run** (`scripts/experiment_run.sh capt_ceiling_adopt
+  --experiments capt_ceiling`, 6 seasons at the harness's default 5 replicas,
+  `wf_capt_ceiling_adopt.json`): `capt_capture` 0.578 vs the plan 09-01
+  baseline's 0.563 — a **+1.5 percentage-point** absolute move, and
+  `model+chips` 2278 vs baseline 2262 (**+16/season**, no regression). D-06's
+  criterion requires **≥ +2 pts absolute**; +1.5 does not clear it.
+- **D-07 auto-adopt verdict: REJECTED.** `config.EXPERIMENTS['capt_ceiling']`
+  stays `False` (D-08: the code stays merged, nothing deleted). No change to
+  `tests/test_experiments.py`'s all-flags-default-off assertion was needed
+  since the default set did not change.
 
 ## Reference findings (why the priorities)
 
