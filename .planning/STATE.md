@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 09
 current_phase_name: xP Model & Optimizer Improvement Experiments
 status: executing
-stopped_at: Completed 09-05-PLAN.md
-last_updated: "2026-09-08T14:13:29.267Z"
+stopped_at: Completed 09-06-PLAN.md
+last_updated: "2026-09-08T14:52:50.661Z"
 last_activity: 2026-09-08
 last_activity_desc: Phase 09 execution started
-state_head: 6d2075b1a5f20c800499b683b76f5bd13ff0727d
+state_head: c66fe205d03f02404b20d6731accb8d024dde7ea
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 55
-  completed_plans: 47
+  completed_plans: 48
   percent: 67
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-07)
 ## Current Position
 
 Phase: 09 (xP Model & Optimizer Improvement Experiments) — EXECUTING
-Plan: 6 of 10
+Plan: 7 of 10
 Status: Ready to execute
 Last activity: 2026-09-08 — Phase 09 execution started
 
@@ -110,6 +110,7 @@ Progress: [███████░░░] 67% (6/7 phases, 39 plans complete)
 | Phase 09 P03 | 40min | 3 tasks | 3 files |
 | Phase 09 P04 | 37min | 3 tasks | 6 files |
 | Phase 09 P05 | 33min | 3 tasks | 7 files |
+| Phase 09 P06 | 30min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -221,6 +222,9 @@ Recent decisions affecting current work:
 - [Phase 09]: [Phase 09] [Phase 09-04]: chips_v2 REJECTED: adoption run measured model+chips -48/season regression (2262->2214) against the plan 09-01 baseline, plus bb's isolated value regressed outside its v1 CI -- flag stays default-off, v1 heuristic scheduler stays shipped default (D-07/D-08)
 - [Phase 09]: [Phase 09] [Phase 09-04]: Wildcard's isolated chip value measured for the first time (+14.2+-9.0 pts/gw, n=4) via a zero-transfer-hold baseline, closing D-06's previously-unmeasured WC criterion regardless of chips_v2's own adoption outcome
 - [Phase 09]: team_strength REJECTED: adoption run measured model+chips -2/season (2262->2260) and multi_safe -12/season (2147->2135) against the plan 09-01 baseline; both D-07 conditions fail — leakage-test criterion (D-06's own bar for this option) passed but D-07's mechanical model+chips-improves-and-multi_safe-holds rule did not
+- [Phase 09]: [Phase 09] [Phase 09-06]: Human approved all four RL packages via the blocking-human D-12 package-legitimacy gate -- verbatim answer: "Approve all four (Recommended)" (torch==2.12.0, gymnasium==1.3.0, stable-baselines3==2.9.0, sb3-contrib==2.9.0). Live PyPI re-verification at execution time found zero drift from 09-RESEARCH.md's audit.
+- [Phase 09]: [Phase 09] [Phase 09-06]: D-09 isolation proven (not asserted): grep + a parser assertion confirm requirements-rl.txt is referenced by nothing in Dockerfile or any .github/workflows/*.yml; git diff confirms those four files are byte-identical to before this plan.
+- [Phase 09]: [Phase 09] [Phase 09-06]: optimize/rl_env.py::FplStrategyEnv built with a fixed 40-action (chip x transfer-count) space and a realised-points-net-of-hits reward reusing backtest.season's own scoring helpers directly; anti-Pitfall-4 test proves a full-season hold-policy run through the environment sums to exactly run_season's total for the equivalent config. config.EXPERIMENTS['rl_strategy'] stays False; plan 09-07 does the training/comparison.
 
 ### Pending Todos
 
@@ -247,6 +251,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-08T14:13:29.097Z
-Stopped at: Completed 09-05-PLAN.md
+Last session: 2026-09-08T14:52:50.486Z
+Stopped at: Completed 09-06-PLAN.md
 Resume file: None
