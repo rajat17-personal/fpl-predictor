@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 09
 current_phase_name: xP Model & Optimizer Improvement Experiments
 status: executing
-stopped_at: Phase 9 context gathered
-last_updated: "2026-09-08T10:54:32.945Z"
-last_activity: 2026-09-07
-last_activity_desc: Phase 07 execution started
-state_head: 8f16beb860b7dc820c2d93c1c05f2ca1a7dbeac5
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-09-08T11:31:49.176Z"
+last_activity: 2026-09-08
+last_activity_desc: Phase 09 execution started
+state_head: 8e353928e18564270ee66810b3d3e1fd0d3ca732
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 55
-  completed_plans: 42
+  completed_plans: 43
   percent: 67
 ---
 
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-07)
 
 **Core value:** The weekly recommendations (xP table, squad, captains, transfers) must keep flowing reliably — every change must leave the pipeline, API, and site at least as correct and more trustworthy than before.
-**Current focus:** Phase 07 — Parity Validation & Cutover
+**Current focus:** Phase 09 — xP Model & Optimizer Improvement Experiments
 
 ## Current Position
 
-Phase: 09 (xP Model & Optimizer Improvement Experiments) — READY TO EXECUTE
-Plan: 4 of 6
+Phase: 09 (xP Model & Optimizer Improvement Experiments) — EXECUTING
+Plan: 2 of 10
 Status: Ready to execute
-Last activity: 2026-09-07 — Phase 07 execution started
+Last activity: 2026-09-08 — Phase 09 execution started
 
-Progress: [█████████░] 86% (6/7 phases, 39 plans complete)
+Progress: [███████░░░] 67% (6/7 phases, 39 plans complete)
 
 ## Performance Metrics
 
@@ -105,6 +105,7 @@ Progress: [█████████░] 86% (6/7 phases, 39 plans complete)
 | Phase 07 P01 | 46min | 3 tasks | 7 files |
 | Phase 07 P02 | 39min | 3 tasks | 5 files |
 | Phase 07 P03 | 28min | 1 tasks | 10 files |
+| Phase 09 P01 | 25min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -207,6 +208,8 @@ Recent decisions affecting current work:
 - [Phase 07]: [Phase 07-02]: Verified against override ports 8010/8011, not the plan's literal default 8000/8001, because port 8000 is held by the same pre-existing, unrelated vanilla uvicorn (PID 2914) 07-01's SUMMARY already documented and left running untouched.
 - [Phase 07]: [Phase 07]: [Phase 07-03]: Reflowed GwBanner's two-line pill text (dropped the 'deadline:' label) to close a desktop-width nav-row wrap defect, rather than shrinking fonts or widening the header past main/footer's shared 68rem cap -- the banner field's deltas are already blanket-explained by PARITY-DEVIATIONS.md #3/#4, so reflowing its wording introduced no new parity defect (confirmed by the post-fix scripted re-run).
 - [Phase 07]: [Phase 07]: [Phase 07-03]: Treated three manual-pass UAT defects (pitch-card stat-text contrast, missing outgoing red dashed outline, desktop nav-row wrap) as plain React code fixes, not PARITY-DEVIATIONS.md ledger rows -- they are visual/UX bugs found by eyeball, not deliberate React/vanilla behavioral divergences the ledger tracks.
+- [Phase 09]: [Phase 09] [Phase 09-01]: captaincy ceiling artifact refit per test season on its own immediately-prior validation season (matching _preds_for's train/val split), never the shipped 2025-26 intervals.json, to avoid leaking future residuals into an earlier season's captaincy decision
+- [Phase 09]: [Phase 09] [Phase 09-01]: the measured 2262 model+chips 6-season baseline (not D-05's inherited ~2,256 or 09-RESEARCH.md's ~2,263 from the cached CSV) is the number the >=2,280 adoption bar is judged against for the rest of this phase
 
 ### Pending Todos
 
@@ -233,6 +236,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-08T09:37:16.763Z
-Stopped at: Phase 9 context gathered
-Resume file: .planning/phases/09-xp-model-optimizer-improvement-experiments/09-CONTEXT.md
+Last session: 2026-09-08T11:31:49.001Z
+Stopped at: Completed 09-01-PLAN.md
+Resume file: None
