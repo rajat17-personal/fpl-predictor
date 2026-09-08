@@ -389,6 +389,45 @@ merged behind a default-off flag with its number recorded here — never deleted
   `--optimistic-plan`) stays merged, nothing deleted — the columns are computed
   unconditionally and simply unused as model features by default.
 
+### rl_strategy: time-boxed MaskablePPO policy vs the solver-scored chip scheduler (plan 09-07)
+
+**Declared time-box (written before any training was launched, per D-16):**
+
+- **Seeds:** 3 fixed seeds (0, 1, 2), pinned in `config.RL_SEEDS`.
+- **Policies:** one per test season per seed, trained only on seasons strictly
+  before that test season.
+- **Per-policy wall-clock cap:** 30 minutes, enforced inside `optimize/rl_train.py`'s
+  `_TimeBoxCallback`, not by hoping `--timesteps` happens to fit.
+- **Hardware:** GPU-accelerated (RTX 4080, `torch.cuda.is_available()` confirmed
+  `True` this session, `torch==2.12.0+cu130`).
+- **Stop rule:** if the box is exhausted without beating plan 09-04's recorded
+  `chips_v2` `model+chips` figure, the experiment is recorded as rejected with
+  its numbers. No additional seeds, no extended timestep budget, no further
+  tuning.
+
+**Discovered constraint, declared before training started: 2020-21 is excluded.**
+`train_seasons_for(T)` can only train on seasons that are themselves
+`TEST_SEASONS` members (the only seasons with a squad pool `build_gw_pool`/
+`pick_squad` can actually build) — `features.parquet`'s `team` column
+[VERIFIED empirically, this session] is 100% null for 2016-17 through 2019-20
+and 0% null from 2020-21 onward, exactly why `backtest.walk_forward.TEST_SEASONS`
+has always started at 2020-21 rather than `DATA_SEASONS`' own 2016-17 floor —
+a pre-existing, structural property of the whole walk-forward pipeline, not
+something this plan introduces. **2020-21 is `TEST_SEASONS`' own earliest
+member, so by construction it has no earlier `TEST_SEASONS` entry to train a
+policy on at all.** The time-box therefore trains policies for the **5**
+seasons that do have >=1 earlier `TEST_SEASONS` member (2021-22 through
+2025-26) — **15 policies (5 seasons x 3 seeds), not 18** — and the D-02
+adoption comparison runs over those same 5 seasons on both sides (`rl_strategy`
+and a freshly-measured 5-season `chips_v2` figure), so the comparison stays
+apples-to-apples rather than comparing a 5-season RL number against the
+previously-recorded 6-season `chips_v2` figure (2214, which includes 2020-21).
+`optimize/rl_env.py::load_policy` raises a `SystemExit` naming the training
+command if `scheduler="rl"` is ever requested for 2020-21 specifically — this
+is a permanent, structural constraint, not a bug to silently work around.
+
+<!-- rl_strategy: results filled by the training + adoption run below -->
+
 ## Reference findings (why the priorities)
 
 Levers that beat noise: model vs form baseline (+83..92/season), active transfers
