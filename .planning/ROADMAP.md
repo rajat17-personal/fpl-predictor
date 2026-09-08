@@ -339,7 +339,7 @@ Plans:
 **Goal:** Raise honest walk-forward season points from the current ~2,105–2,256 core toward the realistic automated frontier (~2,300+), judged exclusively by the existing leakage-safe 6-season harness (`backtest/walk_forward.py`) — never by optimistic backtests. Candidate experiments, in recommended order: (1) benchmark our xP against public projections (theFPLkiwi/OpenFPL) on common rows to size remaining accuracy headroom; (2) captaincy/TC ceiling EV from `models/intervals.py` quantiles (attacks the measured 4.8 pts/GW captaincy gap); (3) solver-scored chip scheduler v2 judged by the isolated-chip harness; (4) Dixon-Coles/Poisson team-strength features (fills NaN-odds 2016-19 rows and horizon GWs); (5) hybrid RL-for-strategy layer (FPL-RL-style: MaskablePPO chooses chip timing and transfer count while the existing ILP keeps doing player selection) — gated on (3) first, since the RL layer must beat the solver-scored chip scheduler on the same honest harness to earn its complexity; (6) additional enrichment data sources: Understat npxG/xGChain via theFPLkiwi's ready-made ID maps, FotMob per-match defensive stats, and FBref once a Chrome-capable scrape host exists — name→FPL ID mapping is the shared prerequisite, and all enter as features only, never sub-models. Excludes everything already tested and rejected in PLAN.md/IMPROVEMENTS.md (ranking loss, CS sub-model, 3-state minutes, true multi-period MILP). Research: `.planning/research/XP-IMPROVEMENT-OPTIONS.md` (incl. the ADnocap/FPL-RL audit — its 2,918 headline is in-sample, but its RL/MILP split and FotMob source are the salvageable ideas adopted here).
 **Requirements**: TBD
 **Depends on:** Phase 8
-**Plans:** 6/10 plans executed
+**Plans:** 7/10 plans executed
 
 Plans:
 **Wave 1**
@@ -368,7 +368,7 @@ Plans:
 
 **Wave 7** *(blocked on Wave 6 completion)*
 
-- [ ] 09-07-PLAN.md — RL training inside a declared time-box + the D-02 gate against chip scheduler v2
+- [x] 09-07-PLAN.md — RL training inside a declared time-box + the D-02 gate against chip scheduler v2
 
 **Wave 8** *(blocked on Wave 7 completion)*
 

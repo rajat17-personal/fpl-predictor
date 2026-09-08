@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 09
 current_phase_name: xP Model & Optimizer Improvement Experiments
 status: executing
-stopped_at: Completed 09-06-PLAN.md
-last_updated: "2026-09-08T14:52:50.661Z"
+stopped_at: Completed 09-07-PLAN.md
+last_updated: "2026-09-08T18:23:05.089Z"
 last_activity: 2026-09-08
 last_activity_desc: Phase 09 execution started
-state_head: c66fe205d03f02404b20d6731accb8d024dde7ea
+state_head: c407053a925767eb2ae7177bbd17bfdd0a47af41
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 55
-  completed_plans: 48
+  completed_plans: 49
   percent: 67
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-07)
 ## Current Position
 
 Phase: 09 (xP Model & Optimizer Improvement Experiments) — EXECUTING
-Plan: 7 of 10
+Plan: 8 of 10
 Status: Ready to execute
 Last activity: 2026-09-08 — Phase 09 execution started
 
@@ -111,6 +111,7 @@ Progress: [███████░░░] 67% (6/7 phases, 39 plans complete)
 | Phase 09 P04 | 37min | 3 tasks | 6 files |
 | Phase 09 P05 | 33min | 3 tasks | 7 files |
 | Phase 09 P06 | 30min | 3 tasks | 4 files |
+| Phase 09 P07 | 3h 30min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -225,6 +226,8 @@ Recent decisions affecting current work:
 - [Phase 09]: [Phase 09] [Phase 09-06]: Human approved all four RL packages via the blocking-human D-12 package-legitimacy gate -- verbatim answer: "Approve all four (Recommended)" (torch==2.12.0, gymnasium==1.3.0, stable-baselines3==2.9.0, sb3-contrib==2.9.0). Live PyPI re-verification at execution time found zero drift from 09-RESEARCH.md's audit.
 - [Phase 09]: [Phase 09] [Phase 09-06]: D-09 isolation proven (not asserted): grep + a parser assertion confirm requirements-rl.txt is referenced by nothing in Dockerfile or any .github/workflows/*.yml; git diff confirms those four files are byte-identical to before this plan.
 - [Phase 09]: [Phase 09] [Phase 09-06]: optimize/rl_env.py::FplStrategyEnv built with a fixed 40-action (chip x transfer-count) space and a realised-points-net-of-hits reward reusing backtest.season's own scoring helpers directly; anti-Pitfall-4 test proves a full-season hold-policy run through the environment sums to exactly run_season's total for the equivalent config. config.EXPERIMENTS['rl_strategy'] stays False; plan 09-07 does the training/comparison.
+- [Phase 09]: [Phase 09] [Phase 09-07]: 2020-21 permanently excluded from the RL experiment -- features.parquet's team column is 100% null 2016-19, 0% null from 2020-21 onward, so no season before 2020-21 has a usable squad pool; train_seasons_for(T) accepts only TEST_SEASONS members strictly before T, and the D-02 comparison runs over the 5 seasons that qualify (2021-22..2025-26), with chips_v2 freshly re-measured on the same 5-season basis for an apples-to-apples comparison — Data constraint discovered mid-execution, not a plan bug -- documented in IMPROVEMENTS.md and 09-07-SUMMARY.md
+- [Phase 09]: rl_strategy REJECTED: seed-mean model+chips 2020 (1847/2069/2144) vs chips_v2's 2192 on the same 5 seasons -- a -172/season regression on every seed, not just the mean — D-02/D-07/D-16 mechanical rule applied; config.EXPERIMENTS['rl_strategy'] stays False, code stays merged (D-08), no additional seeds or budget spent chasing the result
 
 ### Pending Todos
 
@@ -251,6 +254,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-08T14:52:50.486Z
-Stopped at: Completed 09-06-PLAN.md
+Last session: 2026-09-08T18:23:04.908Z
+Stopped at: Completed 09-07-PLAN.md
 Resume file: None
