@@ -108,6 +108,11 @@ Progress: [█████████░] 86% (6/7 phases, 39 plans complete)
 
 ## Accumulated Context
 
+### Roadmap Evolution
+
+- Phase 8 added: Self-Hosted Gameweek Data Capture — vaastav repo stalled at 2026-27 GW1 (GW2/GW3 missing, suspected archival); self-host per-GW capture from the official FPL API before season rollover deletes element-summary history. Research: .planning/research/DATA-SOURCE-RESILIENCE.md
+- Phase 9 added: xP Model & Optimizer Improvement Experiments — user-requested investigation of ~2,900-pt claims (found to be leaky/hindsight backtests; honest frontier ~2,300+); ranked experiment bundle judged by the leakage-safe walk-forward harness. Research: .planning/research/XP-IMPROVEMENT-OPTIONS.md
+
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.

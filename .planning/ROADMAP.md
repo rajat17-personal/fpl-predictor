@@ -323,5 +323,27 @@ These hold across every phase, not just one:
 - `web/data/*.json` is the pipeline↔product contract. It is consumed unchanged and always fetched at runtime, never bundled into a build.
 - All Python work uses the conda env `python314` at `/home/sraja/miniconda3/envs/python314/bin/python`.
 
+### Phase 8: Self-Hosted Gameweek Data Capture
+
+**Goal:** Remove vaastav/Fantasy-Premier-League as a single point of failure for training data. A new `data/gw_capture.py` reconstructs vaastav-schema per-GW rows (`gw{N}.csv`, `merged_gw.csv`, refreshed `players_raw.csv`/`fixtures.csv`) directly from the official FPL API into `data/raw/2026-27/`, runs from `scripts/daily.sh`, and backfills the already-finished GWs before season rollover makes them unrecoverable (element-summary only retains the current season). vaastav is demoted to past-season backfill; `build_table`/`id_map` consume the captured rows unchanged. Research: `.planning/research/DATA-SOURCE-RESILIENCE.md`.
+**Requirements**: TBD
+**Depends on:** Phase 7
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 8 to break down)
+
+### Phase 9: xP Model & Optimizer Improvement Experiments
+
+**Goal:** Raise honest walk-forward season points from the current ~2,105–2,256 core toward the realistic automated frontier (~2,300+), judged exclusively by the existing leakage-safe 6-season harness (`backtest/walk_forward.py`) — never by optimistic backtests. Candidate experiments, in recommended order: (1) benchmark our xP against public projections (theFPLkiwi/OpenFPL) on common rows to size remaining accuracy headroom; (2) captaincy/TC ceiling EV from `models/intervals.py` quantiles (attacks the measured 4.8 pts/GW captaincy gap); (3) solver-scored chip scheduler v2 judged by the isolated-chip harness; (4) Dixon-Coles/Poisson team-strength features (fills NaN-odds 2016-19 rows and horizon GWs). Excludes everything already tested and rejected in PLAN.md/IMPROVEMENTS.md (ranking loss, CS sub-model, 3-state minutes, true multi-period MILP). Research: `.planning/research/XP-IMPROVEMENT-OPTIONS.md`.
+**Requirements**: TBD
+**Depends on:** Phase 8
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 9 to break down)
+
 ---
 *Roadmap created: 2026-08-31*
