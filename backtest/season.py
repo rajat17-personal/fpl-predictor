@@ -142,13 +142,24 @@ def _update_meta(meta: dict, pool: pd.DataFrame, squad: dict) -> None:
 
 def run_season(preds: pd.DataFrame, xp_col: str, *, use_chips: bool = True,
                max_transfers: int | None = None, record_chips: bool = False,
-               capt_col: str | None = None) -> pd.DataFrame:
+               capt_col: str | None = None, scheduler: str = "v1") -> pd.DataFrame:
     """capt_col: separate prediction column for the captain slot (e.g. "xp_mean" —
-    the armband doubles points, so mean-objective xP is the right captain value)."""
+    the armband doubles points, so mean-objective xP is the right captain value).
+
+    scheduler: "v1" (default) uses the fixture-structure heuristic
+    (`chips.causal_schedule`); "v2" uses the xP-scored causal scheduler
+    (`chips.scored_schedule`, Phase 9 chips_v2 experiment). Chip *application*
+    below is identical either way -- only the choice of WHEN each chip fires
+    changes."""
     gws = sorted(preds.gw.unique())
     # Causal scheduler: chip decisions only see fixtures a few GWs ahead, like a
     # real manager (default_schedule reads the final fixture list = look-ahead).
-    schedule = chips.causal_schedule(preds, xp_col) if use_chips else {}
+    if not use_chips:
+        schedule = {}
+    elif scheduler == "v2":
+        schedule = chips.scored_schedule(preds, xp_col, capt_col=capt_col)
+    else:
+        schedule = chips.causal_schedule(preds, xp_col)
     chip_deltas: list[dict] = []   # isolated marginal chip value (same team, w/ vs w/o)
 
     # --- GW1: build the initial squad from scratch ---

@@ -174,7 +174,8 @@ def main(argv=None) -> int:
                   for s in range(args.replicas)]
         # Full system (chips) — replica 0, and harvest isolated chip values.
         chips_df = run_season(te, "xp_med", use_chips=True, record_chips=True,
-                              capt_col=capt_col_active)
+                              capt_col=capt_col_active,
+                              scheduler="v2" if exp["chips_v2"] else "v1")
         chip_recs.extend({"season": T, **d} for d in chips_df.attrs["chip_deltas"])
         cdf = run_season(te, "xp_med", capt_col=capt_col_active or "xp_mean", use_chips=False)
         capt_mean = int(cdf.points.sum())
