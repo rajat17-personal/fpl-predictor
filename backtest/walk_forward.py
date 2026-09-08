@@ -217,13 +217,23 @@ def main(argv=None) -> int:
     print(f"  hold (no xfers)  : {gm['hold']}   -> active mgmt +{gm['model_mean']-gm['hold']}")
     print(f"  within-season team spread (jitter): ~±{int(res['model_std'].mean())} pts")
 
-    # Isolated chip value across all instances.
+    # Isolated chip value across all instances (fh/bb/tc: same team scored
+    # with vs without the chip; wc: same team vs a zero-transfer hold).
     cr = pd.DataFrame(chip_recs)
+    chip_deltas_summary: dict[str, dict[str, float]] = {}
     if len(cr):
         print("\n=== Isolated chip value (same team, with vs without) ===")
         agg = cr.groupby("chip")["delta"].agg(["mean", "std", "count"]).round(1)
         print(agg.to_string())
         print("(positive = the chip added points on the week it was played)")
+        # ddof=1 std is NaN for a single-observation chip (e.g. one WC per
+        # season/replica) -- 0.0 is the honest answer, same guard as model_std.
+        chip_deltas_summary = {
+            str(chip): {"mean": float(row["mean"]),
+                        "std": float(row["std"]) if pd.notna(row["std"]) else 0.0,
+                        "count": int(row["count"])}
+            for chip, row in agg.iterrows()
+        }
 
     active_flags = sorted(k for k, v in exp.items() if v)
     capt_capture_avg = round(float(res["capt_capture"].mean()), 3)
@@ -244,6 +254,7 @@ def main(argv=None) -> int:
             "multi_safe": int(gm["multi_safe"]),
             "form": int(gm["form"]),
             "hold": int(gm["hold"]),
+            "chip_deltas": chip_deltas_summary,
         }
         write_json(summary, config.EXPERIMENTS_DIR / f"wf_{args.tag}.json", indent=1)
         print(f"\nsaved data/processed/experiments/wf_{args.tag}.csv/.json")

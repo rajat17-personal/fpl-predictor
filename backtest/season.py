@@ -186,18 +186,23 @@ def run_season(preds: pd.DataFrame, xp_col: str, *, use_chips: bool = True,
         if chip in ("wc", "fh"):
             budget = _team_value(squad, pool, meta) + bank
             r = pick_squad(pool, budget=budget)
-            if chip == "wc":                       # permanent reset
-                squad, meta = _squad_from_pick(r)
-                bank = round(budget - r["cost"], 1)
             starters, squad_codes, captain = _pick_lists(r)
             capt_code = captain
             pts = _score(pool_idx, starters, squad_codes, captain, "normal")
-            # Free Hit value vs simply holding the current squad this gameweek.
-            if record_chips and chip == "fh":
+            # Free Hit / Wildcard isolated value vs simply holding the current
+            # squad this gameweek (zero transfers) -- measured against the
+            # PRE-reset squad/bank, before wc's permanent replacement below, so
+            # the baseline reflects the team the manager actually had. This is
+            # the same same-gameweek isolation FH/BB/TC already use, so all
+            # four are directly comparable; a wildcard's real value is largely
+            # the multi-gameweek squad it leaves behind, which this delta does
+            # NOT capture -- that shows up in the whole-season model+chips
+            # figure instead.
+            if record_chips and chip in ("fh", "wc"):
                 r0 = optimize_gw(pool, squad, bank, 0, mode="normal", max_transfers=0)
                 base = _score(pool_idx, r0["starters"], list(r0["squad"]),
                               r0["captain_code"], "normal")
-                chip_deltas.append({"gw": gw, "chip": "fh", "delta": pts - base})
+                chip_deltas.append({"gw": gw, "chip": chip, "delta": pts - base})
             if chip == "wc":                       # permanent reset
                 squad, meta = _squad_from_pick(r)
                 bank = round(budget - r["cost"], 1)
