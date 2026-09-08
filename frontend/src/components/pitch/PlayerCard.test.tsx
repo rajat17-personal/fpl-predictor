@@ -220,3 +220,46 @@ describe("PlayerCard — mark and diff badges (D-13, D-16, D-18)", () => {
     expect(screen.queryByText("Suggested transfer out")).not.toBeInTheDocument();
   });
 });
+
+describe("PlayerCard — outgoing red dashed outline (07-03 UAT G-07-2)", () => {
+  it("gives diff=out the same dashed-outline idiom as GhostCard, in the bad token", () => {
+    const { container } = render(
+      <PlayerCard player={basePlayer()} captain={false} vice={false} diff="out" />,
+    );
+    const outer = container.firstElementChild as HTMLElement;
+    expect(outer.className).toContain("border-dashed");
+    expect(outer.className).toContain("border-bad");
+  });
+
+  it("applies no dashed outline for diff=none or diff=in", () => {
+    const { container: noneContainer } = render(
+      <PlayerCard player={basePlayer()} captain={false} vice={false} diff="none" />,
+    );
+    expect((noneContainer.firstElementChild as HTMLElement).className).not.toContain(
+      "border-dashed",
+    );
+
+    const { container: inContainer } = render(
+      <PlayerCard player={basePlayer()} captain={false} vice={false} diff="in" />,
+    );
+    expect((inContainer.firstElementChild as HTMLElement).className).not.toContain(
+      "border-dashed",
+    );
+  });
+});
+
+describe("PlayerCard — pitch stat-line contrast (07-03 UAT G-07-1)", () => {
+  it("uses the pitch-stat backdrop tokens for the price/xP line when onPitch is true", () => {
+    render(<PlayerCard player={basePlayer()} captain={false} vice={false} onPitch />);
+    const statLine = screen.getByText("£6.5 · 3.2");
+    expect(statLine.className).toContain("bg-pitch-stat-bg");
+    expect(statLine.className).toContain("text-pitch-stat-ink");
+  });
+
+  it("keeps the plain ink-2 stat colour when onPitch is false (Bench, GhostCard)", () => {
+    render(<PlayerCard player={basePlayer()} captain={false} vice={false} />);
+    const statLine = screen.getByText("£6.5 · 3.2");
+    expect(statLine.className).toContain("text-ink-2");
+    expect(statLine.className).not.toContain("bg-pitch-stat-bg");
+  });
+});

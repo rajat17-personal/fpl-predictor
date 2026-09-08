@@ -124,6 +124,34 @@ describe("Pitch — ghost card (D-16, D-18)", () => {
   });
 });
 
+describe("Pitch — onPitch contrast threading (07-03 UAT G-07-1)", () => {
+  it("gives a Midfielders-row card the pitch-stat backdrop, but not a Bench-row card", () => {
+    render(<Pitch players={players} captainCode={captainCode} viceCode={null} />);
+
+    const midRow = screen.getByRole("group", { name: "Midfielders" });
+    const midStatLine = within(midRow).getAllByText(/^£/)[0];
+    expect(midStatLine.className).toContain("bg-pitch-stat-bg");
+
+    const benchRow = screen.getByRole("group", { name: "Bench" });
+    const benchStatLine = within(benchRow).getAllByText(/^£/)[0];
+    expect(benchStatLine.className).not.toContain("bg-pitch-stat-bg");
+  });
+
+  it("never gives a ghost card the pitch-stat backdrop, even in a grass row", () => {
+    render(
+      <Pitch
+        players={players}
+        captainCode={captainCode}
+        viceCode={null}
+        ghost={{ row: "MID", afterCode: ODEGAARD, player: GHOST_PLAYER }}
+      />,
+    );
+    const ghostCard = screen.getByLabelText("Suggested incoming player");
+    const ghostStatLine = within(ghostCard).getByText(/^£/);
+    expect(ghostStatLine.className).not.toContain("bg-pitch-stat-bg");
+  });
+});
+
 describe("Pitch — onMark threading", () => {
   it("threads onMark through to every card, making the popover interactive", () => {
     const onMark = vi.fn();
