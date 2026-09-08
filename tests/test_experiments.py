@@ -8,7 +8,7 @@ import pytest
 
 import config
 from backtest.season import run_season
-from backtest.walk_forward import resolve_scheduler
+from backtest.walk_forward import apply_experiment_feature_gating, resolve_scheduler
 from models import captaincy
 
 FEATURES = config.PROCESSED_DIR / "features.parquet"
@@ -101,6 +101,35 @@ def test_resolve_scheduler_rl_and_chips_v2_together_exits_naming_both():
         resolve_scheduler(_exp(rl_strategy=True, chips_v2=True))
     msg = str(exc.value)
     assert "rl_strategy" in msg and "chips_v2" in msg
+
+
+# --- backtest/walk_forward.py::apply_experiment_feature_gating (plan 09-08) --
+
+def test_feature_gating_drops_ts_and_us_families_when_off():
+    df = pd.DataFrame({
+        "ts_attack_self": [1.0], "ts_pcs": [0.5],
+        "us_npxg_r5": [0.2], "us_shots_r3": [1.0],
+        "minutes_r5": [90.0],
+    })
+    out = apply_experiment_feature_gating(df, {"team_strength": False, "understat": False})
+    assert not any(c.startswith("ts_") for c in out.columns)
+    assert not any(c.startswith("us_") for c in out.columns)
+    assert "minutes_r5" in out.columns
+
+
+def test_feature_gating_keeps_family_when_flag_on():
+    df = pd.DataFrame({"ts_attack_self": [1.0], "us_npxg_r5": [0.2], "minutes_r5": [90.0]})
+    out = apply_experiment_feature_gating(df, {"team_strength": True, "understat": True})
+    assert "ts_attack_self" in out.columns
+    assert "us_npxg_r5" in out.columns
+
+
+def test_feature_gating_missing_key_defaults_to_off():
+    """Callers may pass a partial dict -- an absent key must behave as False,
+    not KeyError, since `.get()` is the documented contract."""
+    df = pd.DataFrame({"ts_attack_self": [1.0], "us_npxg_r5": [0.2]})
+    out = apply_experiment_feature_gating(df, {})
+    assert list(out.columns) == [] and len(out) == 1
 
 
 # --- models.captaincy --------------------------------------------------------

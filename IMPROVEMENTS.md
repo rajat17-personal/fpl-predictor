@@ -213,7 +213,7 @@ useful confirmation signal), not a gate on any of them.
 | chips_v2 | model+chips improves over current default; no chip's isolated value regresses; WC value measured | model+chips −48 (2262→2214); bb regressed outside its CI (10.0→8.5); Wildcard measured for the first time (14.2±9.0/gw, n=4, `wf_wc_measure`) | rejected | off |
 | team_strength | `tests/test_leakage.py` leakage assertion passes; D-07: model+chips improves over the current default and multi_safe does not regress | leakage test passes; model+chips −2/season (2262→2260); multi_safe −12/season (2147→2135) | rejected | off |
 | rl_strategy | beats chips_v2 on the same harness (D-02) | seed-mean model+chips 2020 (1847/2069/2144, spread 297) vs chips_v2's 2192 on the same 5 seasons — a −172/season regression, not an improvement | rejected | off |
-| understat | model+chips contribution measured via the harness | pending | pending | off |
+| understat | model+chips improves ≥2,280 primary bar (D-05/D-06), outside noise (D-07) | model+chips +16 (2262→2278, 2 short of the 2,280 bar); multi_safe +33 (2147→2180); fixture-level MAE/Spearman flat-to-slightly-worse (1.8751→1.8761 / 0.3620→0.3599); join coverage 19.9%→41.2% row-level (94.7% of distinct names) after closing a crosswalk gap + 78 fixups | rejected | off |
 | fotmob | model+chips contribution measured via the harness | pending | pending | off |
 | fbref_v2 | model+chips contribution measured via the harness | pending | pending | off |
 
@@ -508,6 +508,101 @@ is a permanent, structural constraint, not a bug to silently work around.
   experiment's own honest, leakage-safe number (seed-mean 2020, well below
   both v1's 2272 and chips_v2's 2192 on the same 5 seasons) is the answer to
   a different, harder question than that headline was ever measuring.
+
+### understat: non-penalty xG + involvement-chain metrics — crosswalk gap found, fixture-level accuracy flat, adoption verdict (plan 09-08)
+
+- ☑ **Join built and cached.** `data/understat.py` fetches per-player match
+  histories via `understatapi` (the real API has no single per-league-season
+  endpoint — `fetch_season()` combines the league's fixture-id list with
+  every roster player's whole career history, filtered to that season's
+  fixture ids) and writes `data/processed/understat.parquet`
+  (109,592 player-match rows, 2016-17 through 2026-27, cached under
+  `data/raw/understat/`, zero network calls on a cache-warm rerun).
+- ☑ **Crosswalk gap found and closed, TESTED — a real assumption delta.**
+  The first real join measured only **19.9% row-level coverage**
+  (413/1,980 distinct Understat names resolved) through
+  `data.id_crosswalk.resolve_by_name`'s existing tiers alone. Root cause:
+  theFPLkiwi's `ID_Dictionary.csv` (plan 09-02's crosswalk source) is a
+  **current-squad-only snapshot** (~454 rows) — it structurally cannot
+  resolve a historically-departed player (Harry Kane, Sergio Agüero, Diego
+  Costa, …) no matter how many name-spelling fixups are added, since the
+  player is simply absent from that source, not misspelled in it. Fixed by
+  extending `resolve_by_name` with a third tier,
+  `id_crosswalk._fpl_name_index()`, matching against **every** historical
+  `player_code` `data/id_map.py` has ever recorded (2,737+ codes, not
+  theFPLkiwi's ~454) — raising coverage to 1,730/1,980 distinct names
+  (row-level 39.8%). A second, smaller bug (Understat's JSON leaves
+  apostrophes HTML-entity-escaped, e.g. `"N&#039;Golo Kanté"`) was fixed
+  with `html.unescape()` in `data/understat.py`. 78 additional
+  `_NAME_FIXUPS` entries (74 multi-token nickname↔full-legal-name mappings,
+  verified by requiring both Understat tokens to appear as **whole** tokens
+  in exactly one `id_map` candidate — never a coincidental substring — plus
+  4 individually football-knowledge-verified mononyms) closed the final gap
+  for well-known nickname/full-name mismatches (Diego Costa, David Luiz,
+  Cristiano Ronaldo, Rúben Neves, …). **Final coverage: 1,875/1,980 distinct
+  names (94.7%), 41.2% row-level** — the remaining ~105 names are
+  deliberately unresolved common mononyms (e.g. "Fred", "Jonny") where a
+  second real same-era EPL player shares the identical display name and no
+  season/team context is available to disambiguate safely (T-09-08-05); see
+  `data/id_crosswalk.py`'s `_NAME_FIXUPS` comment for the specific
+  Fred/Jonny false-positive this plan caught and declined to guess.
+- ☑ **Leakage-safety, TESTED.** `config.UNDERSTAT_COLS` registered in
+  `features/engineer.py::ROLL_STATS` (never `CONTEXT_COLS`) — every value
+  reaches the model only through `_roll`'s `shift(1)`-then-rolling windows.
+  `tests/test_leakage.py::test_understat_features_are_rolled_not_raw`
+  asserts no bare `us_*` column survives in `features.parquet` and
+  independently recomputes one player's `us_npxg_r5` from the raw table.
+  `player_gw.parquet` stayed at 253,509 rows after the rebuild.
+- ☑ **Feature-selection gate generalised.** Extracted plan 09-05's inline
+  `team_strength`-only gating into a named, tested helper,
+  `backtest/walk_forward.py::apply_experiment_feature_gating(df, exp)`,
+  routing both `ts_*` (team_strength) and rolled `us_*` (understat) through
+  one place — re-running one of plan 09-05's own tagged configurations
+  (`ts_fast`) through the new helper reproduced its stored numbers exactly
+  (`model+chips` 2256, `multi_safe` 2100, `multi_optimistic` 2437 — bit-for-bit
+  identical), confirming the refactor changed no team_strength behaviour.
+- ☑ **Fixture-level accuracy measured separately from season points, D-01's
+  own stated expectation.** Reusing `backtest/benchmark_external.py`'s
+  `_stats_block` MAE/Spearman helper (temporarily pointed at our own
+  understat-off vs understat-on `xp_med` columns rather than theFPLkiwi's,
+  no second MAE implementation written), pooled over all 6 test seasons at
+  fixture level (played-only, n=66,665):
+
+  | | MAE (`xp_med`) | Spearman (`xp_med`) |
+  |---|---:|---:|
+  | understat off | 1.8751 | 0.3620 |
+  | understat on | 1.8761 | 0.3599 |
+
+  Fixture-level accuracy did **not** improve — both MAE and Spearman moved
+  very slightly in the wrong direction. Per-season detail in
+  `data/processed/experiments/understat_mae_comparison.json`.
+- **Adoption-deciding run** (`scripts/experiment_run.sh understat_adopt
+  --experiments understat`, the harness's default 6 seasons/5 replicas,
+  `wf_understat_adopt.json`) against the plan 09-01 baseline
+  (`wf_baseline_phase9.json`):
+
+  | metric | baseline | understat on | delta |
+  |--------|---------:|--------------:|------:|
+  | model+chips | 2262 | 2278 | +16 |
+  | multi_safe (honest horizon) | 2147 | 2180 | +33 |
+
+  `model+chips` moved up but stayed **2 points short of the pre-declared
+  ≥2,280 primary bar** (D-05/D-06), and the identical +16 delta was already
+  seen — and separately judged inconclusive — for `capt_ceiling`'s own
+  adoption run in this same phase. Combined with the fixture-level MAE/
+  Spearman reading directly above (essentially flat, slightly worse), the
+  honest read is that this move is consistent with the harness's own
+  season-to-season noise, not a genuine accuracy-driven gain — exactly the
+  "better fixture MAE, season points move within noise" shape this plan's
+  own objective flagged as the expected outcome (the odds-join precedent).
+- **D-07 auto-adopt verdict: REJECTED.** `config.EXPERIMENTS['understat']`
+  stays `False` (already the default; no flip, so no change needed to
+  `tests/test_experiments.py`'s all-flags-default-off assertion). Per D-08
+  all new code (`data/understat.py`, the `id_crosswalk` historical-fallback
+  tier and its 78 fixups, the guarded `build_table.py`/`features/engineer.py`
+  joins, `apply_experiment_feature_gating`) stays merged, nothing deleted —
+  the columns are computed unconditionally and simply unused as model
+  features by default.
 
 ## Reference findings (why the priorities)
 

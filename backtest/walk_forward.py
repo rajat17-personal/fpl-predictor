@@ -127,6 +127,32 @@ def _plan_col(preds: pd.DataFrame, horizon: int = 4, decay: float = 0.84) -> pd.
     return m
 
 
+def apply_experiment_feature_gating(df: pd.DataFrame, exp: dict) -> pd.DataFrame:
+    """Drop an experiment-gated feature family from `df` when its flag is off.
+
+    Both `ts_*` (config.TEAM_STRENGTH_COLS) and rolled `us_*`
+    (config.UNDERSTAT_COLS -> ROLL_STATS) are computed UNCONDITIONALLY by the
+    pipeline (see config.py's own comments on those two constants) so an
+    experiment toggle never forces a data/build_table.py + features/engineer.py
+    rebuild -- the feature-selection gate lives here instead, in exactly one
+    place, so a future enrichment family (FotMob, FBref v2) adds one branch
+    here rather than growing a third ad-hoc inline drop expression.
+
+    Extracted from plan 09-05's inline team_strength-only gating (D-13); the
+    team_strength branch's behaviour is unchanged from what that plan
+    measured -- only understat is new here.
+
+    `exp` needs only `.get()` -- callers may pass any dict-like subset of
+    `config.EXPERIMENTS`'s keys (tests pass a plain two-key dict directly).
+    """
+    drop: list[str] = []
+    if not exp.get("team_strength", False):
+        drop += [c for c in config.TEAM_STRENGTH_COLS if c in df.columns]
+    if not exp.get("understat", False):
+        drop += [c for c in df.columns if c.startswith("us_")]
+    return df.drop(columns=drop) if drop else df
+
+
 def _graft_team_strength_ratings(synth: pd.DataFrame, ratings_g: pd.DataFrame) -> None:
     """Overwrite `synth`'s ts_* columns in place with the DECISION-TIME rating
     (`ratings_g` == `team_strength.ratings_as_of(season, g)`) crossed with the
@@ -255,6 +281,7 @@ def main(argv=None) -> int:
         seasons = list(TEST_SEASONS)
 
     df = load_features()
+    df = apply_experiment_feature_gating(df, exp)
     rows, chip_recs = [], []
     for T in seasons:
         te, models, cols = _preds_for(df, T)
