@@ -47,6 +47,17 @@
 
 **Ecosystem risk note (verified):** the vaastav dataset **stopped weekly updates after 2024-25** — only 3 updates/season now (season start, post-January, season end). Our pipeline already leans on the live FPL API + `data/live_history.py` for the current season, but any future re-ingest of "historical" current-season data must not assume vaastav freshness.
 
+### Post-publication audit: the specific project found (ADnocap/FPL-RL)
+
+The user later identified the ~2,900 project: **github.com/ADnocap/FPL-RL** (MaskablePPO chip/transfer-count strategy over a PuLP/CBC MILP selector, LightGBM 86-feature xP model, vaastav+Understat+FBref+FotMob+odds data). Its README claims **2,918 pts on a "2024-25 holdout season"** at 1 transfer/GW (3,171 at 5/GW; oracle 3,713), plus "0.787 per-GW correlation with actuals". Audit verdict (from the repo's own code, fetched 2026-09-08):
+
+- **The 2,918 is in-sample — mechanism 1 above, confirmed.** `scripts/oracle_comparison.py` feeds the optimizer genuine LightGBM *predictions* (not oracle points), loaded from `models/point_predictor` — the "model of record". But `scripts/train_predictor.py` shows **every configuration trains on 2024-25**: the EVAL model trains 2016-17→2024-25 (validation = last 8 GWs *of 2024-25*), and the PROD "model of record" trains on all 10 seasons through 2025-26. The replayed season is inside the training window either way; the only genuinely held-out season (2025-26) has no published headline number.
+- **The honest-looking parts corroborate this reading:** its no-transfer GW1-squad baseline scores 1,950 — consistent with our honest range — and the implausible **+968 from a single transfer/GW** is precisely the in-sample signature (cf. our own +337 optimistic → +40 honest multi-GW finding).
+- **The 0.787 correlation is Pearson over all players with recorded targets per GW** (`np.corrcoef` on non-NaN rows, per-GW `g["pred"].corr(g["target"])`), so the predictable mass of zero-minute players inflates it; it is not comparable to rank metrics among starters.
+- Repo maturity: 1 star, 41 commits, no published live results ("now running live for the 2026-27 season" — unverified).
+
+**Salvageable ideas from FPL-RL** (independent of its headline number): the hybrid architecture — RL for *strategy* (chip timing, transfer count) atop a MILP for *selection* — is a legitimate framing of our Option 3 (solver-scored chip scheduler); its FotMob per-match defensive stats are a fourth enrichment source we had not catalogued (same caveat as FBref: name→FPL mapping). Neither changes the ranked options below.
+
 ---
 
 ## Ranked options table
