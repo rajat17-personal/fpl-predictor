@@ -209,7 +209,7 @@ useful confirmation signal), not a gate on any of them.
 | flag | criterion | measured | verdict | default |
 |------|-----------|----------|---------|---------|
 | capt_ceiling | capture improves ≥ +2 pts abs. over captain-by-mean | +1.5 pts abs. (0.563→0.578); model+chips +16 (2262→2278) | rejected | off |
-| capt_mc | capture improves ≥ +2 pts abs. over captain-by-mean | pending | pending | off |
+| capt_mc | capture improves ≥ +2 pts abs. over captain-by-mean | not run — gated on capt_ceiling capture delta of +0.015, below the +0.02 trigger | not triggered | off |
 | chips_v2 | no chip's isolated value regresses; WC value measured | pending | pending | off |
 | team_strength | `tests/test_leakage.py` leakage assertion passes | pending | pending | off |
 | rl_strategy | beats chips_v2 on the same harness (D-02) | pending | pending | off |
@@ -249,6 +249,21 @@ merged behind a default-off flag with its number recorded here — never deleted
   stays `False` (D-08: the code stays merged, nothing deleted). No change to
   `tests/test_experiments.py`'s all-flags-default-off assertion was needed
   since the default set did not change.
+
+### capt_mc: Monte-Carlo variant not triggered (plan 09-03)
+
+- ☐ **Not built — gated on the quantile variant's own number.** The research
+  doc's sequencing rule (`.planning/research/XP-IMPROVEMENT-OPTIONS.md`
+  option 1) is that the Monte-Carlo captaincy layer is only worth its
+  machinery once the cheap quantile variant (`capt_ceiling`) has shown the
+  ceiling direction pays. The measured `capt_ceiling` capture delta is
+  **+0.015** (1.5 percentage points), below the **+0.02** trigger this plan
+  pre-declared for building `models/simulate.py`. Per Branch B of this plan's
+  Task 3: `models/simulate.py` was left uncreated, `config.EXPERIMENTS
+  ['capt_mc']` stays `False`, and this is a recorded, numbered decision in the
+  D-08 tradition — not a silent omission. Since `capt_mc` is a
+  variant-ordering rule inside experiment 2 (not a seventh experiment), this
+  does not affect D-01's fixed six-experiment sequence.
 
 ## Reference findings (why the priorities)
 
