@@ -45,14 +45,26 @@ export default function GwBanner({ status, data }: GwBannerProps) {
   const freshness = fmtFreshness(data.generated_utc, now);
   // D-21: the passed state replaces the whole countdown segment, not
   // vanilla's "· passed" suffix.
+  //
+  // 07-03 UAT G-07-3: the two-line pill's longest line drove the header row
+  // past its container width at every desktop viewport (the cap never
+  // grows past 68rem), forcing this pill onto its own line below the nav
+  // tabs. Re-splitting the same three facts (GW/absolute deadline on line
+  // 1, relative countdown + freshness on line 2) across the two existing
+  // lines, instead of one long "deadline: <date> · <countdown>" line, cuts
+  // the longest line from ~47 to ~30 characters with nothing dropped --
+  // this field's deltas are already blanket-explained by ledger #3/#4
+  // (extract.mjs BANNER_FIELD), so reflowing its exact wording introduces
+  // no new parity defect.
   const line1 = rel.passed
     ? `GW${data.gw} deadline passed`
-    : `GW${data.gw} deadline: ${fmtAbs(data.deadline_utc)} · ${rel.text}`;
+    : `GW${data.gw} · ${fmtAbs(data.deadline_utc)}`;
+  const line2 = rel.passed ? freshness : `${rel.text} · ${freshness}`;
 
   return (
     <div className={PILL_CLASS}>
       <div>{line1}</div>
-      <div>{freshness}</div>
+      <div>{line2}</div>
     </div>
   );
 }

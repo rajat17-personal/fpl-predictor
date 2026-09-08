@@ -39,7 +39,13 @@ export default function PageShell() {
   return (
     <div className="flex min-h-screen flex-col bg-bg text-ink">
       <header className="border-b border-line py-4">
-        <div className="mx-auto flex w-full max-w-[68rem] flex-wrap items-center gap-[18px] px-4">
+        {/* 07-03 UAT G-07-3: at desktop width (~1280px, 68rem/1088px inner
+         * cap) the un-tightened row (18px section gaps, px-3 nav padding,
+         * GwBanner's original two-line pill) measured ~1289px against a
+         * ~1088px container -- it always wrapped, at any viewport, because
+         * the cap never grows. gap-2 + px-2 close part of that gap; the
+         * rest comes from GwBanner's own line lengths (see GwBanner.tsx). */}
+        <div className="mx-auto flex w-full max-w-[68rem] flex-wrap items-center gap-2 px-4">
           <span className="font-heading text-[1.25rem] font-bold tracking-tight">
             FPL<span className="text-accent">ML</span>
           </span>
@@ -50,7 +56,7 @@ export default function PageShell() {
                 to={to}
                 end={to === "/"}
                 className={({ isActive }) =>
-                  `flex min-h-[44px] items-center rounded px-3 py-2 font-label text-label ${
+                  `flex min-h-[44px] items-center rounded px-2 py-2 font-label text-label ${
                     isActive
                       ? "bg-accent-bg font-bold text-accent-ink"
                       : "text-ink-2 hover:bg-surface hover:text-ink"
@@ -61,7 +67,7 @@ export default function PageShell() {
               </NavLink>
             ))}
           </nav>
-          <div className="ml-auto flex flex-wrap items-center gap-2">
+          <div className="ml-auto flex flex-wrap items-center gap-1">
             <GwBanner status={metaQuery.status} data={metaQuery.data} />
             <ThemeToggle />
           </div>

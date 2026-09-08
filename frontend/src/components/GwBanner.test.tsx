@@ -24,8 +24,8 @@ describe("GwBanner", () => {
     const data: MetaResponse = { ...META, deadline_utc: "2026-09-04T17:30:00Z" };
     render(<GwBanner status="success" data={data} />);
 
-    expect(screen.getByText(/^GW3 deadline: /)).toBeInTheDocument();
-    expect(screen.getByText(/^generated /)).toBeInTheDocument();
+    expect(screen.getByText(/^GW3 · /)).toBeInTheDocument();
+    expect(screen.getByText(/generated /)).toBeInTheDocument();
   });
 
   it("shows the passed state for a past deadline, with the freshness line and no ·", () => {
