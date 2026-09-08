@@ -117,6 +117,75 @@ where it lands. Status: ☐ todo · ☑ done · ◪ partial.
 - ☐ Injury/press-conference feed earlier than `chance_of_playing`.
 - ☐ Understat npxG/xGChain via soccerdata cache (low priority; FPL xG covers most).
 
+## Phase F — xP model & optimizer improvement experiments (Phase 9)
+
+### Baseline (measured 2026-09-08, all experiment flags off)
+
+Command: `scripts/experiment_run.sh baseline_phase9` → `python -m backtest.walk_forward
+--tag baseline_phase9` (6 seasons, 5 replicas, `--experiments` unset → all-off).
+Result: `data/processed/experiments/wf_baseline_phase9.json`.
+
+| season | model_mean | model_std | model+chips | capt_mean | capt_capture | multi_safe | form | hold |
+|--------|-----------:|----------:|------------:|----------:|-------------:|-----------:|-----:|-----:|
+| 2020-21 | 2074 | 61 | 2091 | 2071 | 0.541 | 1967 | 2077 | 1517 |
+| 2021-22 | 2119 | 47 | 2305 | 2123 | 0.583 | 2312 | 2174 | 1610 |
+| 2022-23 | 2148 | 43 | 2380 | 2183 | 0.563 | 2269 | 2079 | 1835 |
+| 2023-24 | 2191 | 68 | 2210 | 2086 | 0.483 | 2146 | 1960 | 1741 |
+| 2024-25 | 2137 | 44 | 2417 | 2260 | 0.614 | 2101 | 2107 | 2230 |
+| 2025-26 | 2122 | 21 | 2172 | 2174 | 0.595 | 2086 | 1797 | 1439 |
+
+6-season averages: `model_mean` = 2132, `model+chips` = **2262**, `capt_mean` = 2150,
+`capt_capture` = 0.563 (56.3%), `multi_safe` = 2147, `form` = 2032, `hold` = 1729.
+
+This measured `model+chips` average (2262) agrees closely with both prior estimates:
+D-05's quoted "current ≈2,256" (off by 6 points) and 09-RESEARCH.md's ≈2,263 computed
+from the then-cached `walk_forward_results.csv` (off by 1 point) — well within the
+noise this harness already reports (season-to-season std ≈38-68, SE ≈16). **2,262 is
+the reference number the D-05 ≥2,280 bar is judged against for this phase**, measured
+fresh on this machine rather than inherited from either cached figure.
+
+### Adoption criteria (D-05/D-06, pre-declared)
+
+- **Primary bar:** mean core+chips season points ≥ **2,280** across the 6-season average.
+- **Captaincy:** capture % (armband points ÷ best-possible armband) improves ≥ +2 pts
+  absolute over captain-by-mean, averaged over seasons.
+- **Chips:** isolated WC value measured and no chip's isolated value regresses (see the
+  isolated-chip table below); FH/BB/TC stay within their CIs.
+- **Team-strength:** ratings covered by a `tests/test_leakage.py` assertion (ratings at
+  GW g must reproduce from matches < g only).
+- **Multi-GW / horizon:** any horizon-touching change gets an optimistic-vs-frozen A/B.
+- **RL:** must beat chip scheduler v2 on the same harness (D-02).
+
+Isolated chip value observed in this baseline run (same team, with vs without —
+`data/processed/experiments/wf_baseline_phase9.csv`):
+
+| chip | mean | std | count |
+|------|-----:|----:|------:|
+| bb | 10.1 | 8.3 | 9 |
+| fh | 20.8 | 16.1 | 10 |
+| tc | 7.2 | 6.3 | 10 |
+
+WC's isolated value is not separately recorded by the harness (it triggers a full
+squad rebuild, not a same-team-with/without comparison); this baseline table is
+therefore the "currently unmeasured" state the adoption criteria call out for WC.
+
+### Experiment results
+
+| flag | criterion | measured | verdict | default |
+|------|-----------|----------|---------|---------|
+| capt_ceiling | capture improves ≥ +2 pts abs. over captain-by-mean | pending | pending | off |
+| capt_mc | capture improves ≥ +2 pts abs. over captain-by-mean | pending | pending | off |
+| chips_v2 | no chip's isolated value regresses; WC value measured | pending | pending | off |
+| team_strength | `tests/test_leakage.py` leakage assertion passes | pending | pending | off |
+| rl_strategy | beats chips_v2 on the same harness (D-02) | pending | pending | off |
+| understat | model+chips contribution measured via the harness | pending | pending | off |
+| fotmob | model+chips contribution measured via the harness | pending | pending | off |
+| fbref_v2 | model+chips contribution measured via the harness | pending | pending | off |
+
+Every row starts `pending`; later plans in this phase fill their own row as they
+measure it. Plan 09-10 finalises this table. A failed experiment keeps its code
+merged behind a default-off flag with its number recorded here — never deleted (D-08).
+
 ## Reference findings (why the priorities)
 
 Levers that beat noise: model vs form baseline (+83..92/season), active transfers
