@@ -7,6 +7,8 @@ import pandas as pd
 import pytest
 
 import config
+from backtest.season import run_season
+from backtest.walk_forward import resolve_scheduler
 from models import captaincy
 
 FEATURES = config.PROCESSED_DIR / "features.parquet"
@@ -60,6 +62,45 @@ def test_resolve_experiments_all_token_is_all_on():
 def test_resolve_experiments_bogus_token_raises():
     with pytest.raises(ValueError, match="bogus"):
         config.resolve_experiments("bogus")
+
+
+# --- backtest/season.py::run_season scheduler toggle (plan 09-07 Task 1) ----
+
+def test_run_season_bogus_scheduler_raises_naming_all_three():
+    """Pure-logic test: the ValueError fires before any pool/model/policy I/O,
+    so a minimal one-row frame is enough."""
+    preds = pd.DataFrame({"gw": [1], "player_code": [1]})
+    with pytest.raises(ValueError) as exc:
+        run_season(preds, "xp_med", scheduler="bogus")
+    msg = str(exc.value)
+    assert "v1" in msg and "v2" in msg and "rl" in msg
+
+
+# --- backtest/walk_forward.py::resolve_scheduler (plan 09-07 Task 1) --------
+
+def _exp(**overrides) -> dict:
+    base = dict(config.EXPERIMENTS)
+    base.update(overrides)
+    return base
+
+
+def test_resolve_scheduler_defaults_to_v1():
+    assert resolve_scheduler(_exp()) == "v1"
+
+
+def test_resolve_scheduler_chips_v2_flag_maps_to_v2():
+    assert resolve_scheduler(_exp(chips_v2=True)) == "v2"
+
+
+def test_resolve_scheduler_rl_strategy_flag_maps_to_rl():
+    assert resolve_scheduler(_exp(rl_strategy=True)) == "rl"
+
+
+def test_resolve_scheduler_rl_and_chips_v2_together_exits_naming_both():
+    with pytest.raises(SystemExit) as exc:
+        resolve_scheduler(_exp(rl_strategy=True, chips_v2=True))
+    msg = str(exc.value)
+    assert "rl_strategy" in msg and "chips_v2" in msg
 
 
 # --- models.captaincy --------------------------------------------------------

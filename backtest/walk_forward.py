@@ -47,6 +47,22 @@ TEST_SEASONS = ["2020-21", "2021-22", "2022-23", "2023-24", "2024-25", "2025-26"
 JITTER_FRAC = 0.05                                                  # 5% of xP sd
 
 
+def resolve_scheduler(exp: dict[str, bool]) -> str:
+    """Resolve `config.EXPERIMENTS`-shaped flags to exactly one of the three
+    `backtest.season.run_season(scheduler=...)` values (D-02): "rl" when
+    `rl_strategy` is on, else "v2" when `chips_v2` is on, else "v1". Enabling
+    both `rl_strategy` and `chips_v2` is a `SystemExit` naming both -- the
+    D-02 comparison requires the RL layer to beat the solver-scored scheduler
+    on its own, not stacked on top of it. Pure logic, no data/model I/O --
+    safe to unit test directly."""
+    if exp["rl_strategy"] and exp["chips_v2"]:
+        raise SystemExit(
+            "rl_strategy and chips_v2 cannot both be enabled: the D-02 comparison "
+            "requires the RL layer to beat the solver-scored (chips_v2) scheduler "
+            "on its own, not stacked on top of it.")
+    return "rl" if exp["rl_strategy"] else ("v2" if exp["chips_v2"] else "v1")
+
+
 @functools.lru_cache(maxsize=1)
 def _raw_opponent_key() -> pd.DataFrame:
     """(season, player_id, fixture_id) -> opponent_team_id, read once. Not a
@@ -208,6 +224,10 @@ def main(argv=None) -> int:
     ap.add_argument("--chips-hysteresis", type=float, default=None,
                     help="override config.CHIPS_V2_HYSTERESIS for this run "
                          "(only affects the chips_v2 experiment)")
+    ap.add_argument("--rl-seed", type=int, default=None,
+                    help="which config.RL_SEEDS entry's trained policy to load "
+                         "(only affects the rl_strategy experiment; default: "
+                         "config.RL_SEEDS[0])")
     ap.add_argument("--optimistic-plan", action="store_true",
                     help="also compute the OPTIMISTIC multi-GW plan (_plan_col, which "
                          "peeks at future GWs' own predictions) and report it as "
@@ -223,6 +243,8 @@ def main(argv=None) -> int:
                    else args.capt_lambda)
     chips_hysteresis = (config.CHIPS_V2_HYSTERESIS if args.chips_hysteresis is None
                         else args.chips_hysteresis)
+    rl_seed = config.RL_SEEDS[0] if args.rl_seed is None else args.rl_seed
+    scheduler = resolve_scheduler(exp)   # D-02: resolved exactly once, before the season loop
 
     if args.seasons:
         seasons = [s.strip() for s in args.seasons.split(",") if s.strip()]
@@ -248,9 +270,8 @@ def main(argv=None) -> int:
                   for s in range(args.replicas)]
         # Full system (chips) — replica 0, and harvest isolated chip values.
         chips_df = run_season(te, "xp_med", use_chips=True, record_chips=True,
-                              capt_col=capt_col_active,
-                              scheduler="v2" if exp["chips_v2"] else "v1",
-                              chips_hysteresis=chips_hysteresis)
+                              capt_col=capt_col_active, scheduler=scheduler,
+                              chips_hysteresis=chips_hysteresis, rl_seed=rl_seed)
         chip_recs.extend({"season": T, **d} for d in chips_df.attrs["chip_deltas"])
         cdf = run_season(te, "xp_med", capt_col=capt_col_active or "xp_mean", use_chips=False)
         capt_mean = int(cdf.points.sum())
@@ -332,8 +353,10 @@ def main(argv=None) -> int:
             "seasons": seasons,
             "replicas": args.replicas,
             "experiments": exp,
+            "scheduler": scheduler,
             "capt_lambda": capt_lambda,
             "chips_hysteresis": chips_hysteresis,
+            "rl_seed": rl_seed,
             "model_mean": int(gm["model_mean"]),
             "model_std": int(season_std),
             "model+chips": int(gm["model+chips"]),
@@ -353,8 +376,8 @@ def main(argv=None) -> int:
         print("\nsaved data/processed/walk_forward_results.csv")
 
     print(f"[wf] tag={args.tag or 'none'} seasons={len(seasons)} replicas={args.replicas} "
-          f"experiments={','.join(active_flags) or 'none'} capt_lambda={capt_lambda} "
-          f"chips_hysteresis={chips_hysteresis} "
+          f"experiments={','.join(active_flags) or 'none'} scheduler={scheduler} "
+          f"capt_lambda={capt_lambda} chips_hysteresis={chips_hysteresis} rl_seed={rl_seed} "
           f"model_mean={gm['model_mean']} "
           f"model+chips={gm['model+chips']} capt_capture={capt_capture_avg}", flush=True)
     return 0

@@ -171,6 +171,12 @@ CHIPS_V2_HYSTERESIS = 0.0       # chip scheduler v2 fire-now-vs-wait margin (opt
 # swept over {0, 1, 2, 3} in tags chips_hys_0..3 (2026-09-08, 6 seasons/1 replica);
 # 0 measured the highest 6-season-mean model+chips (2214, vs 2205/1, 2198/2, 2169/3)
 
+# --- Phase 9 plan 09-07: RL-for-strategy time-boxed training (D-16) ---------
+RL_SEEDS = (0, 1, 2)            # fixed seeds, one policy per (test season, seed)
+RL_POLICY_DIR = ROOT / "models" / "artifacts"   # gitignored -- multi-hundred-MB
+# policy .zip files (and their sidecar .json metadata) never reach the repo
+RL_POLICY_DIR.mkdir(parents=True, exist_ok=True)
+
 
 def resolve_experiments(spec: str | None = None) -> dict[str, bool]:
     """Resolve a flag spec into a fresh copy of `EXPERIMENTS` with named flags forced on.

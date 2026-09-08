@@ -60,6 +60,108 @@ def _half_of(gw: int) -> str:
     raise ValueError(f"gw {gw} is not in any half")
 
 
+def build_observation(preds: pd.DataFrame, gw: int, squad: dict, meta: dict,
+                      bank: float, free_transfers: int,
+                      chip_used: dict[str, set[str]],
+                      gws_by_code: dict[int, set[int]]) -> np.ndarray:
+    """Shared observation builder -- `FplStrategyEnv._observe()` and
+    `backtest/season.py::run_season`'s scheduler="rl" replay path both call
+    this so a trained policy sees byte-identical state whether it is training
+    or being replayed through the honest walk-forward harness."""
+    half = _half_of(gw)
+    half_gws = list(chips.HALVES[half])
+    half_pos = (gw - half_gws[0]) / max(1, half_gws[-1] - half_gws[0])
+
+    cur = preds[preds.gw == gw]
+    by_code = cur.groupby("player_code")[XP_COL].sum()
+
+    horizon_xp = 0.0
+    for code in squad:
+        base = float(by_code.get(code, 0.0))
+        fixture_gws = gws_by_code.get(code, set())
+        for k in range(HORIZON):
+            if gw + k in fixture_gws:
+                horizon_xp += (DECAY ** k) * base
+    capt_col_sum = cur.groupby("player_code")[CAPT_COL].sum()
+    capt_ceiling = float(capt_col_sum.max()) if len(capt_col_sum) else 0.0
+
+    team_value = season_mod._team_value(squad, cur, meta)
+    used = chip_used[half]
+
+    return np.array([
+        gw / 38.0,
+        half_pos,
+        free_transfers / config.MAX_FREE_TRANSFERS,
+        bank / config.BUDGET,
+        team_value / config.BUDGET,
+        0.0 if "wc" in used else 1.0,
+        0.0 if "fh" in used else 1.0,
+        0.0 if "bb" in used else 1.0,
+        0.0 if "tc" in used else 1.0,
+        horizon_xp / max(1, len(squad)),
+        capt_ceiling,
+    ], dtype=np.float32)
+
+
+def build_action_mask(free_transfers: int, chip_used: dict[str, set[str]],
+                      half: str) -> np.ndarray:
+    """Shared mask builder -- `FplStrategyEnv.action_masks()` and the
+    `run_season` scheduler="rl" replay path both call this so training and
+    replay can never see a different legal-action set at the same state."""
+    used = chip_used[half]
+    ft_cap = free_transfers + HIT_BUDGET
+    mask = np.zeros(len(CHIPS_ORDER) * len(TRANSFER_CAPS), dtype=bool)
+    for c_i, chip in enumerate(CHIPS_ORDER):
+        if chip != "-" and chip in used:
+            continue
+        for t_i, cap in enumerate(TRANSFER_CAPS):
+            if chip in ("wc", "fh"):
+                if t_i != 0:
+                    continue
+            elif cap > ft_cap:
+                continue
+            mask[c_i * len(TRANSFER_CAPS) + t_i] = True
+    return mask
+
+
+def load_policy(test_season: str, seed: int):
+    """Load a trained MaskablePPO policy for `(test_season, seed)` from
+    `config.RL_POLICY_DIR`. Raises `SystemExit` naming the training command
+    when the file is absent (`features/engineer.py:110` house style).
+
+    `sb3_contrib` is imported lazily inside this function: it (and torch) are
+    D-09-isolated, dev-only dependencies (`requirements-rl.txt`) that must
+    never be required just to import `optimize.rl_env` -- only when the "rl"
+    scheduler path is actually exercised.
+    """
+    from sb3_contrib import MaskablePPO
+
+    path = config.RL_POLICY_DIR / f"rl_policy_{test_season}_{seed}.zip"
+    if not path.exists():
+        raise SystemExit(
+            f"Missing {path}. Run `python -m optimize.rl_train "
+            f"--test-season {test_season} --seed {seed}`.")
+    return MaskablePPO.load(path)
+
+
+def decide_action(policy, preds: pd.DataFrame, gw: int, squad: dict, meta: dict,
+                  bank: float, free_transfers: int,
+                  chip_used: dict[str, set[str]],
+                  gws_by_code: dict[int, set[int]]) -> tuple[str, int]:
+    """Ask a trained MaskablePPO `policy` for this gameweek's `(chip,
+    transfer_cap)`, using the exact observation/mask `FplStrategyEnv` would
+    build at this state. Used by `backtest/season.py::run_season`'s
+    scheduler="rl" replay path -- never by training itself (which drives the
+    env directly via `model.learn()`)."""
+    obs = build_observation(preds, gw, squad, meta, bank, free_transfers,
+                            chip_used, gws_by_code)
+    half = _half_of(gw)
+    mask = build_action_mask(free_transfers, chip_used, half)
+    action, _ = policy.predict(obs, deterministic=True, action_masks=mask)
+    chip_idx, tr_idx = divmod(int(action), len(TRANSFER_CAPS))
+    return CHIPS_ORDER[chip_idx], TRANSFER_CAPS[tr_idx]
+
+
 class FplStrategyEnv(gym.Env):
     """One season, one gameweek per `step()`.
 
@@ -177,59 +279,14 @@ class FplStrategyEnv(gym.Env):
         chips, avoiding redundant equivalent actions in the mask).
         """
         gw = self.gws[self._gw_i]
-        half = _half_of(gw)
-        used = self._chip_used[half]
-        ft_cap = self.free_transfers + HIT_BUDGET
-        mask = np.zeros(self.action_space.n, dtype=bool)
-        for c_i, chip in enumerate(CHIPS_ORDER):
-            if chip != "-" and chip in used:
-                continue
-            for t_i, cap in enumerate(TRANSFER_CAPS):
-                if chip in ("wc", "fh"):
-                    if t_i != 0:
-                        continue
-                elif cap > ft_cap:
-                    continue
-                mask[c_i * len(TRANSFER_CAPS) + t_i] = True
-        return mask
+        return build_action_mask(self.free_transfers, self._chip_used, _half_of(gw))
 
     # -- observation ----------------------------------------------------------
 
     def _observe(self) -> np.ndarray:
         gw = self.gws[self._gw_i]
-        half = _half_of(gw)
-        half_gws = list(chips.HALVES[half])
-        half_pos = (gw - half_gws[0]) / max(1, half_gws[-1] - half_gws[0])
-
-        cur = self.preds[self.preds.gw == gw]
-        by_code = cur.groupby("player_code")[XP_COL].sum()
-
-        horizon_xp = 0.0
-        for code in self.squad:
-            base = float(by_code.get(code, 0.0))
-            fixture_gws = self._gws_by_code.get(code, set())
-            for k in range(HORIZON):
-                if gw + k in fixture_gws:
-                    horizon_xp += (DECAY ** k) * base
-        capt_col_sum = cur.groupby("player_code")[CAPT_COL].sum()
-        capt_ceiling = float(capt_col_sum.max()) if len(capt_col_sum) else 0.0
-
-        team_value = season_mod._team_value(self.squad, cur, self.meta)
-        used = self._chip_used[half]
-
-        return np.array([
-            gw / 38.0,
-            half_pos,
-            self.free_transfers / config.MAX_FREE_TRANSFERS,
-            self.bank / config.BUDGET,
-            team_value / config.BUDGET,
-            0.0 if "wc" in used else 1.0,
-            0.0 if "fh" in used else 1.0,
-            0.0 if "bb" in used else 1.0,
-            0.0 if "tc" in used else 1.0,
-            horizon_xp / max(1, len(self.squad)),
-            capt_ceiling,
-        ], dtype=np.float32)
+        return build_observation(self.preds, gw, self.squad, self.meta, self.bank,
+                                 self.free_transfers, self._chip_used, self._gws_by_code)
 
 
 def main(argv: list[str] | None = None) -> int:
