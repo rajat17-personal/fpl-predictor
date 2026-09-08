@@ -142,7 +142,8 @@ def _update_meta(meta: dict, pool: pd.DataFrame, squad: dict) -> None:
 
 def run_season(preds: pd.DataFrame, xp_col: str, *, use_chips: bool = True,
                max_transfers: int | None = None, record_chips: bool = False,
-               capt_col: str | None = None, scheduler: str = "v1") -> pd.DataFrame:
+               capt_col: str | None = None, scheduler: str = "v1",
+               chips_hysteresis: float | None = None) -> pd.DataFrame:
     """capt_col: separate prediction column for the captain slot (e.g. "xp_mean" —
     the armband doubles points, so mean-objective xP is the right captain value).
 
@@ -150,14 +151,16 @@ def run_season(preds: pd.DataFrame, xp_col: str, *, use_chips: bool = True,
     (`chips.causal_schedule`); "v2" uses the xP-scored causal scheduler
     (`chips.scored_schedule`, Phase 9 chips_v2 experiment). Chip *application*
     below is identical either way -- only the choice of WHEN each chip fires
-    changes."""
+    changes. `chips_hysteresis` only affects scheduler="v2" (None -> that
+    function's own config.CHIPS_V2_HYSTERESIS default)."""
     gws = sorted(preds.gw.unique())
     # Causal scheduler: chip decisions only see fixtures a few GWs ahead, like a
     # real manager (default_schedule reads the final fixture list = look-ahead).
     if not use_chips:
         schedule = {}
     elif scheduler == "v2":
-        schedule = chips.scored_schedule(preds, xp_col, capt_col=capt_col)
+        schedule = chips.scored_schedule(preds, xp_col, capt_col=capt_col,
+                                         hysteresis=chips_hysteresis)
     else:
         schedule = chips.causal_schedule(preds, xp_col)
     chip_deltas: list[dict] = []   # isolated marginal chip value (same team, w/ vs w/o)

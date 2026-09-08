@@ -143,12 +143,17 @@ def main(argv=None) -> int:
     ap.add_argument("--capt-lambda", type=float, default=None,
                     help="override config.CAPT_CEILING_LAMBDA for this run "
                          "(only affects the capt_ceiling experiment)")
+    ap.add_argument("--chips-hysteresis", type=float, default=None,
+                    help="override config.CHIPS_V2_HYSTERESIS for this run "
+                         "(only affects the chips_v2 experiment)")
     args = ap.parse_args(argv)
 
     exp = config.resolve_experiments(args.experiments)
     capt_col_active = "xp_capt_ceiling" if exp["capt_ceiling"] else None
     capt_lambda = (config.CAPT_CEILING_LAMBDA if args.capt_lambda is None
                    else args.capt_lambda)
+    chips_hysteresis = (config.CHIPS_V2_HYSTERESIS if args.chips_hysteresis is None
+                        else args.chips_hysteresis)
 
     if args.seasons:
         seasons = [s.strip() for s in args.seasons.split(",") if s.strip()]
@@ -175,7 +180,8 @@ def main(argv=None) -> int:
         # Full system (chips) — replica 0, and harvest isolated chip values.
         chips_df = run_season(te, "xp_med", use_chips=True, record_chips=True,
                               capt_col=capt_col_active,
-                              scheduler="v2" if exp["chips_v2"] else "v1")
+                              scheduler="v2" if exp["chips_v2"] else "v1",
+                              chips_hysteresis=chips_hysteresis)
         chip_recs.extend({"season": T, **d} for d in chips_df.attrs["chip_deltas"])
         cdf = run_season(te, "xp_med", capt_col=capt_col_active or "xp_mean", use_chips=False)
         capt_mean = int(cdf.points.sum())
@@ -246,6 +252,7 @@ def main(argv=None) -> int:
             "replicas": args.replicas,
             "experiments": exp,
             "capt_lambda": capt_lambda,
+            "chips_hysteresis": chips_hysteresis,
             "model_mean": int(gm["model_mean"]),
             "model_std": int(season_std),
             "model+chips": int(gm["model+chips"]),
@@ -264,6 +271,7 @@ def main(argv=None) -> int:
 
     print(f"[wf] tag={args.tag or 'none'} seasons={len(seasons)} replicas={args.replicas} "
           f"experiments={','.join(active_flags) or 'none'} capt_lambda={capt_lambda} "
+          f"chips_hysteresis={chips_hysteresis} "
           f"model_mean={gm['model_mean']} "
           f"model+chips={gm['model+chips']} capt_capture={capt_capture_avg}", flush=True)
     return 0

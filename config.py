@@ -150,7 +150,9 @@ CAPT_CEILING_LAMBDA = 0.5       # captaincy ceiling-EV upside weight (models/cap
 # swept over {0.0, 0.25, 0.5, 0.75, 1.0} in tags capt_lam_0.0..1.0 (2026-09-08,
 # 6 seasons/1 replica); 0.5 measured the highest 6-season-mean capt_capture
 # (0.578, vs 0.576/0.25, 0.572/0.75, 0.547/1.0, 0.563/0.0 control)
-CHIPS_V2_HYSTERESIS = 0.0       # chip scheduler v2 fire-now-vs-wait margin (optimize/chips.py)
+CHIPS_V2_HYSTERESIS = 0.0       # chip scheduler v2 fire-now-vs-wait margin (optimize/chips.py);
+# swept over {0, 1, 2, 3} in tags chips_hys_0..3 (2026-09-08, 6 seasons/1 replica);
+# 0 measured the highest 6-season-mean model+chips (2214, vs 2205/1, 2198/2, 2169/3)
 
 
 def resolve_experiments(spec: str | None = None) -> dict[str, bool]:

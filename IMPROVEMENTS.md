@@ -210,7 +210,7 @@ useful confirmation signal), not a gate on any of them.
 |------|-----------|----------|---------|---------|
 | capt_ceiling | capture improves ≥ +2 pts abs. over captain-by-mean | +1.5 pts abs. (0.563→0.578); model+chips +16 (2262→2278) | rejected | off |
 | capt_mc | capture improves ≥ +2 pts abs. over captain-by-mean | not run — gated on capt_ceiling capture delta of +0.015, below the +0.02 trigger | not triggered | off |
-| chips_v2 | no chip's isolated value regresses; WC value measured | pending | pending | off |
+| chips_v2 | model+chips improves over current default; no chip's isolated value regresses; WC value measured | model+chips −48 (2262→2214); bb regressed outside its CI (10.0→8.5); Wildcard measured for the first time (14.2±9.0/gw, n=4, `wf_wc_measure`) | rejected | off |
 | team_strength | `tests/test_leakage.py` leakage assertion passes | pending | pending | off |
 | rl_strategy | beats chips_v2 on the same harness (D-02) | pending | pending | off |
 | understat | model+chips contribution measured via the harness | pending | pending | off |
@@ -264,6 +264,56 @@ merged behind a default-off flag with its number recorded here — never deleted
   D-08 tradition — not a silent omission. Since `capt_mc` is a
   variant-ordering rule inside experiment 2 (not a seventh experiment), this
   does not affect D-01's fixed six-experiment sequence.
+
+### chips_v2: xP-scored causal scheduler — hysteresis sweep and adoption verdict (plan 09-04)
+
+- ☑ **Wildcard's isolated value measured for the first time.** `backtest/season.py`
+  now records a `wc` `chip_deltas` entry (same-gameweek isolation vs a
+  zero-transfer hold, the same construction FH already used) — previously
+  unmeasured. On the `wf_wc_measure` run (2024-25/2025-26, 1 replica):
+  **wc = +14.2±9.0 pts/gw (n=4)**, roughly in the same neighbourhood as TC
+  (+9.8±9.0) and below FH (+27.3±26.1). This is a same-gameweek reading only —
+  a wildcard's larger real value is the multi-gameweek squad it leaves behind,
+  which shows up in the whole-season `model+chips` figure, not this delta.
+- ☑ **Hysteresis sweep, TESTED.** `--chips-hysteresis` swept over {0, 1, 2, 3}
+  at 6 seasons/1 replica each (`wf_chips_hys_<value>`, 2026-09-08), `chips_v2`
+  forced on:
+
+  | hysteresis | model+chips |
+  |-----------:|------------:|
+  | **0 (winner)** | **2214** |
+  | 1 | 2205 |
+  | 2 | 2198 |
+  | 3 | 2169 |
+
+  Hysteresis 0 measured the highest 6-season-mean `model+chips`, strictly
+  above the other three swept values (no tie-break needed) — matching
+  09-RESEARCH.md's own recommendation to start at 0. Pinned to
+  `config.CHIPS_V2_HYSTERESIS` (already 0.0 by default; comment updated to
+  name the sweep).
+- ☑ **Adoption-deciding run** (`python -m backtest.walk_forward --experiments
+  chips_v2` at the harness's default 6 seasons / 5 replicas,
+  `wf_chips_v2_adopt.json`): `model+chips` **2214** vs the plan 09-01
+  baseline's **2262** — a **−48/season regression**, not an improvement.
+  D-06/D-07's first condition (model+chips improves over the current default)
+  fails outright. The second condition (no chip's isolated value regresses
+  outside its own confidence interval, checked against `wf_wc_measure`'s
+  per-chip table) also fails: `bb` regressed from 10.0±0.0 (v1, n=2) to 8.5±6.5
+  (v2, n=12) — below `baseline_mean − baseline_std` = 10.0.
+
+  | chip | v1 mean (± std, n) — `wf_wc_measure` | v2 mean (± std, n) — `wf_chips_v2_adopt` | regressed outside v1 CI? |
+  |------|----------------------------:|----------------------------:|:---:|
+  | bb | 10.0 ± 0.0 (2) | 8.5 ± 6.5 (12) | **yes** |
+  | fh | 27.3 ± 26.1 (3) | 13.6 ± 17.6 (7) | no (within CI) |
+  | tc | 9.8 ± 9.0 (4) | 8.0 ± 6.3 (12) | no (within CI) |
+  | wc | 14.2 ± 9.0 (4) | 11.7 ± 23.1 (12) | no (within CI) |
+
+- **D-07 auto-adopt verdict: REJECTED.** `config.EXPERIMENTS['chips_v2']` stays
+  `False` (D-08: the code — `scored_schedule`, the `scheduler` keyword, the
+  `--chips-hysteresis` flag, the wc isolated-value measurement — stays merged,
+  nothing deleted). No change to `tests/test_experiments.py`'s all-flags-
+  default-off assertion was needed since the default set did not change. The
+  heuristic v1 scheduler (`causal_schedule`) remains the shipped default.
 
 ## Reference findings (why the priorities)
 
