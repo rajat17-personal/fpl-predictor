@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 current_phase: 09
 current_phase_name: xP Model & Optimizer Improvement Experiments
-status: executing
-stopped_at: Completed 09-09-PLAN.md
-last_updated: "2026-09-09T02:27:00.070Z"
+status: verifying
+stopped_at: Completed 09-10-PLAN.md (Phase 09 complete)
+last_updated: "2026-09-09T02:52:06.426Z"
 last_activity: 2026-09-08
 last_activity_desc: Phase 09 execution started
-state_head: 00f7fc182a16f2ce676b0cd62bc740b7ff32db04
+state_head: 469c24673dcf6b0d0ed11c9696ac84073800387a
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 55
-  completed_plans: 51
+  completed_plans: 52
   percent: 67
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-07)
 
 Phase: 09 (xP Model & Optimizer Improvement Experiments) — EXECUTING
 Plan: 10 of 10
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-08 — Phase 09 execution started
 
 Progress: [███████░░░] 67% (6/7 phases, 39 plans complete)
@@ -114,6 +114,7 @@ Progress: [███████░░░] 67% (6/7 phases, 39 plans complete)
 | Phase 09 P07 | 3h 30min | 3 tasks | 7 files |
 | Phase 09 P08 | 64min | 3 tasks | 9 files |
 | Phase 09 P09 | 6h 29min | 3 tasks | 7 files |
+| Phase 09 P10 | 30min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -234,6 +235,8 @@ Recent decisions affecting current work:
 - [Phase 09]: data.id_crosswalk.resolve_by_name extended with a third fallback tier (_fpl_name_index, matching data/id_map.py's full historical registry) after theFPLkiwi's crosswalk proved to be a ~454-row current-squad-only snapshot capping name-join coverage at ~20% for any multi-season source; raised distinct-name coverage from 20.9% to 87.4% before fixups
 - [Phase 09]: fotmob REJECTED: adoption run measured model+chips +1/season (2262->2263), well inside the harness's own noise band (SE~50) -- flag stays default-off, code stays merged (D-08)
 - [Phase 09]: fbref_v2 confirmed not-acquirable: three real-Chrome spike attempts all hung inside the UC-mode reconnect call while a plain driver confirms the site still serves Cloudflare's challenge page -- a harder access failure than the prior documented value-blanking finding; no new scraping infrastructure built (D-04)
+- [Phase 09]: Final combined run (D-13) measured model+chips 2262, identical to the plan 09-01 baseline and 18 short of the D-05 >=2,280 bar -- no flag was adjusted to chase it — Every one of the phase's eight experiment flags ended default-off (all REJECTED/not-triggered/not-acquirable per plans 09-03 through 09-09), so the shipped default config equals the opening baseline by construction
+- [Phase 09]: Zero product wiring added to predict/live.py or predict/export.py this phase -- confirmed via a new tests/test_product.py export-contract regression test and a real end-to-end python -m predict.export run — The plan's own instruction is to wire nothing for a flag that stayed off; since none of the eight flags adopted, the task's only real work was the no-op verification
 
 ### Pending Todos
 
@@ -260,6 +263,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-09T02:26:59.898Z
-Stopped at: Completed 09-09-PLAN.md
+Last session: 2026-09-09T02:52:06.239Z
+Stopped at: Completed 09-10-PLAN.md (Phase 09 complete)
 Resume file: None
