@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 Phase: 7 — Parity Validation & Cutover
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-09-08 — Phase 09 complete, transitioned to Phase 7
+Last activity: 2026-09-09 — Completed quick task 260909-5vx: per-position/covered-row enrichment re-measurement (null result)
 
 Progress: [███████████████████░] 95% (52/55 plans complete)
 
@@ -257,6 +257,13 @@ Recent decisions affecting current work:
 - **Milestone invariant:** the vanilla site stays live and authoritative until CUT-01 completes. Phase 7 is calendar-gated on one full real gameweek cycle (deadline → live → finished).
 - Payment gateway / merchant-of-record choice still pending with the user — out of scope here, but PITCH-01's trademark disclaimer feeds the eventual gateway review.
 - **[Phase 4]:** Security enforcement is on but no 04-SECURITY.md exists — run `/gsd-secure-phase 4` to backfill the threat verification (03, 05, and now 09 also lack SECURITY.md; 06-SECURITY.md now exists).
+
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260909-5vx | Re-measure understat/fotmob accuracy per position and on covered rows only (Phase F addendum) | 2026-09-09 | 41b08fb | [260909-5vx-re-measure-understat-fotmob-accuracy-per](./quick/260909-5vx-re-measure-understat-fotmob-accuracy-per/) |
 
 ## Deferred Items
 
