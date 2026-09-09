@@ -315,6 +315,16 @@ def test_paired_cluster_bootstrap_degenerate_sum_metric_collapses_to_point():
     assert out["ci_hi"] == pytest.approx(observed)
 
 
+def test_capt_ceiling_and_capt_mc_flags_stay_off():
+    """Quick task 260909-dga's addendum found no season-clustered signal for
+    capt_ceiling (95% CI straddles zero on capt_capture/capt_mean/model+chips)
+    -- REJECTION CONFIRMED. This pins both captaincy flags off explicitly so
+    a future change that silently adopts either fails a test, not a diff
+    review, matching the plan's own guard requirement."""
+    assert config.EXPERIMENTS["capt_ceiling"] is False
+    assert config.EXPERIMENTS["capt_mc"] is False
+
+
 def test_paired_cluster_bootstrap_degenerate_ratio_metric_collapses_to_point():
     """Same degenerate-cluster property for the ratio-of-sums path (the one
     capt_capture actually uses) -- resampling identical-within-season rows

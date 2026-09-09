@@ -1099,6 +1099,102 @@ existing in isolation:
   written against. A pre-registered test on the season-points metric itself
   remains the larger, unaddressed version of that gap.
 
+### Addendum (2026-09-09): capt_ceiling paired intervals — high-replica re-run settled on a different axis (extends plan 09-03)
+
+- **What plan 09-03 concluded, and on what evidence.** The adoption run
+  measured `capt_capture` 0.563 → 0.578 (a **+1.5 percentage-point** absolute
+  move) and `model+chips` 2262 → 2278 (**+16/season**), both at the harness's
+  default of 5 replicas, both judged against an **informally estimated
+  SE≈16** rather than a computed one. D-06's criterion (**≥+2pt absolute**
+  capture) was not cleared, and the verdict was REJECTED.
+- **The replica finding: `--replicas` cannot settle this, and the 25×
+  re-run proves it.** `--replicas` (`backtest/walk_forward.py:241`, default
+  5) feeds exactly one thing — the jittered `totals` list comprehension at
+  `walk_forward.py:298-300`, which produces only `model_mean`/`model_std`.
+  Every metric `capt_ceiling` is capable of moving comes from a single,
+  UNJITTERED `run_season` call: `model+chips` from the `chips_df` call
+  (`walk_forward.py:302-304`), `capt_mean`/`capt_capture` from the `cdf` call
+  (`walk_forward.py:306-308`). Raising `--replicas` therefore cannot move
+  either number — it was never the axis that could answer this question.
+  This is not a code-reading claim left untested: both arms were re-run at
+  `--replicas 25` against the unmodified harness (2025-26, `wf_base_r25`
+  / `wf_capt_r25`) and compared to the existing 5-replica results:
+
+  | metric | r=5 (baseline / adopt) | r=25 (baseline / adopt) | moved? |
+  |---|---|---|---|
+  | `model+chips`  | 2172 / 2293 | 2172 / 2293 | no |
+  | `capt_mean`    | 2174 / 2185 | 2174 / 2185 | no |
+  | `capt_capture` | 0.595 / 0.619 | 0.595 / 0.619 | no |
+  | `model_mean`   | 2122 / 2122 | 2112 / 2112 | **yes** |
+  | `model_std`    | 21 / 21 | 68 / 68 | **yes** |
+
+  `model+chips`, `capt_mean` and `capt_capture` are byte-identical between 5
+  and 25 replicas for both arms, exactly as F1 predicted; only the two
+  replica-averaged columns move. This is the correction to the originating
+  todo's own proposed method (a 25×, 6-season, 2-arm re-run) — that re-run
+  was executed on one season specifically to demonstrate the mechanism, not
+  spent six-fold chasing numbers F1 shows cannot change. The real answer had
+  to come from a different axis: a paired interval over the season-level
+  deltas already sitting in the two committed Phase 9 result CSVs.
+- **The paired intervals, computed by `backtest/capt_ceiling_ci.py` over all
+  six test seasons** (reproducing plan 09-03's published `wf_baseline_phase9.csv`
+  / `wf_capt_ceiling_adopt.csv` rows exactly before any new interval was
+  trusted):
+
+  | season | capture off | capture on | capt_mean off | capt_mean on | model+chips off | model+chips on |
+  |---|---:|---:|---:|---:|---:|---:|
+  | 2020-21 | 0.541 | 0.567 | 2071 | 2118 | 2091 | 2147 |
+  | 2021-22 | 0.583 | 0.569 | 2123 | 2041 | 2305 | 2277 |
+  | 2022-23 | 0.563 | 0.551 | 2183 | 2107 | 2380 | 2350 |
+  | 2023-24 | 0.483 | 0.491 | 2086 | 2090 | 2210 | 2202 |
+  | 2024-25 | 0.614 | 0.670 | 2260 | 2289 | 2417 | 2399 |
+  | 2025-26 | 0.595 | 0.619 | 2174 | 2185 | 2172 | 2293 |
+
+  | metric | mean Δ | season-clustered 95% CI (n=6, GOVERNS) | gameweek-bootstrap 95% CI (n=227, optimistic) | excludes 0? |
+  |---|---:|---|---|---|
+  | capt_capture | +0.0146 | [−0.0131, +0.0423] | [−0.0090, +0.0412] | no |
+  | capt_mean | −11.2 | [−68.5, +46.2] | [−235.0, +98.0] | no |
+  | model+chips | +15.5 | [−48.2, +79.2] | [−250.0, +433.0] | no |
+
+  The season-clustered family is a paired two-sided t-interval (df = 5) on
+  the six per-season on-minus-off deltas; the gameweek family is a
+  percentile interval from a paired cluster bootstrap resampling
+  (season, gameweek) pairs WITH REPLACEMENT, stratified within season,
+  recomputing the ratio-of-sums (for `capt_capture`) or the sum (for
+  `capt_mean`/`model+chips`) each of 10,000 draws — never a per-gameweek
+  ratio averaged after the fact.
+- **The verdict, driven by the season-clustered family: REJECTION CONFIRMED,
+  now on a stated statistical test.** `capt_capture`'s 95% CI
+  [−0.0131, +0.0423] straddles zero, so the +1.5pt reading is not
+  distinguishable from measurement noise at this sample size — it does not
+  even clear the much weaker "excludes zero" bar, let alone D-06's ≥+2pt
+  threshold. `model+chips`'s CI [−48.2, +79.2] also straddles zero. Most
+  tellingly, `capt_mean` — the captaincy arm's OWN season points, not a
+  proxy — has a **negative** mean delta (−11.2/season): the capture-ratio
+  gain the arm shows does not convert into more points on the metric that
+  actually pays a manager. A capture gain riding alongside a points loss is
+  exactly the reading a bar revision would have to survive, and it does not
+  survive here. `config.EXPERIMENTS['capt_ceiling']` stays `False`;
+  `capt_mc` (`models/simulate.py`, still unbuilt) stays ungated — plan
+  09-03's Branch B non-decision stands.
+- **Caveats.** (1) Gameweeks within a season are NOT independent — squad
+  state carries across gameweeks through transfers — so the gameweek-level
+  bootstrap interval is the higher-power but OPTIMISTIC reading and does not
+  govern; it is reported for context only. (2) `capt_col` reaches the ILP as
+  the `xp_capt` objective column (`optimize/squad_ilp.py:42,63`), so the two
+  arms select DIFFERENT squads, not merely a different armband on one squad
+  — the pairing unit is (season, gameweek), not (season, gameweek, squad).
+  These deltas measure the whole capt_col-in-the-ILP-objective change, not
+  an isolated captain pick; do not read them as an isolated armband effect.
+- **Tying this back.** This is the second instalment (after the 2026-09-09
+  understat/fotmob addendum above) on "What this phase did not resolve"'s
+  recorded gap that every REJECTED verdict rested on an eyeballed delta
+  against an informal SE. Unlike that instalment — which tested
+  fixture-level MAE/Spearman — this one tests the season-points metric
+  (`capt_capture`, `capt_mean`, `model+chips`) the ≥+2pt D-06 bar is
+  actually written against, and reaches the same REJECTED verdict on a
+  stated statistical test rather than an eyeballed one.
+
 ## Reference findings (why the priorities)
 
 Levers that beat noise: model vs form baseline (+83..92/season), active transfers
