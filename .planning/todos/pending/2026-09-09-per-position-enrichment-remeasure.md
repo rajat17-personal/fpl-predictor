@@ -3,6 +3,7 @@ created: 2026-09-09T05:14:14.086Z
 title: Re-measure understat/fotmob accuracy per position and on covered rows only
 area: models
 severity: minor
+resolves_phase: 10
 files:
   - data/processed/experiments/understat_mae_comparison.json
   - backtest/benchmark_external.py

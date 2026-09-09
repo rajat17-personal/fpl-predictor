@@ -3,6 +3,7 @@ created: 2026-09-09T05:14:14.086Z
 title: RL v2 — retrain MaskablePPO with a 120-min/policy time-box, judge vs solver
 area: optimize
 severity: minor
+resolves_phase: 10
 files:
   - optimize/rl_train.py
   - optimize/rl_env.py

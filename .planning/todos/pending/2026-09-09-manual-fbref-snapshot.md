@@ -3,6 +3,7 @@ created: 2026-09-09T05:14:14.086Z
 title: Manual FBref CSV snapshot committed like the kiwi data, joined via crosswalk
 area: data
 severity: minor
+resolves_phase: 10
 files:
   - data/external/kiwi/
   - data/id_crosswalk.py

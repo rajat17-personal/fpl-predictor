@@ -3,6 +3,7 @@ created: 2026-09-09T05:14:14.086Z
 title: Feed ep_next + availability flags into the xP model to close the ranking gap
 area: models
 severity: minor
+resolves_phase: 10
 files:
   - models/train.py:41
   - features/engineer.py

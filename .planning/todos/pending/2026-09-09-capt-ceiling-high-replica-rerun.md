@@ -3,6 +3,7 @@ created: 2026-09-09T05:14:14.086Z
 title: High-replica captaincy ceiling-EV re-run to settle the +1.5pt capture reading
 area: models
 severity: minor
+resolves_phase: 10
 files:
   - backtest/walk_forward.py
   - config.py:149

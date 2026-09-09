@@ -121,6 +121,7 @@ Progress: [███████████████████░] 95% (52
 
 ### Roadmap Evolution
 
+- Phase 10 added: xP Experiment Follow-ups — pursue Phase 9's measured leads (six 2026-09-09 todos: ep_next features, per-position enrichment re-measure, manual FBref snapshot, high-replica capt_ceiling, RL v2 bigger box + shaping notes)
 - Phase 8 added: Self-Hosted Gameweek Data Capture — vaastav repo stalled at 2026-27 GW1 (GW2/GW3 missing, suspected archival); self-host per-GW capture from the official FPL API before season rollover deletes element-summary history. Research: .planning/research/DATA-SOURCE-RESILIENCE.md
 - Phase 9 added: xP Model & Optimizer Improvement Experiments — user-requested investigation of ~2,900-pt claims (found to be leaky/hindsight backtests; honest frontier ~2,300+); ranked experiment bundle judged by the leakage-safe walk-forward harness. Research: .planning/research/XP-IMPROVEMENT-OPTIONS.md
 - Phase 9 edited: edited fields: goal (added RL-for-strategy experiment gated on chip-scheduler baseline, and enrichment data sources: Understat via theFPLkiwi maps, FotMob, FBref)

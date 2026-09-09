@@ -382,5 +382,16 @@ Plans:
 
 - [x] 09-10-PLAN.md — Final combined run (D-13), D-05 verdict, product wiring, Phase F ledger close
 
+### Phase 10: xP Experiment Follow-ups
+
+**Goal:** Pursue Phase 9's measured leads under the same honest-harness discipline (D-05/D-07/D-08 pattern: pre-declared criteria, default-off flags, ledger verdicts). Scope = the six 2026-09-09 pending todos: (1) ep_next + availability-flag features to attack the ranking gap (our Spearman 0.383 vs ep_next's 0.579 on the EXP-1 benchmark); (2) per-position + covered-rows re-measurement of understat/fotmob accuracy; (3) manual FBref CSV snapshot committed like the kiwi data, joined via the crosswalk; (4) high-replica (≥25) capt_ceiling adoption re-run recorded as a Phase F addendum; (5) RL v2 bigger-timestep run (120-min/policy box declared 2026-09-09, training launched, artifacts in data/processed/experiments/rl_v2_policies/) with its 5-season adoption comparison; (6) RL reward-shaping notes (potential-based shaping only, if ever revisited). Adoption bar unchanged: ≥2,280 model+chips vs the 2,262 baseline.
+**Requirements**: TBD
+**Depends on:** Phase 9
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 10 to break down)
+
 ---
 *Roadmap created: 2026-08-31*

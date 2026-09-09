@@ -3,6 +3,7 @@ created: 2026-09-09T05:14:14.086Z
 title: RL revisit — potential-based team-value shaping and a real training budget
 area: optimize
 severity: minor
+resolves_phase: 10
 files:
   - optimize/rl_env.py:247-259
   - optimize/rl_train.py
