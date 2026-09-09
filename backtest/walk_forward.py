@@ -130,17 +130,18 @@ def _plan_col(preds: pd.DataFrame, horizon: int = 4, decay: float = 0.84) -> pd.
 def apply_experiment_feature_gating(df: pd.DataFrame, exp: dict) -> pd.DataFrame:
     """Drop an experiment-gated feature family from `df` when its flag is off.
 
-    Both `ts_*` (config.TEAM_STRENGTH_COLS) and rolled `us_*`
-    (config.UNDERSTAT_COLS -> ROLL_STATS) are computed UNCONDITIONALLY by the
-    pipeline (see config.py's own comments on those two constants) so an
-    experiment toggle never forces a data/build_table.py + features/engineer.py
-    rebuild -- the feature-selection gate lives here instead, in exactly one
-    place, so a future enrichment family (FotMob, FBref v2) adds one branch
-    here rather than growing a third ad-hoc inline drop expression.
+    `ts_*` (config.TEAM_STRENGTH_COLS), rolled `us_*` (config.UNDERSTAT_COLS
+    -> ROLL_STATS) and rolled `fm_*` (config.FOTMOB_COLS -> ROLL_STATS) are
+    all computed UNCONDITIONALLY by the pipeline (see config.py's own
+    comments on those three constants) so an experiment toggle never forces a
+    data/build_table.py + features/engineer.py rebuild -- the feature-
+    selection gate lives here instead, in exactly one place, so a future
+    enrichment family (FBref v2) adds one branch here rather than growing a
+    fourth ad-hoc inline drop expression.
 
-    Extracted from plan 09-05's inline team_strength-only gating (D-13); the
-    team_strength branch's behaviour is unchanged from what that plan
-    measured -- only understat is new here.
+    Extracted from plan 09-05's inline team_strength-only gating (D-13), then
+    extended by plan 09-08 (understat) and this plan (fotmob); each existing
+    branch's behaviour is unchanged from what its own plan measured.
 
     `exp` needs only `.get()` -- callers may pass any dict-like subset of
     `config.EXPERIMENTS`'s keys (tests pass a plain two-key dict directly).
@@ -150,6 +151,8 @@ def apply_experiment_feature_gating(df: pd.DataFrame, exp: dict) -> pd.DataFrame
         drop += [c for c in config.TEAM_STRENGTH_COLS if c in df.columns]
     if not exp.get("understat", False):
         drop += [c for c in df.columns if c.startswith("us_")]
+    if not exp.get("fotmob", False):
+        drop += [c for c in df.columns if c.startswith("fm_")]
     return df.drop(columns=drop) if drop else df
 
 

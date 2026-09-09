@@ -153,6 +153,21 @@ TEAM_STRENGTH_COLS = ["ts_attack_self", "ts_defence_self", "ts_attack_opp",
 # shift(1)-then-rolling path, exactly like every other per-match performance stat.
 UNDERSTAT_COLS = ["us_npxg", "us_xgchain", "us_xgbuildup", "us_shots", "us_key_passes"]
 
+# FotMob per-match defensive-action counts (data/fotmob.py) -- OPTIONAL
+# enrichment, computed UNCONDITIONALLY like UNDERSTAT_COLS/TEAM_STRENGTH_COLS
+# above: the pipeline no-ops without data/processed/fotmob.parquet, and once
+# it exists the join always runs so player_gw.parquet/features.parquet stay
+# stable across an A/B run (the EXPERIMENTS["fotmob"] feature-selection gate
+# lives in backtest/walk_forward.py). FPL's own defensive-contribution points
+# reward tackles/interceptions/blocks/clearances/recoveries, none of which
+# vaastav's merged_gw.csv or Understat carry. CRITICAL: these are MATCH
+# OUTCOMES describing the fixture they came from, not pre-match context --
+# features/engineer.py registers them in ROLL_STATS (never CONTEXT_COLS) so
+# they only ever reach the model through the shift(1)-then-rolling path,
+# exactly like every other per-match performance stat.
+FOTMOB_COLS = ["fm_tackles", "fm_interceptions", "fm_blocks", "fm_clearances",
+              "fm_recoveries", "fm_duels_won"]
+
 # --- Modelling (Phase 3): strict time-based split, never random ------------
 # Train on earlier seasons, hold out the most recent complete season as test.
 TRAIN_SEASONS = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21",

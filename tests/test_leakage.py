@@ -10,6 +10,7 @@ FEATURES = config.PROCESSED_DIR / "features.parquet"
 RAW = config.PROCESSED_DIR / "player_gw.parquet"
 TEAM_STRENGTH = config.PROCESSED_DIR / "team_strength.parquet"
 UNDERSTAT = config.PROCESSED_DIR / "understat.parquet"
+FOTMOB = config.PROCESSED_DIR / "fotmob.parquet"
 needs_data = pytest.mark.skipif(not (FEATURES.exists() and RAW.exists()),
                                 reason="run the data pipeline first")
 
@@ -113,5 +114,32 @@ def test_understat_features_are_rolled_not_raw(feat):
            .sort_values("kickoff_time")["us_npxg_r5"])
     exp = (raw[(raw.season == season) & (raw.player_id == pid)]
            .sort_values("kickoff_time")["us_npxg"]
+           .shift(1).rolling(5, min_periods=1).mean())
+    assert np.allclose(got.fillna(-1).values, exp.fillna(-1).values)
+
+
+@pytest.mark.skipif(not (FEATURES.exists() and FOTMOB.exists()),
+                    reason="run `python -m data.fotmob` then rebuild the pipeline first")
+def test_fotmob_features_are_rolled_not_raw(feat):
+    """09-09's leakage requirement: FotMob's per-match defensive-action counts
+    describe the MATCH THEY CAME FROM (a match outcome) -- they must reach the
+    feature matrix only through the shift(1)-then-rolling path
+    (config.FOTMOB_COLS registered in ROLL_STATS), never as bare pre-match
+    context. Mirrors test_understat_features_are_rolled_not_raw's own
+    recompute-and-compare template."""
+    bare = [c for c in config.FOTMOB_COLS if c in feat.columns]
+    assert not bare, f"raw fotmob columns leaked into the feature matrix: {bare}"
+
+    rolled = [c for c in feat.columns
+             if c.startswith("fm_") and c.split("_")[-1].startswith("r")]
+    assert rolled, "no rolled fotmob feature columns found -- was the pipeline rebuilt?"
+
+    raw = pd.read_parquet(RAW)
+    season = "2023-24"
+    pid = feat.loc[feat.season == season, "player_id"].value_counts().index[0]
+    got = (feat[(feat.season == season) & (feat.player_id == pid)]
+           .sort_values("kickoff_time")["fm_tackles_r5"])
+    exp = (raw[(raw.season == season) & (raw.player_id == pid)]
+           .sort_values("kickoff_time")["fm_tackles"]
            .shift(1).rolling(5, min_periods=1).mean())
     assert np.allclose(got.fillna(-1).values, exp.fillna(-1).values)
