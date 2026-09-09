@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 09
 current_phase_name: xP Model & Optimizer Improvement Experiments
 status: executing
-stopped_at: Completed 09-08-PLAN.md
-last_updated: "2026-09-08T19:43:36.181Z"
+stopped_at: Completed 09-09-PLAN.md
+last_updated: "2026-09-09T02:27:00.070Z"
 last_activity: 2026-09-08
 last_activity_desc: Phase 09 execution started
-state_head: 8820956b3e053a75ab70bffa9da13d7cf65a17d8
+state_head: 00f7fc182a16f2ce676b0cd62bc740b7ff32db04
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 55
-  completed_plans: 50
+  completed_plans: 51
   percent: 67
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-07)
 ## Current Position
 
 Phase: 09 (xP Model & Optimizer Improvement Experiments) — EXECUTING
-Plan: 9 of 10
+Plan: 10 of 10
 Status: Ready to execute
 Last activity: 2026-09-08 — Phase 09 execution started
 
@@ -113,6 +113,7 @@ Progress: [███████░░░] 67% (6/7 phases, 39 plans complete)
 | Phase 09 P06 | 30min | 3 tasks | 4 files |
 | Phase 09 P07 | 3h 30min | 3 tasks | 7 files |
 | Phase 09 P08 | 64min | 3 tasks | 9 files |
+| Phase 09 P09 | 6h 29min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -231,6 +232,8 @@ Recent decisions affecting current work:
 - [Phase 09]: rl_strategy REJECTED: seed-mean model+chips 2020 (1847/2069/2144) vs chips_v2's 2192 on the same 5 seasons -- a -172/season regression on every seed, not just the mean — D-02/D-07/D-16 mechanical rule applied; config.EXPERIMENTS['rl_strategy'] stays False, code stays merged (D-08), no additional seeds or budget spent chasing the result
 - [Phase 09]: understat REJECTED: model+chips +16 (2262->2278), 2 short of the >=2280 primary bar, not corroborated by fixture-level MAE/Spearman (flat-to-slightly-worse); config.EXPERIMENTS['understat'] stays False, code stays merged (D-08)
 - [Phase 09]: data.id_crosswalk.resolve_by_name extended with a third fallback tier (_fpl_name_index, matching data/id_map.py's full historical registry) after theFPLkiwi's crosswalk proved to be a ~454-row current-squad-only snapshot capping name-join coverage at ~20% for any multi-season source; raised distinct-name coverage from 20.9% to 87.4% before fixups
+- [Phase 09]: fotmob REJECTED: adoption run measured model+chips +1/season (2262->2263), well inside the harness's own noise band (SE~50) -- flag stays default-off, code stays merged (D-08)
+- [Phase 09]: fbref_v2 confirmed not-acquirable: three real-Chrome spike attempts all hung inside the UC-mode reconnect call while a plain driver confirms the site still serves Cloudflare's challenge page -- a harder access failure than the prior documented value-blanking finding; no new scraping infrastructure built (D-04)
 
 ### Pending Todos
 
@@ -257,6 +260,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-08T19:43:26.304Z
-Stopped at: Completed 09-08-PLAN.md
+Last session: 2026-09-09T02:26:59.898Z
+Stopped at: Completed 09-09-PLAN.md
 Resume file: None
