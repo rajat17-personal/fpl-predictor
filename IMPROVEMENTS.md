@@ -1234,6 +1234,169 @@ existing in isolation:
   and points. The reward-shaping notes todo (potential-based shaping) remains on file
   for any future revisit, but no further RL time-boxes are recommended this milestone.
 
+### Addendum (2026-09-09): ep_next as a model feature — provenance-tainted, both arms rejected (extends the benchmark section above)
+
+- **The todo's own premise was half wrong.** The todo and `models/train.py`'s own
+  `_EXCLUDE` comment both say `xp_fpl` (FPL's `ep_this`/`ep_next` field, mapped in
+  `config.py`) is "evaluation baseline only, not a feature". That is true only of the
+  LITERAL column. `features/engineer.py` has listed `"xp_fpl"` in `ROLL_STATS` since
+  before this task, so `features.parquet` already carries `xp_fpl_r3`, `xp_fpl_r5`,
+  `xp_fpl_r10` and `xp_fpl_rall` — four lagged rolling means of FPL's own expected-points
+  figure have been live model features all along. **"Feed lagged ep_next" needed no new
+  work.** The only genuinely new signals this task could add were (a) the strict
+  previous-fixture value (a `shift(1)`, not a rolling mean) and (b) the SAME-FIXTURE
+  value — exposed behind two new default-off flags, `ep_next_lag` and `ep_next_now`
+  (`config.EXPERIMENTS`), added by `backtest/walk_forward.py`'s
+  `apply_experiment_feature_gating` as derived columns `xp_fpl_lag1`/`xp_fpl_now`.
+- **What the column is, and how much of it exists.** Comparing vaastav's final-gameweek
+  `xP` column against the end-of-season bootstrap's `ep_this`: exact match for **100.0%**
+  of players in 2022-23/2023-24/2024-25 (vs 11–14% at GW1) — this is a genuine
+  per-gameweek capture of FPL's live `ep_this` field, not a season constant. Coverage is
+  broken in two ways: `xp_fpl` is **100% null for 2016-17 through 2019-20** (four of the
+  eight training seasons), and whole gameweeks are captured as an identical `0.0` across
+  every row — an outage written as a false zero, not a null:
+
+  | season | outage gameweeks (all-zero) | zero-share (non-outage gws) |
+  |---|---:|---:|
+  | 2020-21 | 1 (gw35) | 0.295 |
+  | 2021-22 | 0 | 0.308 |
+  | 2022-23 | 2 (gw12, gw36) | 0.364 |
+  | 2023-24 | 1 (gw26) | 0.417 |
+  | 2024-25 | 3 (gw22, gw32, gw34) | 0.379 |
+  | 2025-26 | **27 of 38** | 0.386 |
+
+  2025-26 — the most recent test season — is mostly a fabricated zero if used raw. The
+  gate (`backtest/ep_next_provenance.py`'s coverage census, reproduced exactly by
+  `apply_experiment_feature_gating`) nulls out any (season, gw) group that is 0.0/null
+  for EVERY row before deriving either signal, so an outage gameweek can never enter the
+  model as a confident zero — a mixed zero/non-zero gameweek (the genuine ~30-42%
+  pre-deadline zero mass) is left untouched.
+- **The provenance verdict — the decisive test, and it does NOT exonerate the column.**
+  A low `P(played | xp_fpl==0)` on its own looks like hindsight, but genuine pre-deadline
+  zeros also cluster on truly-unlikely-to-play players, so that number alone does not
+  settle it. `backtest/ep_next_provenance.py` instead compares the historical figure
+  against a KNOWN-pre-deadline control: this repo's own `data/snapshots/*.parquet` (the
+  daily cron, captured at a known `ts_utc` strictly between gameweeks), joined to that
+  gameweek's realised minutes in `data/raw/live/element_history.parquet`.
+
+  | | P(played \| ep==0) | 95% CI (Wilson) | n |
+  |---|---:|---|---:|
+  | historical, pooled non-outage gws (2020-21..2025-26) | 0.0229 | [0.0216, 0.0243] | 48,671 zero-ep rows |
+  | control: `data/snapshots/2026-08-31.parquet` (next_gw=3, ts_utc 12:37 UTC) | 0.0815 | [0.0544, 0.1203] | 270 zero-ep rows |
+
+  The control's interval sits entirely ABOVE the historical pooled interval — no
+  overlap. A genuine pre-deadline capture is materially LESS certain a zero-ep player
+  will actually not play (8.15%) than the historical column claims to be (2.29%): the
+  historical column is more confident than an honest forward-looking snapshot could be,
+  consistent with hindsight contamination. **Verdict: NOT exonerated.** (The second
+  snapshot, `2026-09-07.parquet`, next_gw=4, is honestly reported as `covered: False` —
+  gw4 has no realised minutes yet — rather than dropped silently; the control is
+  therefore n=270 from ONE covered snapshot, a small control, stated as such.) Per the
+  pre-declared rule (T-elx-01), this makes the same-fixture arm (`ep_next_now`) a
+  diagnostic upper bound only, never an adoption case, regardless of what it scores
+  below.
+- **The adoption run (6 seasons, 5 replicas, `data/processed/experiments/wf_ep_next_lag.csv`
+  / `wf_ep_next_now.csv`, paired intervals via `backtest.capt_ceiling_ci.paired_t_interval`,
+  reused rather than reimplemented):**
+
+  | season | model+chips base | +lag | +lag+now | multi_safe base | +lag | +lag+now |
+  |---|---:|---:|---:|---:|---:|---:|
+  | 2020-21 | 2091 | 2091 | 2091 | 1967 | 1967 | 1967 |
+  | 2021-22 | 2305 | 2305 | 2305 | 2312 | 2312 | 2312 |
+  | 2022-23 | 2380 | 2316 | 3395 | 2269 | 2054 | 3316 |
+  | 2023-24 | 2210 | 2110 | 3971 | 2146 | 2143 | 3791 |
+  | 2024-25 | 2417 | 2370 | 3906 | 2101 | 2243 | 3552 |
+  | 2025-26 | 2172 | 2147 | 2627 | 2086 | 2158 | 2488 |
+  | **mean** | **2262** | **2223** | **3049** | **2147** | **2146** | **2905** |
+
+  | arm | metric | mean Δ | season-clustered 95% CI (n=6, GOVERNS) | clears own zero? |
+  |---|---|---:|---|---|
+  | ep_next_lag | model+chips | −39.3 | [−80.4, +1.7] | no |
+  | ep_next_lag | multi_safe | −0.7 | [−126.2, +124.9] | no |
+  | ep_next_now | model+chips | +786.7 | [−4.6, +1577.9] | no (barely) |
+  | ep_next_now | multi_safe | +757.5 | [−3.1, +1518.1] | no (barely) |
+
+  2020-21 and 2021-22 show an EXACT zero delta on every arm: for those two test seasons
+  `_preds_for`'s own train window (`DATA_SEASONS[:i-1]`) is entirely the four fully-null
+  seasons, so LightGBM never sees a single non-null value of either derived column during
+  training and cannot split on it — this is the masking/lag gate behaving correctly, not
+  a bug. The moment the train window first includes a season with real coverage
+  (2020-21, for test season 2022-23 onward), `ep_next_now`'s effect explodes: model+chips
+  triples the baseline gap size on 2023-24 alone (2210→3971). This magnitude — not a
+  modest edge, a near-doubling of realistic season points — is itself corroborating
+  evidence for the provenance verdict above, not a separate finding to weigh against it.
+- **Verdict, applied mechanically (D-05/D-07), THEN gated by provenance (T-elx-01):**
+  - `ep_next_lag` (decision-time-safe by construction — a strict `shift(1)`): mean
+    model+chips 2223 **does not clear** the ≥2,280 D-05 bar, and D-07 fails outright
+    (model+chips regresses, multi_safe is flat). **REJECTED** — the safe half of the
+    todo's ask genuinely does not help. `config.EXPERIMENTS['ep_next_lag']` stays `False`.
+  - `ep_next_now` (same-fixture): mean model+chips 3049 mechanically CLEARS the ≥2,280
+    D-05 bar by a wide margin, and multi_safe also "holds" (2905 vs 2147) — read
+    naively, this is the best single-flag result recorded anywhere in this phase. It is
+    rejected anyway, because the provenance test above found the very feature driving
+    this result behaves as if it knows the outcome before it happens. A number this
+    large, appearing only once the training window contains real (leakage-consistent)
+    data, is the signature of exactly the failure this task's threat register was written
+    to catch (T-elx-01), not a genuine model improvement. **REJECTED — unadoptable
+    regardless of the mechanical bar.** `config.EXPERIMENTS['ep_next_now']` stays `False`.
+- **The benchmark re-score** (`backtest/benchmark_external.py`'s new `--experiments`
+  option, closing F7's gap that this module never gated at all; played-only pooled rows
+  over the two seasons theFPLkiwi covers, 2021-22/2022-23, n=17,488 in every run):
+
+  | run | xp_med MAE | xp_med Spearman | xp_fpl Spearman (same run) |
+  |---|---:|---:|---:|
+  | fresh all-off baseline (`--experiments none`) | 1.978 | 0.383 | 0.579 |
+  | +ep_next_lag | 1.976 | 0.383 | 0.579 |
+  | +ep_next_lag+ep_next_now | 1.753 | 0.516 | 0.579 |
+
+  The fresh all-off baseline reproduces the originally published 0.383/0.579 pooled pair
+  exactly, per season and pooled — a useful confirmation, though F7's own caution stands
+  for any future rebuild that changes `features.parquet` again: this run, not the
+  original 09-02 one, is what a later re-score should compare against. `ep_next_lag`
+  moves the ranking metric by 0.000 pooled — consistent with the season-points reading
+  above, this signal simply is not there once training only sees decision-time-known
+  values. `ep_next_now` moves pooled Spearman from 0.383 to 0.516 — real movement toward
+  `xp_fpl`'s own 0.579, but the per-season breakdown shows why it does not count as
+  closing the gap: 2022-23 alone jumps from 0.386 to **0.688**, SURPASSING `xp_fpl`'s own
+  0.558 figure for that season. A derived feature outranking the very column it was
+  copied from, on the one test season where the training window first contains real
+  coverage, is the same leakage signature as the season-points result — not the model
+  becoming a better forecaster than FPL's own team.
+- **The availability half of the todo is not measurable — this is a measured absence, not
+  a judgement call.** `chance_of_playing_this_round`, `chance_of_playing_next_round`,
+  `status` and `news` appear ONLY in `players_raw.csv`, a single END-OF-SEASON snapshot
+  (rows == unique player ids). Two other candidate sources were checked and neither
+  carries it: `merged_gw.csv` (36–46 columns across the seasons checked, none
+  availability) and this repo's own self-hosted `data/raw/live/element_history.parquet`
+  (21 columns, none availability). There is no per-gameweek availability signal for any
+  past season anywhere in this repo; using the season-final value per gameweek would
+  apply an end-of-season injury flag retroactively to every gameweek of that season, which
+  is worse than no feature. **The forward path already exists and has started:**
+  `data/snapshots/*.parquet` has captured `status`, `chance_of_playing_next_round`,
+  `ep_this`, `ep_next`, `next_gw` and `ts_utc` daily since 2026-08-31 (2 files so far —
+  the same snapshots this addendum's own provenance control used). Roughly one 2026-27
+  season of accumulation makes a per-gameweek availability panel constructible; the daily
+  cron (Phase 6) is the thing that must keep running for that to happen. No feature or
+  number is invented for this half.
+- **Caveats.** (1) The season-clustered t-interval (n=6) is the governing family, per the
+  260909-dga addendum's own precedent — both arms' intervals technically straddle zero at
+  95% despite `ep_next_now`'s huge point estimate, because 2020-21/2021-22 contribute an
+  exact-zero delta each (diluting the mean and widening the interval) for the structural
+  reason explained above, not because the signal is weak once it actually engages. (2)
+  The benchmark re-score covers only the two seasons theFPLkiwi's committed snapshot
+  covers (2021-22, 2022-23) — 2022-23 is also the FIRST test season where `ep_next_now`'s
+  training window includes real coverage, so this 2-season read is not independent
+  confirmation of the season-points result; it shares the same root cause. (3) This is
+  the third instalment on "What this phase did not resolve"'s recorded external-benchmark
+  puzzle (why does `xp_fpl` rank players better than our own model) — after this
+  addendum, the honest answer is still "unexplained by a safe feature", since the only
+  candidate that moved the gap turned out to be leakage.
+- **Closing.** Both `config.EXPERIMENTS['ep_next_lag']` and `['ep_next_now']` stay
+  `False` under every reading above — there is no adoption case here, mechanical bar or
+  not, and none is being presented to the user. If a future daily-cron accumulation
+  (12+ months) produces a large enough known-pre-deadline control to narrow the
+  provenance interval, this verdict is the one to revisit first.
+
 ## Reference findings (why the priorities)
 
 Levers that beat noise: model vs form baseline (+83..92/season), active transfers

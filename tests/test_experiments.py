@@ -229,6 +229,18 @@ def test_ep_next_registry_keys_present_and_off():
     assert {"ep_next_lag", "ep_next_now"} <= _EXPERIMENT_KEYS
 
 
+def test_ep_next_flags_stay_off_after_measurement():
+    """Quick task 260909-elx's addendum found ep_next_lag doesn't clear the
+    D-05 bar (2223 vs >=2280) and ep_next_now clears it only via a
+    provenance-tainted signal (backtest/ep_next_provenance.py's control
+    found the historical column materially more confident than a genuine
+    pre-deadline capture could honestly be, non-overlapping 95% intervals) --
+    REJECTED both ways. This pins both flags off explicitly so a future
+    change that silently adopts either fails a test, not a diff review."""
+    assert config.EXPERIMENTS["ep_next_lag"] is False
+    assert config.EXPERIMENTS["ep_next_now"] is False
+
+
 # --- backtest/benchmark_external.py::_resolve_gate_experiments (quick 260909-elx Task 2) --
 
 def test_benchmark_experiments_arg_none_preserves_ungated_default():
