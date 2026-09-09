@@ -38,7 +38,7 @@ import requests
 from scipy.stats import spearmanr
 
 import config
-from backtest.walk_forward import TEST_SEASONS, _preds_for
+from backtest.walk_forward import TEST_SEASONS, _preds_for, apply_experiment_feature_gating
 from models.train import load_features
 from ops.jsonio import write_json
 
@@ -201,6 +201,25 @@ def _scoreable_seasons() -> tuple[list[str], list[tuple[str, int]]]:
     return scoreable, thin
 
 
+def _resolve_gate_experiments(spec: str | None) -> dict | None:
+    """CLI `--experiments` resolution (quick task 260909-elx Task 2, F7).
+
+    `spec is None` (the flag omitted) means "score exactly like today" --
+    returns `None`, so `score()` skips `apply_experiment_feature_gating`
+    entirely and this module's default behaviour is byte-identical to before
+    this option existed. Any other spec -- including the literal token
+    "none" -- resolves via `config.resolve_experiments` and DOES gate, even
+    though "none" itself resolves to an all-False dict: the caller
+    explicitly asked to be scored through the gate at all-off (dropping
+    ts_/us_/fm_, unlike the omitted case, which never gates at all), for a
+    controlled, reproducible "fresh baseline" run comparable to the
+    ep_next_lag/ep_next_now arms on the same code path.
+    """
+    if spec is None:
+        return None
+    return config.resolve_experiments(spec)
+
+
 def _our_preds_gw_level(df: pd.DataFrame, season: str) -> pd.DataFrame:
     """Leakage-safe predictions for `season` (via the same
     `backtest.walk_forward._preds_for` the real harness uses -- never
@@ -246,10 +265,18 @@ def _stats_block(played: pd.DataFrame) -> dict:
     return out
 
 
-def score(seasons: list[str] | None = None) -> dict:
+def score(seasons: list[str] | None = None, experiments: dict | None = None) -> dict:
     """Score our xP against theFPLkiwi on played-only common rows, per season
     and pooled. Never retrains, never writes into models/artifacts/, never
-    mutates the committed snapshot -- evaluation only."""
+    mutates the committed snapshot -- evaluation only.
+
+    `experiments` (quick task 260909-elx Task 2, F7) optionally gates the
+    feature frame through `backtest.walk_forward.apply_experiment_feature_gating`
+    before scoring -- this module never gated before, so it silently scored
+    whatever ts_/us_/fm_ columns happened to be in features.parquet.
+    `experiments=None` (the default) reproduces TODAY's ungated behaviour
+    exactly -- additive, never a default change.
+    """
     scoreable, thin = _scoreable_seasons()
     chosen = seasons if seasons is not None else scoreable
     unknown = [s for s in chosen if s not in TEST_SEASONS]
@@ -261,6 +288,8 @@ def score(seasons: list[str] | None = None) -> dict:
               f"{n_gws} gameweeks (need >= {_MIN_GWS_TO_SCORE} to score)")
 
     df = load_features()
+    if experiments is not None:
+        df = apply_experiment_feature_gating(df, experiments)
     per_season: dict = {}
     played_all = []
     for season in chosen:
@@ -300,13 +329,21 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--tag", default=None,
                     help="write a tagged data/processed/experiments/benchmark_<tag>.json "
                          "summary instead of only printing")
+    ap.add_argument("--experiments", default=None,
+                    help="comma-separated experiment flags to force on (see "
+                         "config.EXPERIMENTS), gated via "
+                         "apply_experiment_feature_gating before scoring; "
+                         "omitting this flag reproduces this module's ungated "
+                         "scoring path exactly (F7) -- pass 'none' to score "
+                         "through the gate with every flag off instead")
     args = ap.parse_args(argv)
     if args.fetch:
         return fetch()
 
     seasons = ([s.strip() for s in args.seasons.split(",") if s.strip()]
                if args.seasons else None)
-    summary = score(seasons)
+    experiments = _resolve_gate_experiments(args.experiments)
+    summary = score(seasons, experiments=experiments)
     if args.tag:
         config.EXPERIMENTS_DIR.mkdir(parents=True, exist_ok=True)
         dest = config.EXPERIMENTS_DIR / f"benchmark_{args.tag}.json"

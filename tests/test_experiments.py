@@ -229,6 +229,32 @@ def test_ep_next_registry_keys_present_and_off():
     assert {"ep_next_lag", "ep_next_now"} <= _EXPERIMENT_KEYS
 
 
+# --- backtest/benchmark_external.py::_resolve_gate_experiments (quick 260909-elx Task 2) --
+
+def test_benchmark_experiments_arg_none_preserves_ungated_default():
+    """Omitting --experiments must resolve to None (score() skips gating
+    entirely, reproducing this module's pre-existing ungated behaviour --
+    F7), while the explicit 'none' token resolves to a real all-False dict
+    that DOES gate (dropping ts_/us_/fm_ at all-off, unlike the omitted
+    case, which never gates at all)."""
+    from backtest.benchmark_external import _resolve_gate_experiments
+
+    assert _resolve_gate_experiments(None) is None
+
+    resolved = _resolve_gate_experiments("none")
+    assert resolved is not None
+    assert not any(resolved.values())
+
+
+def test_benchmark_experiments_arg_forces_named_flags():
+    from backtest.benchmark_external import _resolve_gate_experiments
+
+    resolved = _resolve_gate_experiments("ep_next_lag")
+    assert resolved is not None
+    assert resolved["ep_next_lag"] is True
+    assert sum(resolved.values()) == 1
+
+
 # --- models.captaincy --------------------------------------------------------
 
 def _hand_built_artifact() -> dict:
