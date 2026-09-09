@@ -704,6 +704,85 @@ gated on any single missing data source — it is gated on the model/decision
 layer, exactly as this phase's other experiments (capt_ceiling, chips_v2,
 team_strength, rl_strategy) also found.
 
+### Final combined run (plan 09-10, D-13)
+
+Command: `scripts/experiment_run.sh final_combined` → `python -m backtest.walk_forward
+--tag final_combined` (6 seasons, 5 replicas — the harness's own defaults — with
+`--experiments` deliberately **not** passed, so this measures the shipped default
+`config.EXPERIMENTS`, never a forced flag combination). Result:
+`data/processed/experiments/wf_final_combined.json`/`.csv`.
+
+**Adopted flag set at phase close: none.** All eight flags (`capt_ceiling`,
+`capt_mc`, `chips_v2`, `team_strength`, `rl_strategy`, `understat`, `fotmob`,
+`fbref_v2`) stayed default-off — every experiment this phase ran was measured
+and REJECTED against its own pre-declared criterion (`capt_mc` was never
+triggered and `fbref_v2` was never acquirable, per their own rows above). D-13's
+"the winners get one final combined run" therefore has zero winners to combine:
+the final combined configuration is, by construction, identical to the phase's
+opening baseline. Per this task's own instruction, that is recorded as a
+legitimate and informative phase outcome, not skipped.
+
+| season | model_mean | model+chips | capt_mean | capt_capture | multi_safe | form | hold |
+|--------|-----------:|------------:|----------:|-------------:|-----------:|-----:|-----:|
+| 2020-21 | 2074 | 2091 | 2071 | 0.541 | 1967 | 2077 | 1517 |
+| 2021-22 | 2119 | 2305 | 2123 | 0.583 | 2312 | 2174 | 1610 |
+| 2022-23 | 2148 | 2380 | 2183 | 0.563 | 2269 | 2079 | 1835 |
+| 2023-24 | 2191 | 2210 | 2086 | 0.483 | 2146 | 1960 | 1741 |
+| 2024-25 | 2137 | 2417 | 2260 | 0.614 | 2101 | 2107 | 2230 |
+| 2025-26 | 2122 | 2172 | 2174 | 0.595 | 2086 | 1797 | 1439 |
+
+6-season means: `model_mean` = 2132, **`model+chips` = 2262**, `capt_mean` = 2150,
+`capt_capture` = 0.563, `multi_safe` = 2147, `form` = 2032, `hold` = 1729 — every
+figure bit-for-bit identical to plan 09-01's `wf_baseline_phase9.json`, exactly
+as expected when the config that ships after this phase and the config that
+shipped before it are the same dict (`assert f['experiments'] ==
+config.EXPERIMENTS` in this task's own verify).
+
+**D-05 verdict, judged arithmetically:**
+
+| comparator | model+chips | delta vs. final combined |
+|---|---:|---:|
+| measured plan 09-01 baseline (`wf_baseline_phase9.json`) | 2262 | 0 |
+| D-05's quoted "current ≈2,256" | 2256 | +6 |
+| D-05 primary bar | 2280 | −18 |
+| **final combined (this run, `wf_final_combined.json`)** | **2262** | — |
+
+The final combined run measures **2262 — 18 points short of the ≥2,280 primary
+bar** — and, as expected, matches the measured phase baseline exactly (delta 0)
+since no flag changed between the two runs. Per-season deltas against the
+2,280 bar range from −70 (2023-24: 2210) to +137 (2024-25: 2417); three of the
+six seasons individually clear 2,280 on their own (2021-22 2305, 2022-23 2380,
+2024-25 2417) and three fall short (2020-21 2091, 2023-24 2210, 2025-26 2172)
+— exactly the shape of "noisy per-season, judged on the 6-season mean" rather
+than a directional signal either way.
+
+Reading the −18 shortfall against the harness's own season-to-season spread on
+`model+chips` (mean 2262, sample std ≈126, SE ≈52 over n=6 — noticeably wider
+than `model_mean`'s own ±38/SE 16, since `model+chips` folds in the isolated
+per-season chip-play variance on top of model noise): **the shortfall is well
+inside one standard error**, and the +6 delta against D-05's quoted ≈2,256
+estimate is smaller still. The honest reading is "unchanged, not regressed" —
+not "close but for bad luck." No flag was adjusted to chase the bar: every
+experiment's D-07 verdict was already recorded and committed by the plan that
+ran it (09-03 through 09-09); this task's run only measures the configuration
+those verdicts left in place.
+
+**This phase's honest walk-forward frontier at close is the same 2,262 it
+measured at open.** Every one of the six ranked experiments in
+`.planning/research/XP-IMPROVEMENT-OPTIONS.md` (captaincy ceiling EV, chip
+scheduler v2, team-strength ratings, RL-for-strategy, and the three enrichment
+sources bundled as the sixth) was built, measured on the honest leakage-safe
+6-season harness, and rejected against its own pre-declared criterion — none
+moved `model+chips` outside the harness's own noise band in the improving
+direction, and two (`chips_v2`, `rl_strategy`) moved it backward outside that
+band. That is not a failure of this phase's own discipline: D-01 through D-16's
+mechanical, pre-declared, noise-aware adoption rule did exactly its job of
+refusing six real, honestly-measured negative-or-noise-band results, matching
+the project's own prior history (odds and set-piece features that improved
+fixture-level MAE without moving season points; the +337-optimistic-vs-+40-
+honest multi-GW leakage trap) that the 2,280 bar exists to guard against, not
+promise past.
+
 ## Reference findings (why the priorities)
 
 Levers that beat noise: model vs form baseline (+83..92/season), active transfers
