@@ -217,9 +217,10 @@ useful confirmation signal), not a gate on any of them.
 | fotmob | model+chips contribution measured via the harness | model+chips +1 (2262→2263, within noise); join coverage 40.4% row-level via the shared crosswalk | rejected | off |
 | fbref_v2 | model+chips contribution measured via the harness | not acquirable this session — real UC-mode Chrome navigation to fbref.com never completed (3 attempts, 5-6 min each) despite Chrome/network working fine against a control site; a non-UC driver confirms the page is still Cloudflare-gated (`Just a moment...` challenge). 0 rows scraped, no `fb_tkl_int_90` coverage | not acquirable | off |
 
-Every row starts `pending`; later plans in this phase fill their own row as they
-measure it. Plan 09-10 finalises this table. A failed experiment keeps its code
-merged behind a default-off flag with its number recorded here — never deleted (D-08).
+Every row started `pending`; each plan in this phase filled its own row as it
+measured it, and plan 09-10 confirms none remain — every cell above carries a
+number or an evidenced reason. A failed experiment keeps its code merged
+behind a default-off flag with its number recorded here — never deleted (D-08).
 
 ### capt_ceiling: lambda sweep and adoption verdict (plan 09-03)
 
@@ -782,6 +783,208 @@ the project's own prior history (odds and set-piece features that improved
 fixture-level MAE without moving season points; the +337-optimistic-vs-+40-
 honest multi-GW leakage trap) that the 2,280 bar exists to guard against, not
 promise past.
+
+### Decisions audit (plan 09-10, D-01 through D-16)
+
+Walking `.planning/phases/09-xp-model-optimizer-improvement-experiments/09-CONTEXT.md`'s
+sixteen implementation decisions in order, stating in one line how this phase
+honoured each and where the evidence sits. An audit that only records
+agreement is not an audit — two entries below (D-01, D-12) are honoured in
+spirit rather than to the letter, and say so plainly.
+
+- **D-01 (fixed order, run everything) — honoured in spirit, not literally.**
+  The declared order is benchmark → captaincy → chips → team-strength → RL
+  (gated) → enrichment. Plan 09-01 built the shared experiment spine
+  (`config.EXPERIMENTS`, the harness's `--experiments`/`--seasons`/`--tag`
+  CLI) **and** rode the cheapest captaincy quantile variant through it as a
+  tracer, before plan 09-02 formally ran the benchmark — so that every later
+  experiment had a flag and a seam to ride from day one, rather than plan
+  09-01 shipping infrastructure nobody could yet use. Once that tracer
+  landed, the six experiments ran in the declared order exactly (09-02
+  benchmark, 09-03 captaincy, 09-04 chips, 09-05 team-strength, 09-06/09-07
+  RL gated on 09-04, 09-08/09-09 enrichment), and the benchmark's own reading
+  (our `xp_med`/`xp_mean` in the same MAE/Spearman neighbourhood as
+  theFPLkiwi's projections) pruned nothing, per D-01's own instruction — it
+  is cited as interpretive context in 09-08/09-09's summaries, never as a
+  gate.
+- **D-02 (RL hard-gated on chips v2) — honoured literally.** `optimize/rl_env.py`
+  (09-06) was built only after 09-04 measured `chips_v2`; 09-07's adoption
+  verdict required RL to beat the solver-scored scheduler on the identical
+  harness (a freshly re-measured 5-season `chips_v2` figure of 2192, matching
+  the seasons RL could actually train on) and it did not on any seed
+  (seed-mean 2020, −172/season) — REJECTED.
+- **D-03 (three enrichment sources, features only, shared crosswalk) —
+  honoured literally.** Understat (09-08) and FotMob (09-09) both register
+  their columns in `features/engineer.py::ROLL_STATS` (never `CONTEXT_COLS`,
+  never a new sub-model); FBref (09-09) stayed a spike with no model
+  integration since it never became acquirable. All three route foreign
+  player names through the single `data.id_crosswalk.resolve_by_name` built
+  in 09-02, extended (not replaced) by 09-08's historical-registry fallback
+  tier.
+- **D-04 (FBref host = local WSL Chrome outside the repo, no scraper image) —
+  honoured literally.** 09-09's spike ran the pre-existing `data/fbref.py`
+  against the local Chrome binary already used by earlier phases; no new
+  infrastructure, container, or committed browser binary was added.
+- **D-05 (primary bar ≥2,280) — honoured literally.** Measured fresh in 09-01
+  (2262, not either inherited ~2,256/~2,263 estimate) and re-confirmed
+  byte-for-byte by this plan's final combined run (2262) — the bar was judged
+  arithmetically against the actual shipped configuration, not an estimate.
+- **D-06 (full per-experiment criteria set) — honoured literally, per
+  experiment.** Captaincy capture bar (09-03: +1.5pt < +2pt, rejected);
+  Wildcard's isolated value measured for the first time (09-04, +14.2±9.0
+  pts/gw) and no chip's isolated value allowed to regress unnoticed (bb's did,
+  in 09-04's own `chips_v2` reading, contributing to that rejection);
+  `tests/test_leakage.py` extended for team-strength ratings (09-05, passes);
+  optimistic-vs-frozen A/B run for team-strength's horizon-touching change
+  (09-05, gap +392, matching the project's own prior +337 finding) and the
+  same `--optimistic-plan` capability reused by this plan's final run.
+- **D-07 (mechanical auto-adopt rule) — honoured literally, six times.**
+  `capt_ceiling` (09-03), `chips_v2` (09-04), `team_strength` (09-05),
+  `rl_strategy` (09-07), `understat` (09-08), and `fotmob` (09-09) were each
+  measured against their own pre-declared criterion and REJECTED without a
+  separate human sign-off being sought — the rule's whole point (a
+  mechanical flip, not a debate) held six times in a row because none
+  cleared its bar.
+- **D-08 (no code deletion, numbers recorded) — honoured literally.** Every
+  rejected experiment's module stays in the repository (verified by this
+  plan's own module-import check below); every row in the results table
+  above carries a number or an evidenced reason, never a silent drop.
+- **D-09 (RL stack isolated in a dev-only lockfile) — honoured literally.**
+  09-06 proved (not merely asserted) that `requirements-rl.txt` is referenced
+  by nothing in `Dockerfile` or any `.github/workflows/*.yml`, and that those
+  files are byte-identical to before the plan.
+- **D-10 (external benchmark data committed as a snapshot) — honoured
+  literally.** `data/external/kiwi/` (ID map + three seasons of projection
+  CSVs) plus `data/external/README.md` (source URLs, license attribution)
+  landed in 09-02, reproducible with zero network access.
+- **D-11 (FotMob = direct JSON endpoints, no wrapper package) — honoured
+  literally.** 09-09 discovered and verified two direct, unofficial JSON
+  endpoints live against the real API; no third-party FotMob client package
+  was installed.
+- **D-12 (blocking-human package-legitimacy gate for every new package) —
+  honoured literally for new installs, correctly not re-triggered for an
+  existing pin.** 09-06's four RL packages (torch, gymnasium,
+  stable-baselines3, sb3-contrib) each went through the blocking-human gate
+  (STATE.md: "Approve all four (Recommended)"). 09-08 needed
+  `understatapi==0.7.1`, already pinned exactly in `requirements.txt` since
+  an earlier phase but missing from the active conda environment — installing
+  an already-approved, already-hash-locked pin is a Rule 1 bug fix
+  (environment drift), not a new-package decision, so no gate was raised for
+  it; this is the one place this audit calls out a literal-vs-spirit
+  distinction on D-12 itself, and 09-08's own SUMMARY documents the
+  reasoning explicitly rather than silently skipping the gate.
+- **D-13 (independent A/Bs + one final combined run) — honoured literally.**
+  Every experiment (09-03 through 09-09) ran its own independent
+  adoption-deciding measurement against the plan 09-01 baseline; this plan
+  (09-10) ran the single final combined measurement D-13 specifies, and the
+  D-05 bar was judged against that one number, not any individual
+  experiment's own reading.
+- **D-14 (fast iterate, full adopt) — honoured literally.** Every sweep
+  (`--capt-lambda`, `--chips-hysteresis`) ran at reduced replicas/seasons for
+  speed; every adoption-deciding run and this plan's final combined run used
+  the harness's full default (6 seasons, 5 replicas).
+- **D-15 (local WSL only, unattended long runs with logs) — honoured
+  literally.** `scripts/experiment_run.sh` (09-01) launched the great
+  majority of this phase's multi-minute-to-multi-hour runs, including this
+  plan's own `final_combined` run
+  (`data/processed/experiments/final_combined-<timestamp>.log`). No cloud
+  compute was used anywhere in this phase.
+- **D-16 (RL time-boxed, fixed seeds, pinned config, declared budget) —
+  honoured literally.** 09-07 declared the box (3 seeds, 30-minute
+  per-policy wall-clock cap, GPU) in `IMPROVEMENTS.md` **before** launching
+  any training, spent it in full (all 15 policies hit the cap), and stopped
+  exactly per the pre-declared stop rule once the REJECTED verdict landed —
+  no extra seeds, no extended timestep budget, no further tuning.
+
+### What this phase did not resolve
+
+- **The primary D-05 bar (≥2,280) was not cleared.** The phase closes at the
+  same 2,262 `model+chips` it opened at (this plan's final combined run,
+  above). Whether a genuinely different lever — not one of this phase's
+  eight flags — could clear it is an open question for a future phase, not
+  one this phase's own experiment menu was designed to answer.
+- **`capt_mc` (the Monte-Carlo captaincy variant) was gated off before it was
+  ever built.** Its own separate question — does full Monte-Carlo layering
+  beat the cheap quantile ceiling once the ceiling direction is proven to pay
+  — remains untested, since the quantile variant's own capture delta
+  (+0.015) never crossed the +0.02 trigger this phase pre-declared for
+  building `models/simulate.py`.
+- **FBref (`fbref_v2`) remains genuinely unacquired**, and this session's
+  failure mode is harder than Phase E's (a Cloudflare-gated hang, not a
+  value-blanked page that got past the gate). Whether a different
+  browser-automation approach — a longer timeout, a different UC-mode
+  configuration, or a paid anti-bot bypass service — would succeed is
+  untested and was explicitly out of this phase's budget (Pitfall 1: don't
+  build infrastructure around a source that may not deliver values even if
+  access were fixed).
+- **`rl_strategy`'s ceiling under a materially larger compute/time budget is
+  unknown.** The training-vs-held-out curves showed no divergence (no
+  overfitting smoking gun) — the honest reading is that ~5,000–14,000
+  timesteps over 2–4 training seasons simply wasn't enough experience for
+  the policy to learn much, not that the approach is fundamentally broken.
+  Whether a much larger box would let it beat `chips_v2` (itself already
+  rejected) is untested and outside D-16's declared box.
+- **Every REJECTED verdict this phase reached rests on judging a small
+  `model+chips` delta as "within the harness's own noise band" by eye
+  (comparing against an informally-estimated SE), not a pre-registered
+  statistical test.** 09-08 and 09-09 both flag this explicitly in their own
+  SUMMARY coverage blocks (`human_judgment: true`) for exactly this reason. A
+  future phase could tighten this with a real paired significance test
+  (e.g. a bootstrap over the 6 season-level observations) rather than an
+  eyeballed SE comparison.
+- **The external benchmark's own puzzle (09-02) is unexplained.** FPL's
+  official `xp_fpl` ranks players noticeably better than our own
+  `xp_med`/`xp_mean` on the same played-only common rows (pooled Spearman
+  0.579 vs 0.383) despite comparable MAE. Per D-01 this informs
+  interpretation only and prunes nothing — but *why* FPL's own figure ranks
+  better was never investigated this phase and stays open.
+- **No experiment this phase touched the model's core selection objective,
+  the two-stage hurdle architecture, or feature engineering beyond three
+  enrichment column families.** This phase's own repeated finding — echoed
+  across 09-03 (capture, not points), 09-04/09-07 (chip/strategy layer
+  regressions), 09-05/09-08/09-09 (feature-accuracy moves indistinguishable
+  from noise) — is that the honest accuracy frontier is gated on the
+  model/decision layer itself, not on any single missing lever this phase
+  tried. No specific alternative model or decision-layer redesign was
+  attempted or ruled out; that is the natural next question for a future
+  phase, not an answer this one produced.
+
+### This phase in the project's continuous history (Phases A–E)
+
+This phase's results extend or qualify five earlier entries rather than
+existing in isolation:
+
+- **Phase C's captain-by-mean adoption** (+16/season, noisy per-season, "wins
+  3/6 with two ties") is directly echoed by `capt_ceiling`'s own
+  adoption-run reading this phase — the identical **+16/season** figure
+  recurred at a completely different lever (upside-weighted armband value
+  instead of mean-value armband). The same number showing up twice from two
+  different mechanisms is itself evidence that +16 is more likely this
+  harness's own noise-band width than a genuine, mechanism-specific signal —
+  not a coincidence to explain away.
+- **Phase C's clean-sheet sub-model rejection** (−50/season) established the
+  "no new sub-model, ride the existing pipeline" discipline this phase's own
+  module docstrings cite by name: `models/captaincy.py`'s post-hoc quantile
+  column (09-01) and every enrichment source's `shift(1)`-then-rolled feature
+  column (09-08, 09-09) both explicitly followed it rather than repeating
+  that mistake.
+- **Phase C's ranking-loss rejection** (−55/season) and **Phase D's true
+  multi-period MILP tie** both established that added machinery does not
+  reliably beat the existing myopic/pointwise setup on this harness. This
+  phase found the same shape twice more at a different layer: `chips_v2`'s
+  actual regression (−48/season) and `rl_strategy`'s larger one
+  (−172/season) are "more sophisticated scheduling/strategy" losing to the
+  simpler heuristic it tried to replace, exactly like ranking loss and the
+  multi-period MILP did before it.
+- **Phase E's FBref finding** (accessible but value-blanked, 2026-08-22) is
+  *qualified*, not repeated, by this phase's harder failure (09-09):
+  inaccessible at all this session, Cloudflare-gated even for a real
+  UC-mode Chrome session that previously got through. The site's defenses
+  tightened between the two attempts, not loosened.
+- **Phase E's own deferred note** ("Understat npxG… low priority") is the
+  option this phase actually spent real engineering effort on (09-08) and
+  closed with a number (+16/season, 2 short of the D-05 bar) rather than
+  leaving it deferred indefinitely.
 
 ## Reference findings (why the priorities)
 
