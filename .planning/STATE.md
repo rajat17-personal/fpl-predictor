@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 Phase: 7 — Parity Validation & Cutover
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-09-09 — Completed quick task 260909-5vx: per-position/covered-row enrichment re-measurement (null result)
+Last activity: 2026-09-09 — Completed quick task 260909-dga: capt_ceiling rejection confirmed with paired CIs
 
 Progress: [███████████████████░] 95% (52/55 plans complete)
 
@@ -264,6 +264,7 @@ Recent decisions affecting current work:
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260909-5vx | Re-measure understat/fotmob accuracy per position and on covered rows only (Phase F addendum) | 2026-09-09 | 41b08fb | [260909-5vx-re-measure-understat-fotmob-accuracy-per](./quick/260909-5vx-re-measure-understat-fotmob-accuracy-per/) |
+| 260909-dga | High-replica capt_ceiling re-run — rejection confirmed via paired gameweek CIs (Phase F addendum) | 2026-09-09 | 4eeabcd | [260909-dga-high-replica-25x-capt-ceiling-adoption-r](./quick/260909-dga-high-replica-25x-capt-ceiling-adoption-r/) |
 
 ## Deferred Items
 
