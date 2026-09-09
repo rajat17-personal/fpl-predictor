@@ -1195,6 +1195,45 @@ existing in isolation:
   actually written against, and reaches the same REJECTED verdict on a
   stated statistical test rather than an eyeballed one.
 
+### Addendum (2026-09-09): rl_strategy v2 — 4x training budget, still rejected, with a dose-response reading (extends plan 09-07)
+
+- **Declared before training** (todo `2026-09-09-rl-v2-bigger-timestep-run.md`, committed
+  `da8227a` prior to launch, D-16 discipline): same 3 seeds (0/1/2), same 5 trainable
+  seasons, same pure realised-points reward, per-policy wall-clock cap raised 30 → **120
+  minutes**, outputs isolated in `data/processed/experiments/rl_v2_policies/` so plan
+  09-07's recorded v1 policies were never overwritten (restored to `models/artifacts/`
+  after the eval).
+- **Box spent as declared.** All 15 policies hit the 120-min cap (`capped: true` in every
+  sidecar); later-season timesteps reached ~51-53k vs v1's 13-14k — the intended ~4x
+  experience. Training logs: `rl_v2_train_seed{0,1,2}.log`.
+- **Adoption-deciding runs** (`wf_rl_v2_adopt_seed{0,1,2}.json`, 5 seasons x 5 replicas,
+  `--experiments rl_strategy --rl-seed N`, eval log `rl_v2_eval-20260909T153101Z.log`):
+
+  | arm | model+chips |
+  |---|---:|
+  | rl v2 seed 0 | 2140 |
+  | rl v2 seed 1 | 2087 |
+  | rl v2 seed 2 | 2065 |
+  | **rl v2 seed-mean** | **2097** |
+  | rl v1 seed-mean (30-min box, plan 09-07) | 2020 |
+  | chips_v2 same-5-season reference (`wf_chips_v2_5season`) | 2192 |
+  | v1 heuristic same-5-season baseline (`wf_baseline_5season`) | 2272 |
+
+- **Verdict: REJECTED (D-02 bar not met).** Every v2 seed individually loses to the
+  solver-scored scheduler (best seed 2140 vs 2192, seed-mean gap −95/season), and all
+  remain far below the v1 heuristic baseline (2272). `config.EXPERIMENTS['rl_strategy']`
+  stays `False`; no product or config change.
+- **The honest dose-response reading.** Quadrupling the training budget moved the
+  seed-mean +77 (2020 → 2097) and tightened the seed spread (297 → 75) — the policy is
+  genuinely learning, not stuck at initialization as v1's reading suggested. But linear
+  extrapolation of that slope (~+77 per 4x budget, with diminishing returns expected)
+  puts break-even with the solver several more quadruplings away (multi-day GPU runs per
+  policy), for a scheduler that would at best match a solver we already have. This
+  addendum therefore settles the RL-for-strategy direction more firmly than plan 09-07
+  could: the constraint is not merely budget, it is the exchange rate between compute
+  and points. The reward-shaping notes todo (potential-based shaping) remains on file
+  for any future revisit, but no further RL time-boxes are recommended this milestone.
+
 ## Reference findings (why the priorities)
 
 Levers that beat noise: model vs form baseline (+83..92/season), active transfers

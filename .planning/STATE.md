@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 Phase: 7 — Parity Validation & Cutover
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-09-09 — Completed quick task 260909-dga: capt_ceiling rejection confirmed with paired CIs
+Last activity: 2026-09-09 — RL v2 adoption eval complete: rejected (seed-mean 2097 vs solver 2192); addendum recorded
 
 Progress: [███████████████████░] 95% (52/55 plans complete)
 
