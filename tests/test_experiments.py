@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 import config
+from backtest.enrichment_slices import cell_stats
 from backtest.season import run_season
 from backtest.walk_forward import apply_experiment_feature_gating, resolve_scheduler
 from models import captaincy
@@ -168,6 +169,67 @@ def test_add_ceiling_ev_lam_zero_reproduces_xp_mean():
     })
     out = captaincy.add_ceiling_ev(preds, artifact, lam=0.0)
     assert np.allclose(out["xp_capt_ceiling"].to_numpy(), out["xp_mean"].to_numpy())
+
+
+# --- backtest.enrichment_slices.cell_stats (quick 260909-5vx) ---------------
+
+def test_cell_stats_identical_predictions_zero_delta():
+    """off == on -> zero MAE delta with a zero-width interval, no signal."""
+    gen = np.random.default_rng(0)
+    n = 250
+    y = gen.normal(size=n)
+    off = y + gen.normal(0, 1.0, size=n)
+    on = off.copy()
+    out = cell_stats(off, on, y, np.random.default_rng(1))
+    assert out["d_mae"] == 0.0
+    assert out["d_mae_lo"] == 0.0
+    assert out["d_mae_hi"] == 0.0
+    assert out["signal"] is False
+
+
+def test_cell_stats_detects_strictly_better_on_column():
+    """on == y exactly (zero error); off carries a large offset + noise error
+    (worse MAE and a materially disrupted rank order) -> a detected signal."""
+    gen = np.random.default_rng(2)
+    n = 250
+    y = gen.normal(size=n)
+    on = y.copy()
+    off = y + 5.0 + gen.normal(0, 3.0, size=n)
+    out = cell_stats(off, on, y, np.random.default_rng(3))
+    assert out["d_mae"] < 0.0
+    assert out["d_mae_hi"] < 0.0
+    assert out["signal"] is True
+
+
+def test_cell_stats_strictly_worse_on_column_never_signals():
+    """Same columns as the previous test, swapped: a strictly worse `on`
+    column must never be reported as a signal, regardless of Spearman."""
+    gen = np.random.default_rng(2)
+    n = 250
+    y = gen.normal(size=n)
+    off = y.copy()
+    on = y + 5.0 + gen.normal(0, 3.0, size=n)
+    out = cell_stats(off, on, y, np.random.default_rng(3))
+    assert out["d_mae"] > 0.0
+    assert out["signal"] is False
+
+
+def test_cell_stats_small_n_guard():
+    """Fewer than MIN_CELL_N rows -> full key set present, signal False, and
+    a note naming the small-sample reason; the bootstrap is skipped."""
+    gen = np.random.default_rng(4)
+    n = 50
+    y = gen.normal(size=n)
+    off = y.copy()
+    on = y.copy()
+    out = cell_stats(off, on, y, np.random.default_rng(5))
+    for key in ("n", "mae_off", "mae_on", "d_mae", "d_mae_lo", "d_mae_hi",
+                "spearman_off", "spearman_on", "d_spearman", "d_spearman_lo",
+                "d_spearman_hi", "signal", "note"):
+        assert key in out, key
+    assert out["n"] == n
+    assert out["signal"] is False
+    assert out["note"] != "" and "200" in out["note"]
 
 
 @needs_data
