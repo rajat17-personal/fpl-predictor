@@ -214,8 +214,8 @@ useful confirmation signal), not a gate on any of them.
 | team_strength | `tests/test_leakage.py` leakage assertion passes; D-07: model+chips improves over the current default and multi_safe does not regress | leakage test passes; model+chips −2/season (2262→2260); multi_safe −12/season (2147→2135) | rejected | off |
 | rl_strategy | beats chips_v2 on the same harness (D-02) | seed-mean model+chips 2020 (1847/2069/2144, spread 297) vs chips_v2's 2192 on the same 5 seasons — a −172/season regression, not an improvement | rejected | off |
 | understat | model+chips improves ≥2,280 primary bar (D-05/D-06), outside noise (D-07) | model+chips +16 (2262→2278, 2 short of the 2,280 bar); multi_safe +33 (2147→2180); fixture-level MAE/Spearman flat-to-slightly-worse (1.8751→1.8761 / 0.3620→0.3599); join coverage 19.9%→41.2% row-level (94.7% of distinct names) after closing a crosswalk gap + 78 fixups | rejected | off |
-| fotmob | model+chips contribution measured via the harness | pending | pending | off |
-| fbref_v2 | model+chips contribution measured via the harness | pending | pending | off |
+| fotmob | model+chips contribution measured via the harness | model+chips +1 (2262→2263, within noise); join coverage 40.4% row-level via the shared crosswalk | rejected | off |
+| fbref_v2 | model+chips contribution measured via the harness | not acquirable this session — real UC-mode Chrome navigation to fbref.com never completed (3 attempts, 5-6 min each) despite Chrome/network working fine against a control site; a non-UC driver confirms the page is still Cloudflare-gated (`Just a moment...` challenge). 0 rows scraped, no `fb_tkl_int_90` coverage | not acquirable | off |
 
 Every row starts `pending`; later plans in this phase fill their own row as they
 measure it. Plan 09-10 finalises this table. A failed experiment keeps its code
@@ -603,6 +603,106 @@ is a permanent, structural constraint, not a bug to silently work around.
   joins, `apply_experiment_feature_gating`) stays merged, nothing deleted —
   the columns are computed unconditionally and simply unused as model
   features by default.
+
+### fotmob: per-match defensive-action counts — endpoint discovery, leakage evidence, and adoption verdict (plan 09-09)
+
+- ☑ **Endpoints discovered and verified live, TESTED.** No FotMob endpoint
+  path or schema was known before this plan (09-RESEARCH.md Open Question 2,
+  assumption A4). A bounded discovery pass found two direct, unofficial JSON
+  endpoints (verified 2026-09-08, no wrapper package per D-11):
+  `GET /api/data/leagues?id=47&season={YYYY/YYYY}` (Premier League fixture
+  list → match ids) and `GET /api/data/matchDetails?matchId={id}` (per-match
+  player stats, including labelled `Tackles`/`Interceptions`/`Blocks`/
+  `Clearances`/`Recoveries`/`Duels won` stat blocks). Sampled coverage check:
+  all 6 sampled matches in each of the 6 walk-forward test seasons
+  (2020-21..2025-26) carried these labels; pre-2020 seasons frequently do not
+  (FotMob's own coverage tier drops from `xG` to `ratings`/`lower`).
+- ☑ **Fetcher built matching plan 09-08's conventions.** `data/fotmob.py`:
+  `FOTMOB_ENABLED` kill switch, 1.5s rate limit, on-disk cache under
+  `data/raw/fotmob/`, explicit shape validation (`_require`) raising on a
+  missing/mis-typed key rather than silently propagating a schema change as
+  NaN (T-09-09-01). Full historical build: **146,924 player-match rows across
+  11 seasons** (2016-17 through the in-progress 2026-27), cached so a re-run
+  touches the network zero times.
+- ☑ **Leakage-safety, TESTED.** `config.FOTMOB_COLS` registered in
+  `features/engineer.py::ROLL_STATS` (never `CONTEXT_COLS`) — every value
+  reaches the model only through `_roll`'s `shift(1)`-then-rolling windows.
+  `tests/test_leakage.py::test_fotmob_features_are_rolled_not_raw` asserts no
+  bare `fm_*` column survives in `features.parquet` and independently
+  recomputes one player's `fm_tackles_r5`. `player_gw.parquet` stayed at
+  253,509 rows after the rebuild; join coverage 40.4% row-level (via the
+  shared `data.id_crosswalk` name resolver plan 09-08 built).
+- ☑ **Feature-selection gate extended.** `backtest/walk_forward.py::apply_experiment_feature_gating`
+  gained a third `fm_*` branch alongside `ts_*`/`us_*` — no new ad-hoc gating
+  path added.
+- ☑ **Adoption-deciding run** (`scripts/experiment_run.sh fotmob_adopt
+  --experiments fotmob`, the harness's default 6 seasons/5 replicas,
+  `wf_fotmob_adopt.json`) against the plan 09-01 baseline
+  (`wf_baseline_phase9.json`): `model+chips` **2262 → 2263** (**+1/season**,
+  well inside the harness's own season-to-season noise band, SE≈50) —
+  nowhere near D-05's ≥2,280 primary bar.
+- **D-07 auto-adopt verdict: REJECTED.** `config.EXPERIMENTS['fotmob']` stays
+  `False` (already the default; no flip, so no change needed to
+  `tests/test_experiments.py`'s all-flags-default-off assertion). Per D-08
+  all new code (`data/fotmob.py`, the guarded `build_table.py`/
+  `features/engineer.py` joins, the `apply_experiment_feature_gating`
+  branch) stays merged, nothing deleted — the columns are computed
+  unconditionally and simply unused as model features by default.
+
+### fbref_v2: real Chrome spike — access still blocked, no new infrastructure built (plan 09-09)
+
+- ☐ **Spiked, CONFIRMED DEAD (access failure).** Per D-04/Pitfall 1, ran a
+  bounded spike before any new work: `data.fbref.scrape_to_cache(seasons=['2025-26'])`
+  (equivalent to `python -m data.fbref --scrape` restricted to one season)
+  against the real Chrome driver at `/usr/bin/google-chrome-stable`, on
+  2026-09-08. **Three independent attempts, each run for 5-6 minutes, all
+  hung indefinitely inside `driver.uc_open_with_reconnect()`** and never
+  returned a page — 0 rows scraped, no `fb_tkl_int_90` coverage to report.
+  A control check confirmed Chrome and the network stack work fine in this
+  session (`driver.get('https://example.com')` returned instantly); a
+  second control check using a *plain* (non-UC) Chrome driver against the
+  same FBref URL loaded in <1s but returned Cloudflare's own
+  `"Just a moment..."` interstitial (`challenges.cloudflare.com` script
+  present in the page source) rather than the stats table — i.e. the site
+  is still fully Cloudflare-gated, and the UC-mode bypass `data/fbref.py`
+  relies on does not clear that challenge within a many-minutes window in
+  this environment.
+- **This is a different, and more severe, failure mode than the
+  2026-08-22 finding** (`IMPROVEMENTS.md` Phase E), which got PAST
+  Cloudflare and received a real page with empty stat cells (value-blanking).
+  Today's access layer itself does not resolve — re-confirming
+  09-RESEARCH.md's plain `curl` 403 (assumption A3 was correctly flagged as
+  unverified; it does not hold, but not in the direction hoped for).
+- **No new scraping-host infrastructure and no scraper container image were
+  built** (D-04) — three short, bounded spike attempts is the full extent of
+  the investment, per Pitfall 1's explicit warning against building
+  infrastructure around a source that may not deliver values even if access
+  were fixed.
+- **Verdict: not acquirable this session.** `config.EXPERIMENTS['fbref_v2']`
+  stays `False` (already the default; no flip, no `tests/test_experiments.py`
+  change needed). Nothing in `data/fbref.py`, `config.FBREF_COLS`, or
+  `features/engineer.py`'s existing wiring changed — there was nothing to
+  build, only to run, and running it did not succeed.
+
+### Enrichment experiment summary (Understat / FotMob / FBref, plan 09-09)
+
+Of the three D-03 enrichment sources, one (Understat) produced real,
+leakage-tested data that moved `model+chips` +16/season (2 short of the
+D-05 bar, REJECTED); one (FotMob) required genuine endpoint-discovery work
+this plan completed, produced real data across 11 seasons, and moved
+`model+chips` +1/season (indistinguishable from noise, REJECTED); one
+(FBref) never got past its own access layer despite three real attempts and
+is recorded not-acquirable with evidence, per D-08's "never dropped
+silently" rule. Read against plan 09-02's external-benchmark finding (our
+`xp_med`/`xp_mean` and theFPLkiwi's projections land in the same MAE/Spearman
+neighbourhood, with FPL's own `xp_fpl` ranking players better than either),
+the combined picture across this phase's whole enrichment-data lever is
+consistent: two real, cleanly-joined, leakage-safe feature families
+(Understat, FotMob) each moved the harness by an amount indistinguishable
+from its own noise floor, and the phase's honest accuracy frontier is not
+gated on any single missing data source — it is gated on the model/decision
+layer, exactly as this phase's other experiments (capt_ceiling, chips_v2,
+team_strength, rl_strategy) also found.
 
 ## Reference findings (why the priorities)
 
