@@ -986,6 +986,119 @@ existing in isolation:
   closed with a number (+16/season, 2 short of the D-05 bar) rather than
   leaving it deferred indefinitely.
 
+### Addendum (2026-09-09): per-position and covered-row re-measurement of understat / fotmob accuracy
+
+- **Why this re-measurement exists.** 09-08/09-09 measured both enrichment
+  sources' fixture-level accuracy pooled over ALL positions and ALL rows.
+  The model is per-position and the enrichment join is partial, so a real
+  positional gain could have been diluted twice over and rejected as noise.
+  `understat` was the phase's closest miss (`model+chips` 2278 vs the
+  2,280 bar) — worth one cheap re-slice before the lead is closed
+  permanently. Built by `backtest/enrichment_slices.py`; the full 50-cell
+  grid (2 sources × 5 position slices × 5 coverage slices) is written to
+  the gitignored `data/processed/experiments/enrichment_position_coverage.json`
+  — the numbers below are the committed record, since the JSON itself is
+  not tracked.
+- **A correction to the premise, stated plainly — sharper than expected.**
+  09-08's own reported raw per-match join coverage (~41% understat, ~40%
+  fotmob) is measured over the WHOLE `player_gw.parquet` table, including
+  every bench/unused/injured row with zero match involvement — rows
+  Understat and FotMob structurally cannot have data for, since both
+  sources only record players who actually featured. Restricted to the
+  played-only rows this measurement (and 09-08's own MAE comparison)
+  actually scores (n=66,665, identical row set), that raw per-match join
+  figure is **96.2%** (understat) / **94.9%** (fotmob) — not ~41%/~40%.
+  Separately, the ROLLED feature the model actually consumes
+  (`us_npxg_r5`/`fm_tackles_r5`, cumulative over `shift(1)`-then-rolling
+  prior matches) is present on **89.2%** (understat) / **88.1%** (fotmob)
+  of the same played rows — per position: understat GK 90.8%, DEF 88.9%,
+  MID 89.0%, FWD 89.4%; fotmob GK 89.2%, DEF 87.6%, MID 88.0%, FWD 88.8%.
+  Two coverage definitions are reported below (`row_joined`: this exact
+  fixture's own raw value is present; `feat_present`: the rolled feature is
+  non-null) because they measure different things and disagree in both
+  directions — a row can be `feat_present` without being `row_joined`
+  (a prior match had data, this one's own raw value is missing), and here
+  `row_joined` is actually the LARGER population on played rows, since the
+  rolling window only looks at matches strictly before the current one and
+  therefore excludes a player's own first-ever covered appearance. Net
+  effect: on the population that actually gets scored, the original todo's
+  "~60% of rows carry empty enrichment features" dilution concern does not
+  hold at either definition — coverage on played rows is 88–96%, not ~40%.
+- **The method, in three sentences.** Same leakage-safe `_preds_for` split
+  as the real harness, same `apply_experiment_feature_gating` gate,
+  played-only fixture rows (n=66,665, identical to 09-08's pooled row set),
+  pooled across the 6 test seasons (2020-21..2025-26). Every delta carries
+  a paired 95% interval: a normal interval on the per-row absolute-error
+  difference for MAE, a 200-resample paired bootstrap for Spearman. The
+  pre-declared signal rule: a cell counts as a real gain only when the MAE
+  delta's upper bound is below zero AND the Spearman delta's lower bound is
+  above zero — both axes must clear their own interval, not just move in
+  the right direction.
+- **The reproduction check.** The pooled understat `ALL`/`all` cell
+  reproduces 09-08's published numbers exactly: MAE 1.8751 (off) / 1.8761
+  (on), Spearman 0.3620 (off) / 0.3599 (on) — `n=66,665` in both, absolute
+  difference 0.0000 on all four figures. `features.parquet` has been
+  rebuilt since 09-08 (09-09 added the `fm_*` family), but that changes
+  nothing about the `off` feature set `apply_experiment_feature_gating`
+  produces, and the exact reproduction confirms it.
+- **The results, `row_joined` (covered-rows-only) slice:**
+
+  **understat** (n=66,665 played rows; `row_joined` = this fixture's own
+  raw `us_npxg` is present)
+
+  | position | n | MAE off | MAE on | ΔMAE [95% CI] | ΔSpearman [95% CI] |
+  |---|---:|---:|---:|---:|---:|
+  | GK | 4,522 | 2.1422 | 2.1444 | +0.0022 [-0.0047, 0.0091] | +0.0154 [-0.0022, 0.0357] |
+  | DEF | 21,681 | 2.0713 | 2.0723 | +0.0011 [-0.0017, 0.0038] | -0.0058 [-0.0088, -0.0023] |
+  | MID | 29,814 | 1.6777 | 1.6776 | -0.0002 [-0.0017, 0.0014] | +0.0025 [0.0003, 0.0045] |
+  | FWD | 8,124 | 1.9779 | 1.9810 | +0.0032 [-0.0017, 0.0080] | -0.0031 [-0.0092, 0.0014] |
+  | ALL | 64,141 | 1.8815 | 1.8823 | +0.0008 [-0.0006, 0.0022] | -0.0019 [-0.0037, -0.0001] |
+
+  **fotmob** (n=66,665 played rows; `row_joined` = this fixture's own raw
+  `fm_tackles` is present)
+
+  | position | n | MAE off | MAE on | ΔMAE [95% CI] | ΔSpearman [95% CI] |
+  |---|---:|---:|---:|---:|---:|
+  | GK | 4,434 | 2.1443 | 2.1551 | +0.0108 [0.0044, 0.0171] | -0.0080 [-0.0232, 0.0086] |
+  | DEF | 21,314 | 2.0734 | 2.0752 | +0.0019 [-0.0006, 0.0044] | +0.0015 [-0.0014, 0.0043] |
+  | MID | 29,448 | 1.6884 | 1.6886 | +0.0002 [-0.0013, 0.0017] | -0.0001 [-0.0020, 0.0021] |
+  | FWD | 8,063 | 1.9873 | 1.9892 | +0.0019 [-0.0029, 0.0068] | -0.0035 [-0.0084, 0.0017] |
+  | ALL | 63,259 | 1.8881 | 1.8899 | +0.0017 [0.0004, 0.0031] | -0.0004 [-0.0022, 0.0012] |
+
+  `feat_present` headline (rolled feature actually consumed by the model):
+  understat pooled `ALL` n=59,453, MAE 1.8927→1.8936 (ΔMAE +0.0009
+  [-0.0006, 0.0024]), Spearman ΔSpearman -0.0021 [-0.0040, -0.0001];
+  fotmob pooled `ALL` n=58,703, MAE 1.8996→1.9013 (ΔMAE +0.0017 [0.0003,
+  0.0032]), Spearman ΔSpearman -0.0007 [-0.0028, 0.0014]. Same shape as
+  `row_joined`: small, mixed-sign deltas, no position clears the bar.
+- **The verdict: no cell reached signal.** Across the full 50-cell grid (2
+  sources × 5 position slices × 5 coverage slices), zero cells satisfy
+  `d_mae_hi < 0.0 AND d_spearman_lo > 0.0`. The closest thing to a
+  positional lean is understat's MID/`row_joined` cell (ΔMAE -0.0002,
+  interval [-0.0017, 0.0014] — crosses zero) and fotmob has no position
+  with a negative ΔMAE at all in `row_joined` (every position's on-column
+  is flat-to-worse). This is a real null result, reported plainly, not a
+  failure of the measurement: the per-position, per-coverage re-slice
+  motivates no follow-up flag variant. `config.EXPERIMENTS['understat']`
+  and `config.EXPERIMENTS['fotmob']` both stay `False` — this addendum
+  adopts nothing.
+- **The multiple-comparison caveat.** 50 cells were tested at 95%, so
+  roughly 2–3 cells would be expected to reach "signal" by chance alone
+  even if neither source had any real per-position effect. Zero cells
+  reaching signal here is therefore a stronger null than "no signal found"
+  would be on a single test — it is below the chance-alone expectation.
+  Any single flagged cell in a future re-run of this kind would still be a
+  lead to re-test on the season-points harness, never a result on its own.
+- **Tying this to the phase's own open weakness.** IMPROVEMENTS.md's "What
+  this phase did not resolve" section (above) records that every Phase 9
+  REJECTED verdict rested on eyeballing a delta against an informally
+  estimated SE rather than a pre-registered statistical test. These paired
+  intervals are a first, narrow instalment on that gap — narrow because
+  they test fixture-level accuracy (MAE/Spearman on `xp_med`), not the
+  season-points metric (`model+chips`) the ≥2,280 adoption bar is actually
+  written against. A pre-registered test on the season-points metric itself
+  remains the larger, unaddressed version of that gap.
+
 ## Reference findings (why the priorities)
 
 Levers that beat noise: model vs form baseline (+83..92/season), active transfers
