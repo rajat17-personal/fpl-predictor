@@ -20,10 +20,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-07)
+See: .planning/PROJECT.md (updated 2026-09-08)
 
 **Core value:** The weekly recommendations (xP table, squad, captains, transfers) must keep flowing reliably — every change must leave the pipeline, API, and site at least as correct and more trustworthy than before.
-**Current focus:** Phase 09 — xP Model & Optimizer Improvement Experiments
+**Current focus:** Phase 7 — Parity Validation & Cutover
 
 ## Current Position
 
@@ -32,7 +32,7 @@ Plan: Not started
 Status: Ready to plan
 Last activity: 2026-09-08 — Phase 09 complete, transitioned to Phase 7
 
-Progress: [███████░░░] 67% (6/7 phases, 39 plans complete)
+Progress: [███████████████████░] 95% (52/55 plans complete)
 
 ## Performance Metrics
 
@@ -252,7 +252,7 @@ None yet.
 - **Time-critical, independent of this milestone:** the daily snapshot cron must run every day — price-model history cannot be backfilled (first snapshot 2026-08-31). Phase 6 closed the loop: cron lines installed and the FPL_ALERT_WEBHOOK failure alert confirmed live (06-UAT.md, 2026-09-07) — a failed run is now noticed same-day.
 - **Milestone invariant:** the vanilla site stays live and authoritative until CUT-01 completes. Phase 7 is calendar-gated on one full real gameweek cycle (deadline → live → finished).
 - Payment gateway / merchant-of-record choice still pending with the user — out of scope here, but PITCH-01's trademark disclaimer feeds the eventual gateway review.
-- **[Phase 4]:** Security enforcement is on but no 04-SECURITY.md exists — run `/gsd-secure-phase 4` to backfill the threat verification (03 and 05 also lack SECURITY.md; 06-SECURITY.md now exists).
+- **[Phase 4]:** Security enforcement is on but no 04-SECURITY.md exists — run `/gsd-secure-phase 4` to backfill the threat verification (03, 05, and now 09 also lack SECURITY.md; 06-SECURITY.md now exists).
 
 ## Deferred Items
 

@@ -36,6 +36,7 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 - ✓ Security & config hardening: CORS restricted to a configured allowlist (wildcard = boot failure, live-browser verified), mode-600 `.env` secrets pattern with loud-warning loader, secret redaction on every log/alert egress — Phase 6
 - ✓ Reliability fixes: all bare file handles routed through ops.jsonio (self-tested repo-wide gate), atomic writes everywhere, cron per-step accounting with zero shell suppression, snapshot retry/backoff, pydantic validation of FPL payloads, bounded LRU+TTL solve cache with pool-version invalidation and the TOCTOU race closed via atomic snapshots — Phase 6
 - ✓ Observability: structured JSON logging with X-Request-ID correlation, distinct liveness/readiness endpoints, never-raising ops.notify alerting spine — cron + webhook confirmed live in UAT — Phase 6
+- ✓ Experiment framework + honest measurement of the xP/optimizer frontier: flag registry (`config.EXPERIMENTS`), leakage-tested enrichment joins (Understat, FotMob, Dixon-Coles team strength), external benchmark vs theFPLkiwi, Wildcard's isolated value measured (+14.2±9.0), RL-for-strategy time-boxed and beaten by the solver — all 8 experiments REJECTED on the pre-declared ≥2,280 bar (final combined 2262 = baseline); code merged default-off, IMPROVEMENTS.md Phase F ledger complete, product surface untouched — Phase 9
 
 ### Active
 
@@ -45,8 +46,8 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 
 - Live deployment to Cloudflare Pages / Hetzner — hosting not yet purchased; CI produces a deployable image, deployment automation is the next milestone
 - Auth (Supabase JWT) and payment integration — blocked on user's gateway/legal decision; `require_key()` stub stays the swap point
-- Model/decision-quality improvements — the model is validated and strong; meta-pattern shows extra sophistication doesn't pay right now (see IMPROVEMENTS.md for the deferred list)
-- FBref data integration — abandoned; site no longer serves advanced stat values
+- Model/decision-quality improvements — meta-pattern now measured, not assumed: Phase 9 ran the six recommended experiments honestly and every one was rejected on its pre-declared bar (IMPROVEMENTS.md Phase F); further xP gains need better signal, not more machinery
+- FBref data integration — confirmed not acquirable (Phase 9: Cloudflare challenge survives real-Chrome UC-mode spikes); no new scraping infrastructure
 - A/B testing / feature-flag infrastructure — needed for model rollout experiments, but post-launch concern
 
 ## Context
@@ -96,6 +97,9 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 | E2E runs against a fixture-mode API server (`FPL_FIXTURE_DIR`), never the live FPL API | Suite must pass or fail on code, not the calendar; frozen v1 fixtures (normal/blank/DGW) with a manifest | ✓ Good — Phase 4: 42 specs deterministic |
 | Fixture-mode seam uses capture-once + explicit restore of `predict.live._gw_pool` | Module reload alone left production bindings permanently monkeypatched after teardown (CR-01) | ✓ Good — Phase 4 gap closure, identity-asserted in tests |
 | Rate-diff ghost card keyed off the sell target's actual pitch row (bench included) | Deriving row from the buy position rendered phantom rows and distorted the visual diff | ✓ Good — Phase 4 gap closure, adjacency-asserted in E2E |
+| Pre-declared mechanical adoption bar (≥2,280 pts, D-05/D-07) with all experiment code merged behind default-off flags (D-08) | Experiments must be judged by the honest harness before any product change; rejected work stays inspectable, never silently dropped | ✓ Good — Phase 9: 8/8 experiments rejected on the bar, zero product wiring needed, export contract locked by regression test |
+| RL dependency stack dev-only and hash-locked (`requirements-rl.txt`), never in Dockerfile/CI (D-09) | torch + gymnasium + SB3 are heavyweight experiment-only deps; production image must not carry them | ✓ Good — Phase 9: isolation proven by grep+parser assertion and byte-identical Dockerfile/workflows |
+| Captain by mean xP retained over ceiling-EV quantile blend | Ceiling-EV capture gain (+1.5pt) fell below the pre-declared ≥+2pt bar; mechanical rule decided | ✓ Good — Phase 9: verdict recorded with numbers in IMPROVEMENTS.md |
 
 ## Evolution
 
@@ -115,4 +119,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-07 after Phase 6*
+*Last updated: 2026-09-08 after Phase 9*
