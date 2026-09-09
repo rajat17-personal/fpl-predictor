@@ -241,9 +241,12 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-[From .planning/todos/pending/ — ideas captured during sessions]
-
-None yet.
+5 pending (captured 2026-09-09, Phase 9 follow-up experiments):
+- ep_next + availability flags as model features (ranking-gap lead)
+- Per-position / covered-rows re-measurement of understat & fotmob
+- Manual FBref CSV snapshot + crosswalk join
+- High-replica capt_ceiling re-run (Phase F addendum)
+- RL reward-shaping notes for any future revisit
 
 ### Blockers/Concerns
 
