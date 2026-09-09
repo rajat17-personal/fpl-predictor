@@ -18,7 +18,8 @@ needs_data = pytest.mark.skipif(not (FEATURES.exists() and RAW.exists()),
                                 reason="run the data pipeline first")
 
 _EXPERIMENT_KEYS = {"capt_ceiling", "capt_mc", "chips_v2", "team_strength",
-                    "rl_strategy", "understat", "fotmob", "fbref_v2"}
+                    "rl_strategy", "understat", "fotmob", "fbref_v2",
+                    "ep_next_lag", "ep_next_now"}
 
 
 # --- config.EXPERIMENTS / resolve_experiments() -----------------------------
@@ -131,6 +132,101 @@ def test_feature_gating_missing_key_defaults_to_off():
     df = pd.DataFrame({"ts_attack_self": [1.0], "us_npxg_r5": [0.2]})
     out = apply_experiment_feature_gating(df, {})
     assert list(out.columns) == [] and len(out) == 1
+
+
+# --- backtest/walk_forward.py::apply_experiment_feature_gating (quick 260909-elx) --
+
+def _ep_next_frame() -> pd.DataFrame:
+    """Two players, one player spanning two seasons, kickoff-ordered but
+    deliberately shuffled in the input frame -- exercises the sort-before-
+    shift path, not luck. Season A / player 1 has a genuine outage gameweek
+    (gw=1, xp_fpl=0.0 for BOTH players -- an all-zero group) whose null must
+    propagate forward as a null lag on player 1's gw=2 fixture, never a
+    confident 0.0. Season A / gw=3 is a MIXED zero/non-zero gameweek (player 1
+    real 0.0, player 2 real 4.0) and must NOT be masked."""
+    return pd.DataFrame({
+        "season":       ["A", "A", "A", "A", "B", "A", "A"],
+        "player_id":    [1,   2,   1,   2,   1,   1,   2],
+        "gw":           [1,   1,   2,   2,   1,   3,   3],
+        "kickoff_time": pd.to_datetime([
+            "2020-01-08", "2020-01-08", "2020-01-15", "2020-01-15",
+            "2021-01-01", "2020-01-22", "2020-01-22",
+        ]),
+        "xp_fpl":       [0.0, 0.0, 5.0, 3.0, 9.0, 0.0, 4.0],
+    })
+
+
+def test_ep_next_flags_off_no_op():
+    df = _ep_next_frame()
+    out = apply_experiment_feature_gating(df, {})
+    assert list(out.columns) == list(df.columns)
+    assert "xp_fpl_lag1" not in out.columns
+    assert "xp_fpl_now" not in out.columns
+
+
+def test_ep_next_lag_column_matches_prior_fixture_no_bleed():
+    """Season B / player 1's first appearance is null even though player_id 1
+    already has a season-A history -- seasons must not bleed. Player 2's
+    lag values never see player 1's history -- players must not bleed."""
+    df = _ep_next_frame()
+    out = apply_experiment_feature_gating(df, {"ep_next_lag": True})
+    assert "xp_fpl_lag1" in out.columns
+
+    got = out.set_index(["season", "player_id", "gw"])["xp_fpl_lag1"]
+    # Season A player 1: gw1 first appearance -> null; gw2 -> null (gw1 was
+    # an all-zero OUTAGE group, masked to null before the shift); gw3 -> 5.0
+    # (gw2's real, unmasked value).
+    assert pd.isna(got[("A", 1, 1)])
+    assert pd.isna(got[("A", 1, 2)])
+    assert got[("A", 1, 3)] == pytest.approx(5.0)
+    # Season A player 2: gw1 first appearance -> null (own outage-masked
+    # value never appears as ITS OWN lag); gw2 -> null (gw1 masked); gw3 ->
+    # 3.0 (gw2's real value).
+    assert pd.isna(got[("A", 2, 1)])
+    assert pd.isna(got[("A", 2, 2)])
+    assert got[("A", 2, 3)] == pytest.approx(3.0)
+    # Season B player 1: first appearance in a NEW season -> null, even
+    # though player 1 has season-A history right before it chronologically.
+    assert pd.isna(got[("B", 1, 1)])
+
+
+def test_ep_next_now_masks_outage_but_not_mixed_gameweek():
+    df = _ep_next_frame()
+    out = apply_experiment_feature_gating(df, {"ep_next_now": True})
+    assert "xp_fpl_now" in out.columns
+    assert "xp_fpl_lag1" not in out.columns  # own flag was off
+
+    got = out.set_index(["season", "player_id", "gw"])["xp_fpl_now"]
+    # gw1 (season A): both players' xp_fpl are 0.0 -> an ALL-ZERO group ->
+    # masked to null for both.
+    assert pd.isna(got[("A", 1, 1)])
+    assert pd.isna(got[("A", 2, 1)])
+    # gw3 (season A): player 1 is a genuine 0.0, player 2 is 4.0 -> a MIXED
+    # group -> NOT masked; player 1's real zero survives as 0.0.
+    assert got[("A", 1, 3)] == 0.0
+    assert got[("A", 2, 3)] == pytest.approx(4.0)
+    # gw2 (season A) and season B's row never touch an all-zero group.
+    assert got[("A", 1, 2)] == pytest.approx(5.0)
+    assert got[("A", 2, 2)] == pytest.approx(3.0)
+    assert got[("B", 1, 1)] == pytest.approx(9.0)
+
+
+def test_ep_next_xp_fpl_literal_survives_every_flag_combination():
+    """xp_fpl and benchmark_external/walk_forward both score it as the FPL
+    baseline -- it must never be dropped or renamed by this gate."""
+    df = _ep_next_frame()
+    for flags in ({}, {"ep_next_lag": True}, {"ep_next_now": True},
+                  {"ep_next_lag": True, "ep_next_now": True}):
+        out = apply_experiment_feature_gating(df, flags)
+        assert "xp_fpl" in out.columns
+        assert (out["xp_fpl"].to_numpy() == df["xp_fpl"].to_numpy()).all()
+
+
+def test_ep_next_registry_keys_present_and_off():
+    assert {"ep_next_lag", "ep_next_now"} <= set(config.EXPERIMENTS)
+    assert config.EXPERIMENTS["ep_next_lag"] is False
+    assert config.EXPERIMENTS["ep_next_now"] is False
+    assert {"ep_next_lag", "ep_next_now"} <= _EXPERIMENT_KEYS
 
 
 # --- models.captaincy --------------------------------------------------------

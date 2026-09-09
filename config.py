@@ -189,8 +189,29 @@ EXPERIMENTS: dict[str, bool] = {
     "understat": False,
     "fotmob": False,
     "fbref_v2": False,
+    "ep_next_lag": False,
+    "ep_next_now": False,
 }
 
+# Quick task 260909-elx: FPL's own ep_this/ep_next figure (`xp_fpl` here --
+# config.py maps vaastav's `xP` column onto it) as a model feature. The
+# LAGGED rolling means of xp_fpl (xp_fpl_r3/r5/r10/rall) have been live model
+# features via features/engineer.py's ROLL_STATS all along -- "feed lagged
+# ep_next" needed no new work. These two flags cover only the two signals
+# that were genuinely unavailable before this task:
+#   ep_next_lag -- the strict previous-fixture value (a shift(1), never a
+#     rolling mean), added by backtest/walk_forward.py's
+#     apply_experiment_feature_gating as a new `xp_fpl_lag1` column.
+#   ep_next_now -- the SAME-FIXTURE value, added as `xp_fpl_now`.
+# ep_next_now is PROVENANCE-CONDITIONAL: backtest/ep_next_provenance.py's
+# control (data/snapshots/*.parquet joined to data/raw/live/
+# element_history.parquet's realised minutes) measured the historical
+# column's P(played | xp_fpl==0) as materially LOWER than a known
+# pre-deadline capture's own rate, with non-overlapping 95% intervals --
+# consistent with the historical column carrying hindsight, not a genuine
+# forward-looking figure. See IMPROVEMENTS.md's 2026-09-09 addendum for the
+# full verdict. Any positive ep_next_now reading is a diagnostic upper bound,
+# never an adoption case, unless that verdict changes.
 CAPT_CEILING_LAMBDA = 0.5       # captaincy ceiling-EV upside weight (models/captaincy.py);
 # swept over {0.0, 0.25, 0.5, 0.75, 1.0} in tags capt_lam_0.0..1.0 (2026-09-08,
 # 6 seasons/1 replica); 0.5 measured the highest 6-season-mean capt_capture

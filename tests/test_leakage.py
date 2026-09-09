@@ -143,3 +143,40 @@ def test_fotmob_features_are_rolled_not_raw(feat):
            .sort_values("kickoff_time")["fm_tackles"]
            .shift(1).rolling(5, min_periods=1).mean())
     assert np.allclose(got.fillna(-1).values, exp.fillna(-1).values)
+
+
+@needs_data
+def test_ep_next_lag_gate_matches_independent_masked_shift(feat):
+    """Quick task 260909-elx's decision-time leakage requirement: the
+    previous-fixture (`ep_next_lag`) gate must equal an independently
+    recomputed masked-then-shift(1) series of `xp_fpl` for a real player, and
+    the same-fixture derived column (`xp_fpl_now`) must be absent unless its
+    own flag is on -- mirrors test_understat_features_are_rolled_not_raw's
+    own recompute-and-compare template."""
+    from backtest.walk_forward import apply_experiment_feature_gating
+    from models.train import load_features
+
+    df = load_features()
+    season = "2023-24"  # F3: intact coverage (only 1 of 38 gameweeks is an outage)
+    pid = df.loc[df.season == season, "player_id"].value_counts().index[0]
+
+    gated_lag = apply_experiment_feature_gating(df, {"ep_next_lag": True})
+    assert "xp_fpl_now" not in gated_lag.columns, \
+        "same-fixture column must not appear when only ep_next_lag is on"
+    assert "xp_fpl_lag1" in gated_lag.columns
+
+    got = (gated_lag[(gated_lag.season == season) & (gated_lag.player_id == pid)]
+           .sort_values("kickoff_time")["xp_fpl_lag1"]
+           .reset_index(drop=True))
+
+    raw = pd.read_parquet(RAW, columns=["season", "player_id", "gw", "kickoff_time", "xp_fpl"])
+    season_all = raw[raw.season == season]
+    all_zero_gw = season_all.groupby("gw")["xp_fpl"].apply(lambda s: bool((s == 0.0).all()))
+    outage_gws = set(all_zero_gw[all_zero_gw].index)
+
+    raw_sub = (raw[(raw.season == season) & (raw.player_id == pid)]
+              .sort_values("kickoff_time").reset_index(drop=True))
+    masked = raw_sub["xp_fpl"].mask(raw_sub["gw"].isin(outage_gws))
+    exp = masked.shift(1)
+
+    assert np.allclose(got.fillna(-1).values, exp.fillna(-1).values)

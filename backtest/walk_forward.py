@@ -127,8 +127,36 @@ def _plan_col(preds: pd.DataFrame, horizon: int = 4, decay: float = 0.84) -> pd.
     return m
 
 
+def _masked_xp_fpl(df: pd.DataFrame) -> pd.Series:
+    """`xp_fpl` with every (season, gw) group nulled out where it is 0.0 or
+    null for EVERY row in that group -- an outage gameweek captured as a
+    false zero (or an entirely-null training season, F3) must never enter the
+    model as a confident zero. A gameweek with a genuine MIXTURE of zero and
+    non-zero rows is left untouched, so this does not eat F4's legitimate
+    ~40% pre-deadline zero mass."""
+    is_zero_or_null = df["xp_fpl"].isna() | (df["xp_fpl"] == 0.0)
+    all_masked = is_zero_or_null.groupby([df["season"], df["gw"]]).transform("all")
+    return df["xp_fpl"].where(~all_masked)
+
+
+def _prev_fixture_lag(df: pd.DataFrame, masked: pd.Series) -> pd.Series:
+    """Strict previous-fixture value of `masked` (a shift(1), never a rolling
+    mean) within (season, player_id), ordered by kickoff_time -- the same
+    ordering features/engineer.py's `_roll` uses. Operates on the ALREADY-
+    masked series, so an outage gameweek's null propagates forward as a null
+    lag rather than a confident zero (T-elx-02). Returns a Series aligned to
+    `df`'s original row order/index regardless of `df`'s own row order."""
+    tmp = pd.DataFrame({"season": df["season"].to_numpy(),
+                        "player_id": df["player_id"].to_numpy(),
+                        "kickoff_time": df["kickoff_time"].to_numpy(),
+                        "masked": masked.to_numpy()}, index=df.index)
+    order = tmp.sort_values(["season", "player_id", "kickoff_time"]).index
+    lagged = tmp.loc[order].groupby(["season", "player_id"])["masked"].shift(1)
+    return lagged.reindex(df.index)
+
+
 def apply_experiment_feature_gating(df: pd.DataFrame, exp: dict) -> pd.DataFrame:
-    """Drop an experiment-gated feature family from `df` when its flag is off.
+    """Drop or add an experiment-gated feature from `df` depending on its flag.
 
     `ts_*` (config.TEAM_STRENGTH_COLS), rolled `us_*` (config.UNDERSTAT_COLS
     -> ROLL_STATS) and rolled `fm_*` (config.FOTMOB_COLS -> ROLL_STATS) are
@@ -140,8 +168,17 @@ def apply_experiment_feature_gating(df: pd.DataFrame, exp: dict) -> pd.DataFrame
     fourth ad-hoc inline drop expression.
 
     Extracted from plan 09-05's inline team_strength-only gating (D-13), then
-    extended by plan 09-08 (understat) and this plan (fotmob); each existing
+    extended by plan 09-08 (understat) and 09-09 (fotmob); each existing
     branch's behaviour is unchanged from what its own plan measured.
+
+    `ep_next_lag`/`ep_next_now` (quick task 260909-elx) are this function's
+    first branch that ADDS a column rather than dropping one. `xp_fpl` (FPL's
+    own per-fixture xP, models.train.load_features()'s merged-in evaluation
+    baseline) must stay OUT of `feature_cols` (models/train.py's `_EXCLUDE`
+    keeps it there) while staying IN the frame, because walk_forward and
+    benchmark_external both score it as the FPL baseline -- so these two
+    flags expose DERIVED columns (`xp_fpl_lag1`, `xp_fpl_now`) under new
+    names, never rename or consume the literal `xp_fpl` column itself.
 
     `exp` needs only `.get()` -- callers may pass any dict-like subset of
     `config.EXPERIMENTS`'s keys (tests pass a plain two-key dict directly).
@@ -153,7 +190,23 @@ def apply_experiment_feature_gating(df: pd.DataFrame, exp: dict) -> pd.DataFrame
         drop += [c for c in df.columns if c.startswith("us_")]
     if not exp.get("fotmob", False):
         drop += [c for c in df.columns if c.startswith("fm_")]
-    return df.drop(columns=drop) if drop else df
+    out = df.drop(columns=drop) if drop else df
+
+    add_lag = exp.get("ep_next_lag", False)
+    add_now = exp.get("ep_next_now", False)
+    if add_lag or add_now:
+        if "xp_fpl" not in df.columns:
+            raise AssertionError(
+                "ep_next_lag/ep_next_now require 'xp_fpl' in the frame -- "
+                "models.train.load_features() must have merged it in")
+        if out is df:
+            out = out.copy()
+        masked = _masked_xp_fpl(df)
+        if add_lag:
+            out["xp_fpl_lag1"] = _prev_fixture_lag(df, masked)
+        if add_now:
+            out["xp_fpl_now"] = masked
+    return out
 
 
 def _graft_team_strength_ratings(synth: pd.DataFrame, ratings_g: pd.DataFrame) -> None:
