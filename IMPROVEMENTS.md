@@ -1397,6 +1397,18 @@ existing in isolation:
   (12+ months) produces a large enough known-pre-deadline control to narrow the
   provenance interval, this verdict is the one to revisit first.
 
+### Declared time-box (2026-09-09, written before training): rl_strategy v3 single-season overnight extension
+
+User-directed extension of the v2 dose-response reading: **one season (2025-26), 3 seeds
+(0/1/2) in parallel, 540 minutes (9h) per policy, `--timesteps 400000`** (raised so the
+wall-clock box stays the binding budget), same pure realised-points reward, outputs in
+`data/processed/experiments/rl_v3_policies/` (v1/v2 artifacts untouched). Stop rule:
+when the box is spent, evaluate as-is on the same-season adoption comparison
+(`wf_rl_v3_adopt_2025-26_seed{N}`) against the season's recorded v2 seed scores and the
+solver reference; no extension, no extra seeds. Purpose: extend the measured
+compute→points curve (30min→v1, 120min→v2, 540min→v3) by one more point on the
+best-covered season.
+
 ## Reference findings (why the priorities)
 
 Levers that beat noise: model vs form baseline (+83..92/season), active transfers
