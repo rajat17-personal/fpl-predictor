@@ -252,3 +252,82 @@ def test_fit_ceiling_artifact_shape():
     for spec in artifact["positions"].values():
         assert "edges" in spec
         assert "bins" in spec
+
+
+# --- backtest.capt_ceiling_ci (quick 260909-dga) -----------------------------
+
+from backtest.capt_ceiling_ci import (capture_ratio, paired_cluster_bootstrap,
+                                      paired_t_interval)
+
+
+def test_capture_ratio_is_ratio_of_sums_not_mean_of_ratios():
+    """best_pts varies across gameweeks -> ratio-of-sums must differ from the
+    mean of per-gameweek ratios, and capture_ratio must match the former."""
+    capt_pts = np.array([1.0, 8.0])
+    best_pts = np.array([2.0, 8.0])
+    ratio_of_sums = capture_ratio(capt_pts, best_pts)          # (1+8)/(2+8) = 0.9
+    mean_of_ratios = float(np.mean(capt_pts / best_pts))        # (0.5+1.0)/2 = 0.75
+    assert ratio_of_sums != pytest.approx(mean_of_ratios)
+    assert ratio_of_sums == pytest.approx(0.9)
+
+
+def test_capture_ratio_zero_denominator_guard():
+    """All-zero best_pts must return a finite value, not inf/nan/raise --
+    mirrors walk_forward.py:308's max(sum(best_pts), 1) guard."""
+    out = capture_ratio(np.array([0.0, 0.0]), np.array([0.0, 0.0]))
+    assert np.isfinite(out)
+    assert out == 0.0
+
+
+def test_paired_t_interval_reproduces_f3_capt_capture():
+    """The six capt_capture deltas from the plan's measured_facts F3 (baseline
+    vs capt_ceiling, wf_baseline_phase9.csv / wf_capt_ceiling_adopt.csv) must
+    reproduce F3's published mean and 95% CI to 4 decimal places."""
+    deltas = [0.026, -0.014, -0.012, 0.008, 0.056, 0.024]
+    out = paired_t_interval(deltas)
+    assert out["mean"] == pytest.approx(0.0147, abs=1e-4)
+    assert out["ci_lo"] == pytest.approx(-0.0131, abs=1e-4)
+    assert out["ci_hi"] == pytest.approx(0.0424, abs=1e-4)
+
+
+def test_paired_t_interval_reproduces_f3_model_chips():
+    """Same reproduction check for the model+chips deltas in F3."""
+    deltas = [56, -28, -30, -8, -18, 121]
+    out = paired_t_interval(deltas)
+    assert out["mean"] == pytest.approx(15.5, abs=0.05)
+    assert out["se"] == pytest.approx(24.77, abs=0.05)
+    assert out["ci_lo"] == pytest.approx(-48.2, abs=0.1)
+    assert out["ci_hi"] == pytest.approx(79.2, abs=0.1)
+
+
+def test_paired_cluster_bootstrap_degenerate_sum_metric_collapses_to_point():
+    """Clusters (seasons) whose gameweek rows are all identical within the
+    season -> resampling with replacement cannot change either arm's sum, so
+    the returned interval collapses to a point at the observed delta."""
+    off_df = pd.DataFrame({"season": ["2020-21"] * 4 + ["2021-22"] * 4,
+                           "gw": list(range(4)) * 2,
+                           "points": [10.0] * 4 + [20.0] * 4})
+    on_df = off_df.copy()
+    on_df["points"] = off_df["points"] + 2.0   # constant per-row offset
+    out = paired_cluster_bootstrap(off_df, on_df, ["points"], False, 500, seed=0)
+    observed = float(on_df["points"].sum() - off_df["points"].sum())
+    assert out["ci_lo"] == pytest.approx(observed)
+    assert out["ci_hi"] == pytest.approx(observed)
+
+
+def test_paired_cluster_bootstrap_degenerate_ratio_metric_collapses_to_point():
+    """Same degenerate-cluster property for the ratio-of-sums path (the one
+    capt_capture actually uses) -- resampling identical-within-season rows
+    cannot move either arm's ratio."""
+    off_df = pd.DataFrame({"season": ["2020-21"] * 3 + ["2021-22"] * 3,
+                           "gw": list(range(3)) * 2,
+                           "capt_pts": [4.0, 4.0, 4.0, 6.0, 6.0, 6.0],
+                           "best_pts": [8.0, 8.0, 8.0, 10.0, 10.0, 10.0]})
+    on_df = off_df.copy()
+    on_df["capt_pts"] = off_df["capt_pts"] + 1.0
+    out = paired_cluster_bootstrap(off_df, on_df, ["capt_pts", "best_pts"], True, 500, seed=0)
+    off_ratio = off_df["capt_pts"].sum() / off_df["best_pts"].sum()
+    on_ratio = on_df["capt_pts"].sum() / on_df["best_pts"].sum()
+    observed = float(on_ratio - off_ratio)
+    assert out["ci_lo"] == pytest.approx(observed)
+    assert out["ci_hi"] == pytest.approx(observed)
