@@ -1446,6 +1446,98 @@ references from the same harness:
   (`models/artifacts/` + `rl_v2_policies/` + `rl_v3_policies/`; v1's 2025-26 pair
   restored from `rl_v1_2025-26_backup`).
 
+## Phase G — xP experiment follow-ups (Phase 10)
+
+Phase 10 pursues Phase 9's own measured leads under the same honest-harness
+discipline: every experiment lands opt-in behind a `config.EXPERIMENTS` flag,
+defaulted off, judged by `backtest/walk_forward.py`'s unflagged-reproduces-
+baseline contract — never a bespoke ad-hoc switch. This section locks every
+Phase 10 adoption criterion in writing before any run in this phase measures
+anything against them (T-10-01-05).
+
+### Declared criteria (2026-09-10, written before any Phase 10 adoption run)
+
+- **Primary bar (unchanged):** 6-season mean `model+chips` >= **2,280** against
+  the measured **2,262** Phase F baseline.
+- **D-09 availability dual criterion, BOTH required:** (a) 2025-26 walk-forward
+  `model+chips` improves by >= **+25** points; (b) pooled played-only
+  `spearman_xp_med` on `backtest.benchmark_external`'s EXP-1 basis improves by
+  >= **+0.03** over the **0.383** baseline. The 2025-26 coverage this criterion
+  is judged on comes from the D-05 vendored FPL-Core-Insights backfill, **not**
+  from our own daily snapshots — those start in season 2026-27 and
+  `backtest/walk_forward.py::DATA_SEASONS` drops 2026-27 entirely, so our own
+  captured snapshots have zero walk-forward coverage on their own.
+- **D-02 news-sentiment trigger:** after BOTH Tier-1 experiments, if pooled
+  played-only `spearman_xp_med` is **< 0.500** the news-sentiment experiment
+  gets built; if **>= 0.500** it is recorded not-triggered (the `capt_mc`
+  precedent — a numbered, evidenced non-decision, not a silent skip). The
+  0.383 -> 0.579 arithmetic midpoint (the two pooled Spearman figures already
+  on record in this file's Phase F benchmark table) is **0.481**; the binding
+  number is **0.500** — D-02's own stated figure, made exact.
+- **D-15 bracket cheap gate:** a model-class-bracket candidate advances only if
+  its val-split played-only Spearman >= LightGBM's own on the same split **+
+  0.010**; MAE is recorded as a diagnostic alongside it and is never itself a
+  gate.
+- **D-11 split verdicts:** the final combined run (10-16) includes only
+  full-coverage winners and is judged on >= 2,280; the availability
+  experiment carries its own dual-criterion verdict (D-09, above) recorded
+  separately — no apples-to-oranges combination of the two.
+- **D-13 compute budget:** 200 Colab Pro units total plus open-ended local
+  overnights; recurrent and transformer candidates run on Colab,
+  Ridge/XGBoost/CatBoost/MLP run local (WSL); hard stop at unit exhaustion,
+  consumption recorded per candidate.
+- **D-19 tuning budget:** 12 configs per deep candidate per granularity
+  variant, hard stop, logged like `models/tune.py`; XGBoost/CatBoost get
+  sensible LightGBM-adjacent defaults only (asymmetric per D-19).
+- **D-10:** no availability flag may be flipped default-on until the
+  missing-snapshot NaN fallback is asserted by a passing test —
+  `tests/test_availability.py::test_missing_snapshot_degrades_to_nan_not_raise`
+  (plan 10-01, this phase).
+
+### Experiment results (Phase 10)
+
+| flag | criterion | measured | verdict | default |
+|------|-----------|----------|---------|---------|
+| availability_flags | D-09 dual criterion: 2025-26 model+chips +25, pooled played-only Spearman +0.03 over 0.383 | pending | pending | off |
+| transfermarkt_injury | model+chips contribution measured via the harness | pending | pending | off |
+| news_sentiment | D-02 conditional build; if built, model+chips contribution measured via the harness | pending | pending | off |
+| bracket_ridge | D-15 cheap gate: val played-only Spearman >= LightGBM + 0.010 | pending | pending | off |
+| bracket_xgb | D-15 cheap gate: val played-only Spearman >= LightGBM + 0.010 | pending | pending | off |
+| bracket_catboost | D-15 cheap gate: val played-only Spearman >= LightGBM + 0.010 | pending | pending | off |
+| bracket_mlp | D-15 cheap gate: val played-only Spearman >= LightGBM + 0.010 | pending | pending | off |
+| bracket_rnn | D-15 cheap gate: val played-only Spearman >= LightGBM + 0.010 | pending | pending | off |
+| bracket_transformer | D-15 cheap gate: val played-only Spearman >= LightGBM + 0.010 | pending | pending | off |
+
+Every row starts `pending`; each plan in this phase fills its own row as it
+measures it, and plan 10-16 confirms none remain — matching the Phase F
+table's own closing discipline.
+
+### Data provenance and access risk (Phase 10)
+
+| source | access status | committed? | license/ToS posture | evidence |
+|--------|---------------|------------|----------------------|----------|
+| FPL API | open, no auth | not committed (fetched live) | public API, standard ToS | already the project's primary data source |
+| FPL-Core-Insights | reachable — probed live 2026-09-10 (GW1-3 `playerstats.csv`, columns confirmed) | commit pending 10-06's license check | license unconfirmed at plan time (10-RESEARCH.md Pitfall) — verify before committing | `data/raw/fpl_core_insights/2025-2026/` (gitignored probe, this plan) |
+| Transfermarkt | **unverified** | not committed | unofficial source, ToS unclear | spike gated in 10-05, not yet attempted |
+| figshare pre-scraped dataset | **403 on direct fetch** | not committed | unknown | checked in 10-05 per 10-RESEARCH.md's "check first" note |
+| GDELT DOC 2.0 | keyless, not yet probed | not committed, conditional on D-02's trigger firing | public API | plain `requests`, no `gdeltdoc` package (locked decision, this plan) |
+| Guardian | free key needed, not yet probed | not committed, conditional on D-02's trigger firing | Open Platform ToS | plain `requests` client (locked decision, this plan) |
+| fplreview | **403 to automated access — manual capture only** | never redistributed, never a model input | manual, non-redistributable | 10-RESEARCH.md / plan 10-02 |
+| fbrapi.com | half-down 2026-09-09, **not re-probed per D-04** | not committed | unknown | 09-RESEARCH.md Phase 9 finding (Cloudflare-gated) |
+
+### Unverified prior evidence (Phase 10)
+
+- The IJCSS 2025 paper (`10.2478/ijcss-2025-0008`) could not be located this
+  session. Every claim the Tier-1 todos attribute to it is **[ASSUMED]** —
+  cited as provenance, not verified fact, in any later plan's writeup.
+- `danielfrees/mlpremier` (arXiv 2405.02412) — the repo D-02's todo cites to
+  mine for a news-sentiment approach — published a **negative** result for
+  Guardian-based news sentiment: it underperformed both its own CNN and its
+  Ridge/LightGBM baselines in that paper's own reported comparison.
+- Neither note changes any pre-declared trigger above; both are context the
+  eventual ledger entries for `news_sentiment` (and any Tier-1 experiment
+  drawing on the IJCSS claims) must cite rather than omit.
+
 ## Reference findings (why the priorities)
 
 Levers that beat noise: model vs form baseline (+83..92/season), active transfers
