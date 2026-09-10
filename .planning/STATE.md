@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 10
 current_phase_name: xP Experiment Follow-ups
 status: executing
-stopped_at: Completed 10-09-PLAN.md
-last_updated: "2026-09-10T17:06:43.046Z"
+stopped_at: Completed 10-10-PLAN.md
+last_updated: "2026-09-10T18:31:11.350Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 10 execution started
-state_head: 58d9ca4ef5e967830c7548407c12124ecdab72a5
+state_head: baf90418816805fde57119aae6dcf747f20b8658
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 71
-  completed_plans: 60
+  completed_plans: 61
   percent: 70
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 ## Current Position
 
 Phase: 10 (xP Experiment Follow-ups) — EXECUTING
-Plan: 9 of 16
+Plan: 10 of 16
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 10 execution started
 
@@ -124,6 +124,7 @@ Progress: [███████░░░] 70% (52/55 plans complete)
 | Phase 10 P06 | 55min | 3 tasks | 41 files |
 | Phase 10 P07 | 45min | 3 tasks | 10 files |
 | Phase 10 P09 | 25min | 2 tasks | 2 files |
+| Phase 10 P10 | 80min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -264,6 +265,9 @@ Recent decisions affecting current work:
 - [Phase 10]: [Phase 10] Phase 10 Plan 07: transfermarkt_injury feature family (config.INJURY_COLS) joined by date-range overlap against data.availability.gw_deadlines(), resolved-vs-unresolved NaN rule drawn from the id map's own membership (_covered_player_codes), never the spell table's -- registered in CONTEXT_COLS, gated default-off, attach() deliberately NOT wired into data/build_table.py yet (plan 10-08 Task 1's job)
 - [Phase 10]: [Phase 10] Phase 10 Plan 09: External-prediction ingestion seam (D-14) built and proven via round-trip equivalence (2133 model+chips, both sides, 100% coverage) before any Colab candidate exists; six-column artifact contract (season, gw, player_code, fixture_id, xp_med, xp_mean) fixed, ground truth always re-attached locally, never trusted from the artifact
 - [Phase 10]: [Phase 10] Phase 10 Plan 09: Implausibility gate self-sufficient via _lgbm_played_spearman (vintage-keyed by season + features.parquet sha256), replacing Task 1's dependency on plan 10-10's not-yet-written bracket_gate_lgbm.json; measured 2025-26 in-process LightGBM played-only Spearman = 0.3464
+- [Phase 10]: [Phase 10] Phase 10 Plan 10: Human approved xgboost==3.4.1 and catboost==1.2.10 ("approve both", zero PyPI drift) into a dev-only hash-locked requirements-experiments lockfile; models/bracket/ gives train_position one stage-2 regressor swap seam, proven byte-equivalent for stage2=lgbm (walk-forward model+chips=2172, identical to pre-change baseline)
+- [Phase 10]: [Phase 10] Phase 10 Plan 10: D-15 gate measured all three challengers against LightGBM's 0.3900 val-split played-only Spearman baseline -- ridge +0.0055, xgb +0.0049, catboost -0.0014, all HOLD against the +0.010 margin; no candidate advances to a full walk-forward
+- [Phase 10]: [Phase 10] Phase 10 Plan 10: uv pip sync (not install) against a shared conda env wiped every package outside the target lockfile, including project-critical deps; recovered via uv pip install -r <file> --require-hashes across all four project lockfiles, full pytest green before continuing -- future installs into this env must use install, never sync
 
 ### Pending Todos
 
@@ -302,6 +306,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T17:06:42.818Z
-Stopped at: Completed 10-09-PLAN.md
+Last session: 2026-09-10T18:31:11.124Z
+Stopped at: Completed 10-10-PLAN.md
 Resume file: None
