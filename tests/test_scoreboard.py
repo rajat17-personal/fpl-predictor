@@ -14,6 +14,8 @@ import responses
 
 import config
 import data.fpl_standings as standings
+import data.fplreview as fplreview
+import data.id_crosswalk as id_crosswalk
 
 _STANDINGS_URL = f"{config.FPL_API}/leagues-classic/{standings.OVERALL_LEAGUE_ID}/standings/"
 
@@ -159,3 +161,84 @@ def test_build_writes_parquet_and_load_consensus_returns_it(monkeypatch, tmp_pat
 
 def test_load_consensus_returns_none_when_absent():
     assert standings.load_consensus(99) is None
+
+
+# ======================================================= data/fplreview.py
+
+
+@pytest.fixture(autouse=True)
+def _isolate_fplreview_dir(tmp_path, monkeypatch):
+    """Every fplreview test must never read a real capture file."""
+    d = tmp_path / "fplreview_captures"
+    d.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(fplreview, "FPLREVIEW_DIR", d)
+    return d
+
+
+def _write_capture(dirpath, season, gw, csv_text):
+    path = dirpath / f"fplreview_{season}_gw{gw:02d}.csv"
+    path.write_text(csv_text)
+    return path
+
+
+def test_validate_raises_naming_all_missing_columns_at_once():
+    df = pd.DataFrame({"name": ["A"], "proj_pts": [1.0]})  # missing team + position
+    with pytest.raises(ValueError) as exc_info:
+        fplreview.validate(df, "fake.csv")
+    msg = str(exc_info.value)
+    assert "team" in msg
+    assert "position" in msg
+
+
+def test_validate_raises_when_proj_pts_entirely_non_numeric():
+    df = pd.DataFrame({"name": ["A", "B"], "team": ["X", "Y"], "position": ["MID", "DEF"],
+                        "proj_pts": ["N/A", "n/a"]})
+    with pytest.raises(ValueError, match="non-numeric"):
+        fplreview.validate(df, "fake.csv")
+
+
+def test_load_gw_returns_none_when_no_capture_file(_isolate_fplreview_dir):
+    assert fplreview.load_gw("2026-27", 4) is None
+
+
+def test_load_gw_resolves_names_and_drops_unresolved(_isolate_fplreview_dir, monkeypatch):
+    monkeypatch.setattr(
+        id_crosswalk, "resolve_by_name",
+        lambda names: names.map({"Haaland": 223094}).astype("Int64"))
+    _write_capture(_isolate_fplreview_dir, "2026-27", 4,
+                    "name,team,position,proj_pts\n"
+                    "Haaland,Man City,FWD,7.5\n"
+                    "Some Unknown Player,Nowhere,MID,2.0\n")
+
+    out = fplreview.load_gw("2026-27", 4)
+
+    assert out is not None
+    assert list(out.player_code) == [223094]
+    assert "Some Unknown Player" not in out.name.values
+
+
+def test_load_gw_duplicate_player_names_raises(_isolate_fplreview_dir, monkeypatch):
+    monkeypatch.setattr(
+        id_crosswalk, "resolve_by_name",
+        lambda names: names.map({"Haaland": 223094, "E.Haaland": 223094}).astype("Int64"))
+    _write_capture(_isolate_fplreview_dir, "2026-27", 4,
+                    "name,team,position,proj_pts\n"
+                    "Haaland,Man City,FWD,7.5\n"
+                    "E.Haaland,Man City,FWD,7.5\n")
+
+    with pytest.raises(AssertionError, match="duplicate"):
+        fplreview.load_gw("2026-27", 4)
+
+
+def test_load_gw_lowercases_and_strips_header_whitespace(_isolate_fplreview_dir, monkeypatch):
+    monkeypatch.setattr(
+        id_crosswalk, "resolve_by_name",
+        lambda names: names.map({"Haaland": 223094}).astype("Int64"))
+    _write_capture(_isolate_fplreview_dir, "2026-27", 4,
+                    " Name , Team , Position , Proj_Pts \n"
+                    "Haaland,Man City,FWD,7.5\n")
+
+    out = fplreview.load_gw("2026-27", 4)
+
+    assert out is not None
+    assert list(out.player_code) == [223094]
