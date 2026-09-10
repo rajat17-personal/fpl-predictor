@@ -14,7 +14,8 @@ import responses
 
 import config
 import data.snapshot as snapshot
-from data import availability
+from data import availability, id_map
+from data import fpl_core_insights
 from test_api import fake_boot
 
 FEATURES = config.PROCESSED_DIR / "features.parquet"
@@ -297,3 +298,60 @@ def test_availability_family_present_and_not_rolled_in_features():
     rolled = [c for c in feat.columns
              if c.startswith("av_") and c.endswith(("_r3", "_r5", "_r10", "_rall"))]
     assert not rolled, f"availability columns must never be rolled: found {rolled}"
+
+
+# --- data/fpl_core_insights.py -- plan 10-06's committed vendoring ----------
+
+
+def test_reduce_gw_csv_raises_on_missing_availability_column():
+    """T-10-06-02: a vendor schema break must raise loudly, never silently
+    produce an all-NaN availability column. Synthetic CSV omits `news`
+    (one of `_KEEP_COLS`'s six members) -- the raise must name it."""
+    csv_bytes = (
+        b"id,status,chance_of_playing_next_round,chance_of_playing_this_round,news_added\n"
+        b"1,a,100,100,\n"
+    )
+    with pytest.raises(ValueError, match="news"):
+        fpl_core_insights._reduce_gw_csv(csv_bytes, "2025-26", 7)
+
+
+@needs_data
+def test_vendored_provider_uses_prior_gw_folder(tmp_path, monkeypatch):
+    """T-10-06-01 / D-05's leakage rule, made executable: a vendored folder
+    labelled gameweek N freezes at gameweek N's END, so it is only ever
+    eligible for gameweek N+1 onward. Build a synthetic vendored directory
+    carrying ONLY a GW1 folder (real season 2025-26, so `gw_deadlines()` has
+    real kickoff data to resolve against) and prove GW2 resolves from that
+    frozen GW1 folder while GW1 itself resolves to nothing (no GW0 folder
+    exists -- the D-10 NaN-fallback case)."""
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    base = tmp_path / "external" / "fpl_core_insights" / "2025-2026"
+    base.mkdir(parents=True)
+
+    id_map_df = id_map.load_id_map()
+    season_rows = id_map_df[id_map_df["season"] == "2025-26"]
+    if season_rows.empty:
+        pytest.skip("no 2025-26 rows in id_map -- run the data pipeline first")
+    row = season_rows.iloc[0]
+    player_id, player_code = int(row["player_id"]), row["player_code"]
+
+    pd.DataFrame({
+        "id": [player_id], "status": ["a"], "chance_of_playing_next_round": [100.0],
+        "chance_of_playing_this_round": [100.0], "news": [""], "news_added": [None],
+    }).to_csv(base / "GW1_playerstats.csv", index=False)
+
+    deadlines = availability.gw_deadlines()
+    deadlines = deadlines[deadlines["season"] == "2025-26"]
+    if deadlines.empty:
+        pytest.skip("no 2025-26 deadlines derivable -- run the data pipeline first")
+
+    snaps = availability._fpl_core_insights_source()
+    assert not snaps.empty, "expected the synthetic GW1 file to be picked up"
+
+    resolved = availability.resolve_as_of(snaps, deadlines)
+    gw1_rows = resolved[(resolved["gw"] == 1) & (resolved["player_code"] == player_code)]
+    gw2_rows = resolved[(resolved["gw"] == 2) & (resolved["player_code"] == player_code)]
+
+    assert gw1_rows.empty, "GW1 has no prior (GW0) folder -- must resolve to nothing"
+    assert len(gw2_rows) == 1, "GW2 must resolve from the frozen GW1 folder"
+    assert gw2_rows.iloc[0]["status"] == "a"
