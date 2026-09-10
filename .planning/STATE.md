@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 10
 current_phase_name: xP Experiment Follow-ups
 status: executing
-stopped_at: Completed 10-01-PLAN.md
-last_updated: "2026-09-10T11:30:53.845Z"
+stopped_at: Completed 10-02-PLAN.md
+last_updated: "2026-09-10T12:06:04.256Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 10 execution started
-state_head: f417eaa17f9cea32608f5f5917ba3a9f65f2804a
+state_head: e286e94c399c940949767dd5d41264e1198deddf
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 71
-  completed_plans: 53
+  completed_plans: 54
   percent: 70
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 ## Current Position
 
 Phase: 10 (xP Experiment Follow-ups) — EXECUTING
-Plan: 2 of 16
+Plan: 3 of 16
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 10 execution started
 
@@ -117,6 +117,7 @@ Progress: [███████░░░] 70% (52/55 plans complete)
 | Phase 09 P09 | 6h 29min | 3 tasks | 7 files |
 | Phase 09 P10 | 30min | 3 tasks | 6 files |
 | Phase 10 P01 | 42min | 3 tasks | 10 files |
+| Phase 10 P02 | 25min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -242,6 +243,8 @@ Recent decisions affecting current work:
 - [Phase 09]: Zero product wiring added to predict/live.py or predict/export.py this phase -- confirmed via a new tests/test_product.py export-contract regression test and a real end-to-end python -m predict.export run — The plan's own instruction is to wire nothing for a flag that stayed off; since none of the eight flags adopted, the task's only real work was the no-op verification
 - [Phase 10]: Phase 10 Plan 01: fpl_core_insights provider directory layout is <base>/<season-as-in-source-repo>/GW<n>_playerstats.csv (flat), this plan's own choice since 10-06's committed vendoring has not run yet — 10-RESEARCH.md Pitfall 2: probe schema live before designing against it; layout documented in data/availability.py's module docstring
 - [Phase 10]: Phase 10 Plan 01: locked D-02's news-sentiment trigger at pooled played-only spearman_xp_med < 0.500 (0.481 midpoint on record) in IMPROVEMENTS.md before any Phase 10 measuring run — T-10-01-05: pre-declared criteria written after a measurement risks being back-fitted to the number
+- [Phase 10]: OVERALL_LEAGUE_ID=314 kept as a keyword-default argument, never inlined into a URL f-string; confirmed correct by a real live standings run (10-RESEARCH.md A3)
+- [Phase 10]: No mae_consensus scoreboard key -- consensus ownership is a percentage, not points; an MAE against actual points would be meaningless in a published trust artifact
 
 ### Pending Todos
 
@@ -280,6 +283,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T11:30:53.632Z
-Stopped at: Completed 10-01-PLAN.md
+Last session: 2026-09-10T12:06:04.032Z
+Stopped at: Completed 10-02-PLAN.md
 Resume file: None
