@@ -10,6 +10,8 @@ files:
   - features/engineer.py
 ---
 
+> **DEPRIORITIZED (2026-09-10):** season-aggregate tables rank below every research-derived todo; FotMob per-match data already measured +1. Do last, or drop.
+
 ## Problem
 
 Automated FBref access is confirmed dead (Phase 9: Cloudflare "Just a moment..." challenge survives real-Chrome UC-mode; 3 attempts logged in IMPROVEMENTS.md § fbref_v2). The hosted proxy fbrapi.com (dkjorling/FbrefAPI) was probed 2026-09-09 and is currently half-down: TLS chain fails verification AND no HTTP response even ignoring TLS — not dependable for a pipeline. But FBref's per-season tables are downloadable manually in a normal browser (Share & Export → Get table as CSV; a human passes the Cloudflare challenge interactively).
