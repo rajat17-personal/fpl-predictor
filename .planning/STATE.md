@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 10
 current_phase_name: xP Experiment Follow-ups
 status: executing
-stopped_at: Completed 10-03-PLAN.md
-last_updated: "2026-09-10T12:19:15.931Z"
+stopped_at: Completed 10-04-PLAN.md
+last_updated: "2026-09-10T12:54:15.285Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 10 execution started
-state_head: 9ded4f36ac16743b44cd97a45e11afd22b99414e
+state_head: 43fe5aadd793a31792533cedf03dce25a84442e9
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 71
-  completed_plans: 55
+  completed_plans: 56
   percent: 70
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 ## Current Position
 
 Phase: 10 (xP Experiment Follow-ups) — EXECUTING
-Plan: 4 of 16
+Plan: 5 of 16
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 10 execution started
 
@@ -119,6 +119,7 @@ Progress: [███████░░░] 70% (52/55 plans complete)
 | Phase 10 P01 | 42min | 3 tasks | 10 files |
 | Phase 10 P02 | 25min | 3 tasks | 5 files |
 | Phase 10 P03 | 5min | 3 tasks | 3 files |
+| Phase 10 P04 | 30min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -248,6 +249,9 @@ Recent decisions affecting current work:
 - [Phase 10]: No mae_consensus scoreboard key -- consensus ownership is a percentage, not points; an MAE against actual points would be meaningless in a published trust artifact
 - [Phase 10]: Phase 10 Plan 3: @reboot crontab line installed alongside pre-existing 30 2 * * * daily.sh line (which was actually missing from this machine's crontab and installed fresh); both confirmed via independent crontab -l re-check
 - [Phase 10]: Phase 10 Plan 3: pre-fix D-08 baseline measured at execution time — 2 files spanning 11 days (9 days missing) in data/snapshots/
+- [Phase 10]: Phase 10 Plan 04: 'n' FPL status code (found in real fpl_core_insights data) normalised to 'u' via _STATUS_ALIASES, matching predict/live.py:130's existing i/s/u/n-as-unavailable grouping -- preserves config.AVAILABILITY_COLS's eight-column contract
+- [Phase 10]: Phase 10 Plan 04: resolve_as_of's selection/dedup logic unchanged from 10-01; extended only with a deadline_ts/news_added pass-through so encode_availability has per-row context without altering which row wins
+- [Phase 10]: Phase 10 Plan 04: 'source' kept as an on-disk-only column in availability.parquet (added by build() after encode_availability, never part of config.AVAILABILITY_COLS) so --report can break coverage down per provider without it reaching features.parquet
 
 ### Pending Todos
 
@@ -286,6 +290,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T12:19:15.704Z
-Stopped at: Completed 10-03-PLAN.md
+Last session: 2026-09-10T12:54:15.063Z
+Stopped at: Completed 10-04-PLAN.md
 Resume file: None

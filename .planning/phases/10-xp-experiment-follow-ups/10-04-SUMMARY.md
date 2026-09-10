@@ -250,3 +250,19 @@ None - no external service configuration required.
 ---
 *Phase: 10-xp-experiment-follow-ups*
 *Completed: 2026-09-10*
+
+## Self-Check: PASSED
+
+- FOUND: config.py
+- FOUND: data/availability.py
+- FOUND: features/engineer.py
+- FOUND: tests/test_availability.py
+- FOUND: .planning/phases/10-xp-experiment-follow-ups/10-04-SUMMARY.md
+- FOUND: commit d149c5d (Task 1)
+- FOUND: commit 03d2c7d (Task 2)
+- FOUND: commit f6df639 (Task 3)
+- FOUND: commit 97cc80e (Task 1 addendum -- missing test coverage)
+- FOUND: commit 43fe5aa (plan summary)
+- Re-ran repo-wide `python -m pytest -q`: 279 passed, 1 skipped, 0 failed
+- Re-ran `ruff check .`: all checks passed
+- Re-ran plan-level `<verification>` checks: `config.AVAILABILITY_COLS` is the eight-name family registered only in `CONTEXT_COLS`; `features.parquet` carries all eight raw, zero rolled variants; `availability_coverage.json` exists with `per_season`/`per_source` keys; 2025-26 coverage (92.2%) recorded above as the pre-vendoring baseline
