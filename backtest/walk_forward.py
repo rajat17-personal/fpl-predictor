@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import functools
+import hashlib
 import sys
 
 import numpy as np
@@ -98,6 +99,48 @@ def _preds_for(df: pd.DataFrame, test_season: str):
     return te, models, cols
 
 
+def _features_parquet_hash() -> str:
+    """sha256 of the on-disk features.parquet -- the "vintage" a cached
+    baseline is keyed against, so a rebuilt feature matrix (new source,
+    fixed bug, extra season) invalidates a stale cache entry rather than
+    silently comparing a fresh candidate against yesterday's numbers."""
+    return hashlib.sha256((config.PROCESSED_DIR / "features.parquet").read_bytes()).hexdigest()
+
+
+def _lgbm_played_spearman(df: pd.DataFrame, test_season: str) -> float:
+    """In-process LightGBM played-only Spearman for `test_season`, via the
+    identical `_preds_for` the real harness uses, filtered to `y_minutes > 0`
+    and scored with the same `spearmanr(...).statistic` call form
+    `backtest/benchmark_external.py::_stats_block` uses (one metric
+    definition everywhere, never three near-identical ones) -- the baseline
+    every Colab candidate's implausibility check is compared against.
+
+    Cached to `config.EXPERIMENTS_DIR / "lgbm_played_spearman.json"`, keyed
+    by BOTH season and `_features_parquet_hash()` -- comparing a fresh
+    candidate against a stale baseline is exactly the kind of silent
+    mismatch this whole check exists to catch, so a hash change forces a
+    recompute even if the season's own key is already cached.
+    """
+    cache_path = config.EXPERIMENTS_DIR / "lgbm_played_spearman.json"
+    h = _features_parquet_hash()
+    cache = (read_json(cache_path, what="LightGBM played-only Spearman baseline cache")
+             if cache_path.exists() else {})
+    if not isinstance(cache, dict):
+        cache = {}
+    entry = cache.get(test_season)
+    if isinstance(entry, dict) and entry.get("hash") == h and "spearman" in entry:
+        return float(entry["spearman"])
+
+    te, _models, _cols = _preds_for(df, test_season)
+    played = te[te["y_minutes"] > 0]
+    spearman = float(spearmanr(played["xp_med"], played["y_points"]).statistic)
+
+    cache[test_season] = {"hash": h, "spearman": spearman}
+    config.EXPERIMENTS_DIR.mkdir(parents=True, exist_ok=True)
+    write_json(cache, cache_path, indent=1)
+    return spearman
+
+
 # --- External prediction ingestion (D-14): score a Colab-trained bracket
 # candidate through the exact same run_season/_preds_for-shaped path an
 # in-process LightGBM run uses, so the local harness stays the sole judge.
@@ -146,10 +189,13 @@ def load_external_predictions(path, test_season: str, *, df: pd.DataFrame | None
          increase the row count (a fan-out join).
 
     On top of validation, the played-only Spearman of the artifact's own
-    `xp_med` against real `y_points` is compared to the in-process LightGBM
-    baseline; a jump over `_MAX_PLAUSIBLE_SPEARMAN_JUMP` is flagged loudly
-    (printed, and on the returned frame's `.attrs["implausible"]`) but the
-    number is still recorded -- see the constant's own comment.
+    `xp_med` against real `y_points` is compared to a vintage-keyed
+    in-process LightGBM baseline (`_lgbm_played_spearman`, always available
+    -- computed on arrival if not already cached); a jump over
+    `_MAX_PLAUSIBLE_SPEARMAN_JUMP` is flagged loudly (printed, and on the
+    returned frame's `.attrs["implausible"]`) but the number is still
+    recorded -- see the constant's own comment. `baseline_spearman` lets a
+    caller who already has a figure in hand skip that (expensive) run.
     """
     artifact = pd.read_parquet(path)
     missing = [c for c in _EXTERNAL_PRED_COLS if c not in artifact.columns]
@@ -190,17 +236,7 @@ def load_external_predictions(path, test_season: str, *, df: pd.DataFrame | None
     te = _attach_opponent_id(te)
 
     if baseline_spearman is None:
-        gate_path = config.EXPERIMENTS_DIR / "bracket_gate_lgbm.json"
-        gate = (read_json(gate_path, what="bracket gate LightGBM baseline")
-                if gate_path.exists() else {})
-        baseline_spearman = gate.get(test_season) if isinstance(gate, dict) else None
-    if baseline_spearman is None:
-        print(f"[external] {test_season}: no LightGBM baseline available "
-              "(config.EXPERIMENTS_DIR/'bracket_gate_lgbm.json' not found or missing "
-              "this season) -- skipping the implausibility check. This note is "
-              "always printed; the check is never silently skipped.")
-        te.attrs["implausible"] = None
-        return te
+        baseline_spearman = _lgbm_played_spearman(base, test_season)
 
     played = te[te["y_minutes"] > 0]
     ext_spearman = float(spearmanr(played["xp_med"], played["y_points"]).statistic)

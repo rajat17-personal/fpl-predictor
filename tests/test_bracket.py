@@ -2,7 +2,9 @@
 (D-14) -- proves an externally-produced (e.g. Colab) per-fixture prediction
 parquet scores through `backtest.season.run_season` identically to an
 in-process LightGBM run, and that every validation axis (schema, season set,
-row count, ground truth, implausibility) actually fires.
+row count, ground truth) and the vintage-keyed implausibility gate
+(Task 2's `_lgbm_played_spearman`) actually fire -- and that the gate stays
+quiet on a legitimate artifact.
 
 Mirrors tests/test_leakage.py's `@needs_data` + module-scoped fixture shape.
 """
@@ -115,8 +117,47 @@ def test_external_preds_ignores_ground_truth_columns_in_the_artifact(tmp_path, d
     path = tmp_path / "external.parquet"
     sample.to_parquet(path)
 
-    out = load_external_predictions(path, "2025-26", df=df_full)
+    # Explicit baseline_spearman skips the (now always-on, Task 2)
+    # `_lgbm_played_spearman` run -- irrelevant to this test's own claim and
+    # otherwise a second, redundant training run alongside `te_2025`.
+    out = load_external_predictions(path, "2025-26", df=df_full, baseline_spearman=0.383)
     captured = capsys.readouterr()
     assert "WARNING" in captured.out and "y_points" in captured.out
     # The real y_points is re-attached locally, never the artifact's fabricated 999.0.
     assert (out["y_points"] != 999.0).all()
+
+
+# --- implausibility check: a candidate's own Spearman vs the LightGBM baseline
+
+@needs_data
+def test_external_preds_flags_implausible_spearman_jump(tmp_path, df_full, capsys):
+    local = df_full[df_full.season == "2025-26"]
+    artifact = local[["season", "gw", "player_code", "fixture_id", "y_points"]].copy()
+    # Deliberate, obvious leak: xp_med is a monotone function of the REAL
+    # y_points for the test season -- a candidate that could only have
+    # trained on (or otherwise seen) the very rows it is being scored
+    # against, exactly the smells-like-leakage signal 10-RESEARCH.md
+    # Pitfall 6 describes.
+    artifact["xp_med"] = artifact["y_points"]
+    artifact["xp_mean"] = artifact["y_points"]
+    artifact = artifact.drop(columns=["y_points"])
+    path = tmp_path / "external.parquet"
+    artifact.to_parquet(path)
+
+    out = load_external_predictions(path, "2025-26", df=df_full, baseline_spearman=0.383)
+    captured = capsys.readouterr()
+    assert out.attrs["implausible"] is True
+    assert "IMPLAUSIBLE" in captured.out
+
+
+@needs_data
+def test_external_preds_legitimate_roundtrip_not_flagged_implausible(tmp_path, df_full, te_2025):
+    """A check that fires on everything is worthless -- a legitimate
+    round-tripped artifact (the same known-good input the round-trip test
+    uses) must NOT be flagged implausible."""
+    artifact = te_2025[_ARTIFACT_COLS]
+    path = tmp_path / "external.parquet"
+    artifact.to_parquet(path)
+
+    external = load_external_predictions(path, "2025-26", df=df_full, baseline_spearman=0.383)
+    assert external.attrs["implausible"] is False
