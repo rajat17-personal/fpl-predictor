@@ -329,3 +329,31 @@ def test_mlp_search_respects_budget(monkeypatch):
     log = bracket_deep.run_search("mlp", "unit_test", fit_and_score=fit_and_score)
     assert len(calls) == bracket_deep.SEARCH_BUDGET
     assert len(log["configs"]) == bracket_deep.SEARCH_BUDGET
+
+
+@needs_data
+def test_granularity_bracket_writes_gate_schema(monkeypatch, df_full):
+    """run_granularity_bracket("mlp") writes a gate result whose key set is
+    a SUPERSET of bracket_gate_lgbm.json's (plan 10-13's comparison table
+    and plan 10-14's ledger read all seven candidates' gate files
+    uniformly), plus granularity + granularity_scores for both variants.
+    Monkeypatched to a single tiny config and max_epochs=1 so the suite
+    stays fast."""
+    import json
+
+    monkeypatch.setattr(bracket_deep, "_search_space",
+                        lambda candidate: [{"hidden": (4, 2), "dropout": 0.0,
+                                            "lr": 1e-3, "weight_decay": 0.0}])
+    monkeypatch.setattr(bracket_deep, "_SEARCH_MAX_EPOCHS", 1)
+    monkeypatch.setattr(bracket_deep, "_FINAL_MAX_EPOCHS", 1)
+
+    out = bracket_deep.run_granularity_bracket("mlp", df=df_full)
+
+    baseline_path = config.EXPERIMENTS_DIR / "bracket_gate_lgbm.json"
+    assert baseline_path.exists(), "run plan 10-10's gate first (python -m models.bracket.gate)"
+    baseline = json.loads(baseline_path.read_text())
+
+    missing = [k for k in baseline if k not in out]
+    assert not missing, missing
+    assert "granularity" in out and "granularity_scores" in out
+    assert set(out["granularity_scores"]) == {"per_position", "pooled"}
