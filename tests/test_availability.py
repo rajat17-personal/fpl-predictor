@@ -198,3 +198,90 @@ def test_availability_column_present_and_not_rolled_in_features():
     rolled = [c for c in feat.columns
              if c.startswith("av_chance_pct_r")]
     assert not rolled, f"av_chance_pct must never be rolled: found {rolled}"
+
+
+# --- data/availability.py::encode_availability -- plan 10-04 ----------------
+
+
+def _resolved_frame(**overrides) -> pd.DataFrame:
+    """A minimal synthetic `resolved`-shaped frame for `encode_availability`
+    tests -- one row, every column the function requires, overridable per
+    test via keyword."""
+    base = {
+        "season": ["2099-00"], "gw": [5], "player_code": [1],
+        "snapshot_ts": [pd.Timestamp("2099-01-04 12:00", tz="UTC")],
+        "deadline_ts": [pd.Timestamp("2099-01-05 17:30", tz="UTC")],
+        "status": ["a"], "chance_of_playing_next_round": [100.0],
+        "news_added": [pd.NaT],
+    }
+    base.update(overrides)
+    return pd.DataFrame(base)
+
+
+def test_status_one_hot_covers_every_fpl_code():
+    codes = ["a", "d", "i", "s", "u"]
+    resolved = pd.DataFrame({
+        "season": ["2099-00"] * 5, "gw": [5] * 5, "player_code": list(range(1, 6)),
+        "snapshot_ts": [pd.Timestamp("2099-01-04 12:00", tz="UTC")] * 5,
+        "deadline_ts": [pd.Timestamp("2099-01-05 17:30", tz="UTC")] * 5,
+        "status": codes,
+        "chance_of_playing_next_round": [100.0] * 5,
+        "news_added": [pd.NaT] * 5,
+    })
+    out = availability.encode_availability(resolved)
+
+    status_cols = [c for c in config.AVAILABILITY_COLS if c.startswith("av_status_")]
+    assert status_cols == ["av_status_a", "av_status_d", "av_status_i",
+                            "av_status_s", "av_status_u"]
+    for i, code in enumerate(codes):
+        row = out.iloc[i]
+        ones = [c for c in status_cols if row[c] == 1.0]
+        assert ones == [f"av_status_{code}"], (code, ones)
+        others = [c for c in status_cols if c != f"av_status_{code}"]
+        assert row[others].sum() == 0.0
+
+
+def test_snapshot_age_days_is_deadline_minus_snapshot_ts():
+    resolved = _resolved_frame(
+        snapshot_ts=[pd.Timestamp("2099-01-02 17:30", tz="UTC")],
+        deadline_ts=[pd.Timestamp("2099-01-05 17:30", tz="UTC")],
+    )
+    out = availability.encode_availability(resolved)
+    assert out.iloc[0]["av_snapshot_age_days"] == pytest.approx(3.0, abs=1e-9)
+
+
+def test_whole_family_is_nan_when_no_snapshot_qualifies(monkeypatch):
+    """Extends 10-01's D-10 fallback scenario to the FULL eight-column
+    family: with an EMPTY availability cache, attach() must leave ALL EIGHT
+    columns NaN together for the unmatched key -- never a partial fill
+    (T-10-04-02), which is the specific failure a `fillna(0)` upstream or a
+    partially-populated cache would produce."""
+    empty_avail = pd.DataFrame(columns=["season", "gw", "player_code"] + config.AVAILABILITY_COLS)
+    monkeypatch.setattr(availability, "load_availability", lambda: empty_avail)
+
+    full = pd.DataFrame({"season": ["2099-00"], "gw": [5], "player_code": [1],
+                         "other_col": ["x"]})
+    merged = availability.attach(full)
+    assert len(merged) == len(full)
+    for col in config.AVAILABILITY_COLS:
+        assert merged[col].isna().all(), f"{col} should be NaN, not partially filled"
+
+
+def test_unknown_status_code_raises_not_silently_dropped():
+    resolved = _resolved_frame(status=["x"])
+    with pytest.raises(ValueError, match="x"):
+        availability.encode_availability(resolved)
+
+
+@needs_data
+def test_availability_family_present_and_not_rolled_in_features():
+    """The family-classification regression gate (plan 10-04's own
+    must_have), now covering all eight columns rather than 10-01's single
+    `av_chance_pct`: every column must reach features.parquet raw, never
+    through the ROLL_STATS shift-then-roll machinery."""
+    feat = pd.read_parquet(FEATURES)
+    missing = [c for c in config.AVAILABILITY_COLS if c not in feat.columns]
+    assert not missing, f"missing from features.parquet: {missing}"
+    rolled = [c for c in feat.columns
+             if c.startswith("av_") and c.endswith(("_r3", "_r5", "_r10", "_rall"))]
+    assert not rolled, f"availability columns must never be rolled: found {rolled}"

@@ -50,13 +50,23 @@ ROLL_STATS = [
 # handing the frame to train_predict, so an A/B is a flag away and never forces a
 # features.parquet rebuild. Do not "fix" this by gating inclusion here.
 #
-# config.AVAILABILITY_COLS (av_chance_pct) belongs here, never in ROLL_STATS:
-# a point-in-time availability figure resolved as of the gameweek deadline
-# (data/availability.py::resolve_as_of) is already leakage-safe on its own
-# terms -- it is not a match outcome to be shift(1)-then-rolled -- and
-# _roll's rolling-mean machinery would apply the wrong lookback horizon
-# across double gameweeks and postponements, where "the last N appearances"
-# and "the last N calendar gameweeks" diverge.
+# config.AVAILABILITY_COLS (av_chance_pct, the av_status_* one-hot, plus
+# av_days_since_news/av_snapshot_age_days -- plan 10-04) belongs here, never
+# in ROLL_STATS: a point-in-time availability figure resolved as of the
+# gameweek deadline (data/availability.py::resolve_as_of) is already
+# leakage-safe on its own terms -- it is not a match outcome to be
+# shift(1)-then-rolled -- and _roll's rolling-mean machinery would apply the
+# wrong lookback horizon across double gameweeks and postponements, where
+# "the last N appearances" and "the last N calendar gameweeks" diverge.
+#
+# T-10-04-02: these eight columns must NEVER be `fillna(0)`-ed anywhere
+# downstream. `data/availability.py::attach`'s left merge produces NaN (not
+# 0.0) for a player-gameweek with no qualifying snapshot -- since the
+# av_status_* one-hot is 0.0 for four of five codes on every PRESENT row, a
+# `fillna(0)` on a missing row would be silently indistinguishable from
+# "available and definitely not injured/doubtful/suspended/unavailable". The
+# one-hot's zeros are only meaningful alongside a non-null
+# av_snapshot_age_days (proof the row actually resolved to a real snapshot).
 CONTEXT_COLS = (["was_home", "fdr_self", "fdr_opp", "is_dgw", "price_m",
                  "selected", "transfers_balance"]
                 + config.SET_PIECE_COLS + config.ODDS_COLS + config.FBREF_COLS
