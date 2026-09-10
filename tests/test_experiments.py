@@ -7,6 +7,8 @@ import pandas as pd
 import pytest
 
 import config
+from backtest.capt_ceiling_ci import (capture_ratio, paired_cluster_bootstrap,
+                                      paired_t_interval)
 from backtest.enrichment_slices import cell_stats
 from backtest.season import run_season
 from backtest.walk_forward import apply_experiment_feature_gating, resolve_scheduler
@@ -19,7 +21,7 @@ needs_data = pytest.mark.skipif(not (FEATURES.exists() and RAW.exists()),
 
 _EXPERIMENT_KEYS = {"capt_ceiling", "capt_mc", "chips_v2", "team_strength",
                     "rl_strategy", "understat", "fotmob", "fbref_v2",
-                    "ep_next_lag", "ep_next_now"}
+                    "ep_next_lag", "ep_next_now", "availability_flags"}
 
 
 # --- config.EXPERIMENTS / resolve_experiments() -----------------------------
@@ -389,9 +391,6 @@ def test_fit_ceiling_artifact_shape():
 
 
 # --- backtest.capt_ceiling_ci (quick 260909-dga) -----------------------------
-
-from backtest.capt_ceiling_ci import (capture_ratio, paired_cluster_bootstrap,
-                                      paired_t_interval)
 
 
 def test_capture_ratio_is_ratio_of_sums_not_mean_of_ratios():

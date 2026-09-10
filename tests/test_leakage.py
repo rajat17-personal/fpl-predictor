@@ -146,6 +146,25 @@ def test_fotmob_features_are_rolled_not_raw(feat):
 
 
 @needs_data
+def test_availability_features_are_raw_context_not_rolled(feat):
+    """Phase 10 plan 10-01's leakage requirement -- the opposite
+    classification from test_understat_features_are_rolled_not_raw's: a
+    point-in-time availability figure resolved as of the gameweek deadline
+    (data/availability.py::resolve_as_of) is ALREADY leakage-safe on its own
+    terms, so it must reach the feature matrix RAW, as pre-match context
+    (config.AVAILABILITY_COLS registered in CONTEXT_COLS), never rolled --
+    the regression gate against a future edit "helpfully" moving the family
+    into ROLL_STATS."""
+    assert "av_chance_pct" in feat.columns, \
+        "av_chance_pct missing -- was the pipeline rebuilt after data.availability?"
+
+    rolled = [c for c in feat.columns
+             if c.startswith("av_") and any(
+                 c.endswith(sfx) for sfx in ("_r3", "_r5", "_r10", "_rall"))]
+    assert not rolled, f"availability columns must never be rolled: found {rolled}"
+
+
+@needs_data
 def test_ep_next_lag_gate_matches_independent_masked_shift(feat):
     """Quick task 260909-elx's decision-time leakage requirement: the
     previous-fixture (`ep_next_lag`) gate must equal an independently

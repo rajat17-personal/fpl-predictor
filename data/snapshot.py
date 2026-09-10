@@ -48,6 +48,15 @@ _ELEMENT_COLS = [
     # next change, momentum, and per-player locks — ground truth for the watch.
     "price_change_percent", "price_change_hourly_rate",
     "price_change_locked_until", "price_change_calibrating",
+    # Phase 10 (data/availability.py): the P(play) stage has never seen these
+    # three. The FPL API exposes only CURRENT state, never history -- a day
+    # not captured is a day permanently lost, the same argument the price
+    # snapshot already rests on, so capture starts accruing them from today
+    # rather than waiting for the first plan that consumes them.
+    # chance_of_playing_this_round is numerically coerced below, like its
+    # next_round sibling; news/news_added stay as captured strings --
+    # news_added is an ISO timestamp string, parsed downstream, not at capture.
+    "chance_of_playing_this_round", "news", "news_added",
 ]
 
 
@@ -69,7 +78,8 @@ def snapshot_frame(boot: dict, ts: dt.datetime) -> pd.DataFrame:
     df["position"] = df.element_type.map(_POS)
     df = df.drop(columns=["element_type"])
     for c in ("selected_by_percent", "ep_next", "ep_this", "form",
-              "price_change_percent", "price_change_hourly_rate"):
+              "price_change_percent", "price_change_hourly_rate",
+              "chance_of_playing_this_round"):
         df[c] = pd.to_numeric(df[c], errors="coerce")
     # First projection step (tonight's update): FPL's own projected % and its
     # -5..+5 likelihood band.
