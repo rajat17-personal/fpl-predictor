@@ -6,6 +6,14 @@ after the gameweek finishes this job fetches realised points and appends one
 entry to web/data/scoreboard.json. Nothing is ever recomputed from hindsight —
 a gameweek with no frozen prediction file simply never appears.
 
+Two Tier-3 diagnostic benchmark columns (Phase 10-02) also land here: top-100
+overall-league consensus ownership (`data/fpl_standings.py`) and fplreview's
+free-model weekly capture (`data/fplreview.py`). Both are DIAGNOSTIC ONLY --
+neither is ever a model input, and the fplreview figures are never
+redistributed beyond this repository (ToS). Each is independently optional:
+when its source data is absent for a gameweek, the entry produced is
+byte-identical to today's (no keys added, none dropped).
+
 Run (post-GW cron, or manually after a gameweek ends):
   python -m predict.scoreboard
 """
@@ -19,6 +27,8 @@ import requests
 from scipy.stats import spearmanr
 
 import config
+import data.fpl_standings
+import data.fplreview
 from ops.jsonio import read_json, write_json
 from predict.export import WEB_DATA
 
@@ -50,6 +60,37 @@ def score_gw(frozen: dict, actuals: pd.DataFrame) -> dict:
         entry["spearman_fpl"] = round(
             float(spearmanr(fpl.ep_next, fpl.actual).statistic), 3)
 
+    # Tier-3 diagnostic 1: top-100 consensus ownership (data/fpl_standings.py).
+    # Consensus ownership is a PERCENTAGE, not points -- an MAE against actual
+    # points would be a meaningless number in a published trust artifact, so
+    # only Spearman (rank agreement) is scored for this column.
+    consensus = data.fpl_standings.load_consensus(frozen["gw"])
+    if consensus is not None:
+        cpred = pred.merge(consensus, on="player_id", how="inner")
+        if len(cpred):
+            entry["n_consensus"] = len(cpred)
+            entry["spearman_consensus"] = round(
+                float(spearmanr(cpred.consensus_pct, cpred.actual).statistic), 3)
+            entry["spearman_consensus_vs_model"] = round(
+                float(spearmanr(cpred.consensus_pct, cpred.xp).statistic), 3)
+
+    # Tier-3 diagnostic 2: fplreview's free-model weekly capture
+    # (data/fplreview.py). Diagnostic only -- never a model input, never
+    # redistributed (ToS). Played-only rows, matching
+    # backtest/benchmark_external.py's own basis so the two numbers stay
+    # comparable.
+    season = frozen.get("meta", {}).get("season") or config.SEASONS[-1]
+    fpr = data.fplreview.load_gw(season, frozen["gw"])
+    if fpr is not None:
+        joined = pred.merge(fpr[["player_code", "proj_pts"]], on="player_code", how="inner")
+        joined = joined[joined.minutes > 0]
+        if len(joined):
+            entry["n_fplreview"] = len(joined)
+            entry["mae_fplreview"] = round(
+                float((joined.proj_pts - joined.actual).abs().mean()), 3)
+            entry["spearman_fplreview"] = round(
+                float(spearmanr(joined.proj_pts, joined.actual).statistic), 3)
+
     # The public calls: our captain pick and our top-5 xP, vs what they scored.
     cap = pred.sort_values("xp_capt", ascending=False).iloc[0]
     entry["captain"] = {"name": cap["name"], "team": cap["team"],
@@ -73,6 +114,13 @@ def running_summary(entries: list[dict]) -> dict:
     if "mae_fpl" in df:
         out["mae_fpl"] = round(float(df.mae_fpl.mean()), 3)
         out["spearman_fpl"] = round(float(df.spearman_fpl.mean()), 3)
+    if "spearman_consensus" in df:
+        out["spearman_consensus"] = round(float(df.spearman_consensus.mean()), 3)
+        out["spearman_consensus_vs_model"] = round(
+            float(df.spearman_consensus_vs_model.mean()), 3)
+    if "mae_fplreview" in df:
+        out["mae_fplreview"] = round(float(df.mae_fplreview.mean()), 3)
+        out["spearman_fplreview"] = round(float(df.spearman_fplreview.mean()), 3)
     return out
 
 

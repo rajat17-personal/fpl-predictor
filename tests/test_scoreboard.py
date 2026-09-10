@@ -16,6 +16,7 @@ import config
 import data.fpl_standings as standings
 import data.fplreview as fplreview
 import data.id_crosswalk as id_crosswalk
+import predict.scoreboard as sb
 
 _STANDINGS_URL = f"{config.FPL_API}/leagues-classic/{standings.OVERALL_LEAGUE_ID}/standings/"
 
@@ -242,3 +243,113 @@ def test_load_gw_lowercases_and_strips_header_whitespace(_isolate_fplreview_dir,
 
     assert out is not None
     assert list(out.player_code) == [223094]
+
+
+# ================================================= predict/scoreboard.py
+
+
+def _sample_players(n=5):
+    return [
+        {"player_id": i, "player_code": 100 + i, "name": f"P{i}", "team": "T",
+         "position": "MID", "xp": float(i), "xp_capt": float(i) + 1,
+         "ep_next": float(i) - 0.5}
+        for i in range(1, n + 1)
+    ]
+
+
+def _sample_actuals(n=5, minutes=90):
+    return pd.DataFrame([
+        {"player_id": i, "actual": i * 2, "minutes": minutes} for i in range(1, n + 1)
+    ])
+
+
+def _frozen(gw, players, season="2026-27"):
+    return {"gw": gw, "meta": {"gw": gw, "season": season,
+                                "generated_utc": "2026-01-01T00:00:00Z"},
+            "players": players}
+
+
+def test_score_gw_both_absent_reproduces_todays_key_set():
+    players = _sample_players(5)
+    actuals = _sample_actuals(5)
+    entry = sb.score_gw(_frozen(4, players), actuals)
+
+    expected_keys = {"gw", "n_players", "generated_utc", "mae_model", "spearman_model",
+                      "mae_fpl", "spearman_fpl", "captain", "top5", "best_player"}
+    assert set(entry.keys()) == expected_keys
+
+
+def test_score_gw_adds_consensus_keys_when_present(monkeypatch):
+    consensus = pd.DataFrame({"player_id": [1, 2, 3], "n_owners": [90, 50, 10],
+                               "consensus_pct": [0.9, 0.5, 0.1], "consensus_rank": [1, 2, 3]})
+    monkeypatch.setattr(sb.data.fpl_standings, "load_consensus", lambda gw: consensus)
+
+    entry = sb.score_gw(_frozen(4, _sample_players(5)), _sample_actuals(5))
+
+    assert entry["n_consensus"] == 3
+    assert "spearman_consensus" in entry
+    assert "spearman_consensus_vs_model" in entry
+    assert "mae_consensus" not in entry  # ownership is not in points units
+
+
+def test_score_gw_omits_consensus_keys_when_absent():
+    entry = sb.score_gw(_frozen(4, _sample_players(5)), _sample_actuals(5))
+    for key in ("n_consensus", "spearman_consensus", "spearman_consensus_vs_model"):
+        assert key not in entry
+
+
+def test_score_gw_adds_fplreview_keys_on_played_rows_only(monkeypatch):
+    fpr = pd.DataFrame({"player_code": [101, 102, 103], "proj_pts": [3.5, 4.0, 0.0]})
+    monkeypatch.setattr(sb.data.fplreview, "load_gw", lambda season, gw: fpr)
+
+    players = _sample_players(5)  # player_code 101..105
+    actuals = pd.DataFrame([
+        {"player_id": 1, "actual": 2, "minutes": 90},
+        {"player_id": 2, "actual": 4, "minutes": 90},
+        {"player_id": 3, "actual": 0, "minutes": 0},   # unplayed -- must be filtered
+        {"player_id": 4, "actual": 6, "minutes": 90},
+        {"player_id": 5, "actual": 8, "minutes": 90},
+    ])
+    entry = sb.score_gw(_frozen(4, players), actuals)
+
+    assert entry["n_fplreview"] == 2   # only players 1,2 matched AND played
+    assert "mae_fplreview" in entry
+    assert "spearman_fplreview" in entry
+
+
+def test_score_gw_omits_fplreview_keys_when_absent():
+    entry = sb.score_gw(_frozen(4, _sample_players(5)), _sample_actuals(5))
+    for key in ("n_fplreview", "mae_fplreview", "spearman_fplreview"):
+        assert key not in entry
+
+
+def test_running_summary_averages_each_new_key_only_over_carrying_entries(monkeypatch):
+    consensus = pd.DataFrame({"player_id": [1, 2, 3], "n_owners": [90, 50, 10],
+                               "consensus_pct": [0.9, 0.5, 0.1], "consensus_rank": [1, 2, 3]})
+    monkeypatch.setattr(sb.data.fpl_standings, "load_consensus",
+                        lambda gw: consensus if gw == 4 else None)
+    fpr = pd.DataFrame({"player_code": [101, 102], "proj_pts": [3.5, 4.0]})
+    monkeypatch.setattr(sb.data.fplreview, "load_gw",
+                        lambda season, gw: fpr if gw == 5 else None)
+
+    entry4 = sb.score_gw(_frozen(4, _sample_players(5)), _sample_actuals(5))
+    entry5 = sb.score_gw(_frozen(5, _sample_players(5)), _sample_actuals(5))
+    summary = sb.running_summary([entry4, entry5])
+
+    assert "spearman_consensus" in summary   # entry4 carries it
+    assert "mae_fplreview" in summary         # entry5 carries it
+
+
+def test_rescore_with_force_gains_new_keys_without_losing_existing(monkeypatch):
+    """A gameweek scored before either benchmark existed, then rescored once a
+    benchmark becomes available, keeps every original key and gains the new
+    ones."""
+    first = sb.score_gw(_frozen(4, _sample_players(5)), _sample_actuals(5))
+
+    consensus = pd.DataFrame({"player_id": [1, 2, 3], "n_owners": [90, 50, 10],
+                               "consensus_pct": [0.9, 0.5, 0.1], "consensus_rank": [1, 2, 3]})
+    monkeypatch.setattr(sb.data.fpl_standings, "load_consensus", lambda gw: consensus)
+    second = sb.score_gw(_frozen(4, _sample_players(5)), _sample_actuals(5))
+
+    assert set(first.keys()) <= set(second.keys())
+    assert "spearman_consensus" in second
