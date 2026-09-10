@@ -186,6 +186,66 @@ def test_report_never_raises_even_when_everything_is_broken(tmp_path, monkeypatc
     assert result is None
 
 
+# ------------------------------------------------------- snapshot catch-up (D-08)
+
+
+def test_catchup_script_is_syntactically_valid():
+    import subprocess
+
+    script = config.ROOT / "scripts" / "snapshot_catchup.sh"
+    assert subprocess.run(["bash", "-n", str(script)]).returncode == 0
+    assert os.access(script, os.X_OK)
+
+
+def test_catchup_reports_missing_days_without_capturing(tmp_path):
+    import datetime as dt
+    import subprocess
+
+    today = dt.datetime.now(dt.timezone.utc).date()
+    d1 = (today - dt.timedelta(days=5)).isoformat()
+    d2 = (today - dt.timedelta(days=2)).isoformat()
+    (tmp_path / f"{d1}.parquet").write_bytes(b"not a real parquet, existence is all that matters")
+    (tmp_path / f"{d2}.parquet").write_bytes(b"not a real parquet, existence is all that matters")
+
+    env = dict(os.environ)
+    env["FPL_SNAPSHOT_DIR"] = str(tmp_path)
+
+    result = subprocess.run(
+        ["bash", str(config.ROOT / "scripts" / "snapshot_catchup.sh"), "--report-only"],
+        cwd=str(config.ROOT), env=env, capture_output=True, text=True,
+    )
+
+    assert result.returncode == 0
+    span_days = (today - dt.date.fromisoformat(d1)).days + 1
+    missing_days = span_days - 2
+    assert "days missing" in result.stdout
+    assert f"({missing_days} days missing)" in result.stdout
+    parquets = sorted(p.name for p in tmp_path.glob("*.parquet"))
+    assert parquets == [f"{d1}.parquet", f"{d2}.parquet"]
+
+
+def test_catchup_is_a_noop_when_today_exists(tmp_path):
+    import datetime as dt
+    import subprocess
+
+    today = dt.datetime.now(dt.timezone.utc).date().isoformat()
+    (tmp_path / f"{today}.parquet").write_bytes(b"not a real parquet, existence is all that matters")
+
+    env = dict(os.environ)
+    env["FPL_SNAPSHOT_DIR"] = str(tmp_path)
+
+    result = subprocess.run(
+        ["bash", str(config.ROOT / "scripts" / "snapshot_catchup.sh")],
+        cwd=str(config.ROOT), env=env, capture_output=True, text=True,
+    )
+
+    assert result.returncode == 0
+    assert "already present" in result.stdout
+    parquets = list(tmp_path.glob("*.parquet"))
+    assert len(parquets) == 1
+    assert parquets[0].name == f"{today}.parquet"
+
+
 # --------------------------------------------------------------- cron scripts
 
 
