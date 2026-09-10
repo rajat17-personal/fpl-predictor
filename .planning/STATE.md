@@ -3,17 +3,17 @@ gsd_state_version: 1.0
 current_phase: 7
 current_phase_name: Parity Validation & Cutover
 status: planning
-stopped_at: Phase 09 complete, ready to plan Phase 7
-last_updated: "2026-09-09T03:07:16.329Z"
-last_activity: 2026-09-08
+stopped_at: Phase 10 context gathered
+last_updated: "2026-09-10T07:44:51.275Z"
+last_activity: 2026-09-10
 last_activity_desc: Phase 09 complete, transitioned to Phase 7
-state_head: 2abafa2400dfe9a61b008dd83a5a7ce4ebea309c
+state_head: 2234e38ecc9e602eadfdab617c444d272c7421d3
 progress:
-  total_phases: 9
+  total_phases: 10
   completed_phases: 7
   total_plans: 55
   completed_plans: 52
-  percent: 78
+  percent: 70
 ---
 
 # Project State
@@ -243,6 +243,7 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 5 pending (captured 2026-09-09, Phase 9 follow-up experiments):
+
 - ep_next + availability flags as model features (ranking-gap lead)
 - Per-position / covered-rows re-measurement of understat & fotmob
 - Manual FBref CSV snapshot + crosswalk join
@@ -257,7 +258,6 @@ Recent decisions affecting current work:
 - **Milestone invariant:** the vanilla site stays live and authoritative until CUT-01 completes. Phase 7 is calendar-gated on one full real gameweek cycle (deadline → live → finished).
 - Payment gateway / merchant-of-record choice still pending with the user — out of scope here, but PITCH-01's trademark disclaimer feeds the eventual gateway review.
 - **[Phase 4]:** Security enforcement is on but no 04-SECURITY.md exists — run `/gsd-secure-phase 4` to backfill the threat verification (03, 05, and now 09 also lack SECURITY.md; 06-SECURITY.md now exists).
-
 
 ### Quick Tasks Completed
 
@@ -277,6 +277,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-09T02:52:06.239Z
-Stopped at: Phase 09 complete, ready to plan Phase 7
-Resume file: None
+Last session: 2026-09-10T07:44:50.911Z
+Stopped at: Phase 10 context gathered
+Resume file: .planning/phases/10-xp-experiment-follow-ups/10-CONTEXT.md
