@@ -252,3 +252,37 @@ def test_gate_records_the_in_sample_eval_split_label(gate_lgbm_result):
     assert gate_lgbm_result["spearman_xp_med"] is not None
     assert gate_lgbm_result["mae_xp_med"] is not None
     assert gate_lgbm_result["n_played_rows"] > 0
+
+
+# --- Phase 10 plan 10-11: the leakage-safe padded/masked sequence builder (D-20/D-21) ---
+
+import numpy as np  # noqa: E402
+import torch  # noqa: E402
+
+from models.bracket import sequence as bracket_sequence  # noqa: E402
+
+
+def test_sequence_window_is_padded_and_masked():
+    """A synthetic player with 3 prior fixtures against window=10 gives 7
+    masked positions, all at the front (left-padding -- the most recent
+    gameweek always sits at the LAST index)."""
+    window, n_stats = 10, 4
+    three_real = np.arange(3 * n_stats, dtype="float32").reshape(3, n_stats)
+    x_seq, mask = bracket_sequence._pad_and_mask([three_real], window, n_stats)
+
+    assert x_seq.shape == (1, window, n_stats)
+    assert mask.shape == (1, window)
+    # 7 padded (True) positions, then 3 real (False) positions, in that order.
+    assert mask[0].tolist() == [True] * 7 + [False] * 3
+    # The real rows land at the LAST 3 indices, most-recent row last.
+    assert torch.allclose(x_seq[0, 7:], torch.as_tensor(three_real))
+
+
+def test_sequence_uses_raw_stats_not_rolled_features():
+    """D-20's raw-input contract: neither SEQ_STATS nor STATIC_COLS may
+    contain a rolled (_r3/_r5/_r10/_rall) column -- re-feeding the already-
+    rolled features would test nothing about learned temporal aggregation."""
+    rolling_suffixes = ("_r3", "_r5", "_r10", "_rall")
+    bad = [c for c in list(bracket_sequence.SEQ_STATS) + list(bracket_sequence.STATIC_COLS)
+          if c.endswith(rolling_suffixes)]
+    assert not bad, bad

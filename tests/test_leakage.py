@@ -272,6 +272,65 @@ def test_transfermarkt_injury_dates_precede_kickoff():
 
 
 @needs_data
+def test_sequence_features_no_future_gw_leakage():
+    """D-21's named gate for models/bracket/sequence.py (Phase 10 plan
+    10-11): for at least 200 real target fixtures spread across seasons,
+    independently recompute the expected prior-fixture set directly from
+    player_gw.parquet (never trusting the builder's own bookkeeping) and
+    assert the sequence builder's timesteps match it exactly, and that every
+    included kickoff_time is strictly less than the target's own. Mirrors
+    test_minutes_r5_matches_independent_recompute's own recompute-and-compare
+    template."""
+    from models.bracket import sequence as seq_mod
+
+    raw = pd.read_parquet(RAW)
+    feat_df = pd.read_parquet(FEATURES)
+
+    rng = np.random.RandomState(0)
+    seasons = sorted(feat_df.season.unique())
+    sample_seasons = list(rng.choice(seasons, min(4, len(seasons)), replace=False))
+
+    checked = 0
+    for season in sample_seasons:
+        gws = sorted(feat_df.loc[feat_df.season == season, "gw"].unique())
+        sample_gws = list(rng.choice(gws, min(6, len(gws)), replace=False))
+        for gw in sample_gws:
+            gw = int(gw)
+            bundle = seq_mod.build_sequences(season, gw, raw=raw, feat=feat_df)
+            targets = (feat_df[(feat_df.season == season) & (feat_df.gw == gw)]
+                      .sort_values(["player_id", "kickoff_time"]).reset_index(drop=True))
+            assert len(targets) == len(bundle.ids)
+            seq_stats = seq_mod.SEQ_STATS
+
+            for i, row in targets.iterrows():
+                pid, kt = row.player_id, row.kickoff_time
+                # Independent recompute -- a fresh expression against
+                # player_gw.parquet, not a call into the builder's own code.
+                hist = (raw[(raw.season == season) & (raw.player_id == pid)
+                            & (raw.kickoff_time < kt)]
+                        .sort_values("kickoff_time"))
+                expected = hist.tail(seq_mod.SEQ_WINDOW)[seq_stats].to_numpy(dtype="float32")
+                n_real = len(expected)
+
+                got_mask = bundle.mask[i].numpy()
+                n_got_real = int((~got_mask).sum())
+                assert n_got_real == n_real, (season, gw, pid, n_got_real, n_real)
+                if n_real:
+                    got_seq = bundle.x_seq[i][~got_mask].numpy()
+                    assert np.allclose(got_seq, expected, atol=1e-4, equal_nan=True), \
+                        (season, gw, pid)
+                    assert (hist.tail(n_real)["kickoff_time"] < kt).all()
+
+                checked += 1
+            if checked >= 200:
+                break
+        if checked >= 200:
+            break
+
+    assert checked >= 200, f"only checked {checked} fixtures, need >=200"
+
+
+@needs_data
 def test_transfermarkt_injury_features_are_raw_context_not_rolled(feat):
     """Task 3's second required regression, mirroring
     test_availability_features_are_raw_context_not_rolled's own template: the
