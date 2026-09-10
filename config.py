@@ -184,7 +184,19 @@ FOTMOB_COLS = ["fm_tackles", "fm_interceptions", "fm_blocks", "fm_clearances",
 # then-rolling would apply the wrong lookback horizon across double
 # gameweeks and postponements -- but it is not a "known ahead of time"
 # fixture fact either.
-AVAILABILITY_COLS = ["av_chance_pct"]
+#
+# Phase 10 plan 10-04 grows this from one column to the full OpenFPL-style
+# encoding (arXiv:2508.09992 reports categorical FPL availability tags alone
+# -- no proprietary xMins sub-model -- close most of the ep_next ranking
+# gap): a status one-hot (av_status_a/d/i/s/u), the chance-of-playing
+# percentage, news recency, and av_snapshot_age_days -- the age of the
+# resolved snapshot itself. This last one is in the family because an
+# availability tag's value depends on its freshness, and after the D-08
+# daily-capture gap that freshness genuinely varies (a nine-day-old "75%
+# chance" is not the same signal as a same-day one).
+AVAILABILITY_COLS = ["av_chance_pct", "av_status_a", "av_status_d", "av_status_i",
+                     "av_status_s", "av_status_u", "av_days_since_news",
+                     "av_snapshot_age_days"]
 
 # --- Modelling (Phase 3): strict time-based split, never random ------------
 # Train on earlier seasons, hold out the most recent complete season as test.

@@ -49,9 +49,15 @@ later snapshot: a (season, gw, player_code) with no qualifying row is simply
 absent from the resolved output (D-10) -- `attach`'s left merge turns that
 absence into NaN, never a raise, never a stale carry-forward.
 
+`encode_availability` (plan 10-04) is a pure derivation on top of
+`resolve_as_of`'s output -- status one-hot, chance%, news recency, and the
+staleness of the resolved snapshot itself (`av_snapshot_age_days`) -- and
+adds no new time-travel surface of its own.
+
 Run:
   python -m data.availability            # (re)build data/processed/availability.parquet
   python -m data.availability --force    # ignore the cache, rebuild
+  python -m data.availability --report   # read-only per-season/per-source coverage report
 """
 from __future__ import annotations
 
@@ -79,8 +85,36 @@ _DEADLINE_LEAD = pd.Timedelta(minutes=90)   # FPL deadlines are exactly 90 min
 _REQUIRED_SOURCE_COLS = ["season", "player_code", "snapshot_ts", "status",
                          "chance_of_playing_next_round", "source"]
 
+# Carried through by whichever provider(s) actually supply them (currently
+# fpl_core_insights for news_added; daily_snapshot gained these columns in
+# data/snapshot.py from 2026-09-10, so older captured .parquet files under
+# data/snapshots/ won't have them yet). load_sources()/resolve_as_of() treat
+# these as pass-through: present when available, NaN otherwise -- never
+# required (T-10-04's Task 1 grows the family from Task 1's own
+# encode_availability, not from a schema requirement on every provider).
+_OPTIONAL_SOURCE_COLS = ["news_added", "chance_of_playing_this_round"]
+
 _RESOLVED_COLS = ["season", "gw", "player_code", "status",
-                  "chance_of_playing_next_round", "source", "snapshot_ts"]
+                  "chance_of_playing_next_round", "source", "snapshot_ts",
+                  "deadline_ts", "news_added", "chance_of_playing_this_round"]
+
+# FPL's own per-player availability codes: a=available, d=doubtful,
+# i=injured, s=suspended, u=unavailable -- config.AVAILABILITY_COLS's five
+# av_status_* one-hot columns are a CLOSED set over exactly these five.
+_STATUS_CODES = ("a", "d", "i", "s", "u")
+
+# 'n' ("ineligible" -- e.g. a player who transferred out of the Premier
+# League mid-season but remains in the FPL element list as a historic
+# record) is a real code seen in the vendored fpl_core_insights probe data
+# (2025-26 GW2/GW3: Nkunku/N.Jackson/Isak/Wissa, all mid-window-transfer
+# players with chance_of_playing_next_round == 0.0) that predates this
+# plan's five-code assumption. predict/live.py:130 already groups it with
+# i/s/u as functionally unavailable ("injured/suspended/unavailable/
+# ineligible") -- normalised here to 'u' for that same reason, rather than
+# growing _STATUS_CODES to six: the one-hot family stays the exact eight
+# columns config.AVAILABILITY_COLS declares, and a code this alias map does
+# NOT cover still raises (T-10-04-01) rather than being silently folded in.
+_STATUS_ALIASES = {"n": "u"}
 
 
 def _require_columns(df: pd.DataFrame, cols: list[str], what: str) -> None:
@@ -127,12 +161,13 @@ def _daily_snapshot_source() -> pd.DataFrame:
     _require_columns(snaps, ["player_code", "ts_utc", "status",
                              "chance_of_playing_next_round"],
                      "daily_snapshot provider")
-    out = snaps[["player_code", "ts_utc", "status",
-                "chance_of_playing_next_round"]].copy()
+    base_cols = ["player_code", "ts_utc", "status", "chance_of_playing_next_round"]
+    optional = [c for c in _OPTIONAL_SOURCE_COLS if c in snaps.columns]
+    out = snaps[base_cols + optional].copy()
     out["snapshot_ts"] = pd.to_datetime(out.pop("ts_utc"), utc=True)
     out["season"] = config.CURRENT_SEASON
     out["source"] = "daily_snapshot"
-    return out[_REQUIRED_SOURCE_COLS]
+    return out[_REQUIRED_SOURCE_COLS + optional]
 
 
 def _fci_season_label(dirname: str) -> str:
@@ -183,8 +218,8 @@ def _fpl_core_insights_source() -> pd.DataFrame:
                 # No deadline info for this (season, gw) -- e.g. player_gw.parquet
                 # has no rows for this season yet. Skip silently: absent, never raise.
                 continue
-            df = pd.read_csv(csv_path, usecols=lambda c: c in {
-                "id", "status", "chance_of_playing_next_round"})
+            df = pd.read_csv(csv_path, usecols=lambda c: c in (
+                {"id", "status", "chance_of_playing_next_round"} | set(_OPTIONAL_SOURCE_COLS)))
             _require_columns(df, ["id", "status", "chance_of_playing_next_round"],
                              f"fpl_core_insights {csv_path.relative_to(base.parent)}")
             df = df.rename(columns={"id": "player_id"})
@@ -193,7 +228,8 @@ def _fpl_core_insights_source() -> pd.DataFrame:
             merged["snapshot_ts"] = kickoff_max_by_gw.loc[key]
             merged["season"] = season
             merged["source"] = "fpl_core_insights"
-            frames.append(merged[_REQUIRED_SOURCE_COLS])
+            optional = [c for c in _OPTIONAL_SOURCE_COLS if c in merged.columns]
+            frames.append(merged[_REQUIRED_SOURCE_COLS + optional])
     if not frames:
         return pd.DataFrame(columns=_REQUIRED_SOURCE_COLS)
     return pd.concat(frames, ignore_index=True)
@@ -219,7 +255,8 @@ def load_sources() -> pd.DataFrame:
         if df is None or df.empty:
             continue
         _require_columns(df, _REQUIRED_SOURCE_COLS, f"provider '{name}'")
-        frames.append(df[_REQUIRED_SOURCE_COLS])
+        optional = [c for c in _OPTIONAL_SOURCE_COLS if c in df.columns]
+        frames.append(df[_REQUIRED_SOURCE_COLS + optional])
     if not frames:
         return pd.DataFrame(columns=_REQUIRED_SOURCE_COLS)
     return pd.concat(frames, ignore_index=True)
@@ -264,23 +301,111 @@ def resolve_as_of(snaps: pd.DataFrame, deadlines: pd.DataFrame) -> pd.DataFrame:
                      .groupby("player_code", as_index=False, sort=False).last())
             latest["season"] = season
             latest["gw"] = int(row["gw"])
+            # Pass-through, not a change to the selection rule above: Task
+            # 10-04-01 needs each resolved row's own gw deadline_ts to derive
+            # av_days_since_news/av_snapshot_age_days. Which row wins (the
+            # two-condition cutoff + latest-per-player dedup immediately
+            # above) is unchanged from plan 10-01.
+            latest["deadline_ts"] = row["deadline_ts"]
             results.append(latest)
     if not results:
         return pd.DataFrame(columns=_RESOLVED_COLS)
     out = pd.concat(results, ignore_index=True)
+    for col in _OPTIONAL_SOURCE_COLS:
+        if col not in out.columns:
+            out[col] = pd.NA
     return out[_RESOLVED_COLS]
 
 
+def encode_availability(resolved: pd.DataFrame) -> pd.DataFrame:
+    """Derive the full OpenFPL-style eight-column availability family
+    (arXiv:2508.09992 -- categorical availability tags, no proprietary xMins
+    sub-model needed) from `resolve_as_of`'s output. A PURE function of the
+    resolver's already leakage-safe frame: every column below is derived only
+    from rows `resolve_as_of` already admitted, so this function adds no new
+    time-travel surface of its own (T-10-04's own must_have).
+
+    Returns exactly `config.AVAILABILITY_COLS` (in that order) plus the three
+    join keys (season, gw, player_code) -- nothing else. A player-gameweek
+    absent from `resolved` is simply absent from this function's output too;
+    turning that absence into a whole-family NaN row is `attach()`'s left
+    merge, not this function's job (D-10).
+    """
+    join_keys = ["season", "gw", "player_code"]
+    _require_columns(
+        resolved,
+        join_keys + ["snapshot_ts", "deadline_ts", "status", "chance_of_playing_next_round"],
+        "encode_availability",
+    )
+    if resolved.empty:
+        return pd.DataFrame(columns=join_keys + config.AVAILABILITY_COLS)
+
+    out = resolved[join_keys].copy()
+
+    # av_chance_pct -- resolved as of a gameweek's deadline, "next round" IS
+    # that gameweek, so chance_of_playing_next_round is the right field.
+    # chance_of_playing_this_round describes whichever gameweek was CURRENT
+    # when the snapshot was taken -- for a pre-deadline snapshot that is the
+    # PREVIOUS gameweek, a different reference frame; captured (carried
+    # through resolve_as_of) but deliberately left unencoded here.
+    out["av_chance_pct"] = pd.to_numeric(
+        resolved["chance_of_playing_next_round"], errors="coerce") / 100.0
+
+    # Status one-hot: normalise known aliases (_STATUS_ALIASES), THEN
+    # validate the remaining distinct codes against _STATUS_CODES. An
+    # unrecognised code raises ValueError naming it and its row count
+    # (T-10-04-01) -- an all-zeros one-hot would be indistinguishable from a
+    # missing row and would hide a genuine upstream schema change.
+    status_raw = resolved["status"].astype(str).str.strip().str.lower()
+    status = status_raw.replace(_STATUS_ALIASES)
+    unknown = sorted(set(status.unique()) - set(_STATUS_CODES))
+    if unknown:
+        counts = status.value_counts()
+        detail = ", ".join(f"{code!r} ({int(counts.get(code, 0))} row(s))" for code in unknown)
+        raise ValueError(
+            f"encode_availability: unrecognised status code(s) not in "
+            f"{_STATUS_CODES} (aliases: {_STATUS_ALIASES}): {detail}")
+    for code in _STATUS_CODES:
+        out[f"av_status_{code}"] = (status == code).astype(float)
+
+    # av_days_since_news -- deadline_ts minus news_added, in whole days, NaN
+    # when news_added is null. A news_added that POSTDATES the deadline means
+    # resolve_as_of admitted a row it should have excluded (T-10-01-02's own
+    # escape hatch) -- raise naming the offending key, never clip.
+    deadline_ts = pd.to_datetime(resolved["deadline_ts"], utc=True)
+    news_added = pd.to_datetime(resolved.get("news_added"), utc=True, errors="coerce")
+    delta_news_days = (deadline_ts - news_added).dt.total_seconds() / 86400.0
+    bad = delta_news_days < 0
+    if bad.any():
+        offenders = ", ".join(
+            f"({r.season}, {r.gw}, {r.player_code})"
+            for r in resolved.loc[bad, join_keys].itertuples(index=False)
+        )
+        raise AssertionError(
+            f"encode_availability: news_added postdates the gw deadline for "
+            f"{offenders} -- resolve_as_of should already have excluded these rows")
+    out["av_days_since_news"] = delta_news_days
+
+    # av_snapshot_age_days -- the staleness signal: how long before the
+    # deadline the resolved snapshot was actually taken. Always strictly
+    # positive because resolve_as_of only ever admits snapshot_ts < deadline_ts.
+    snapshot_ts = pd.to_datetime(resolved["snapshot_ts"], utc=True)
+    out["av_snapshot_age_days"] = (deadline_ts - snapshot_ts).dt.total_seconds() / 86400.0
+
+    return out[join_keys + config.AVAILABILITY_COLS]
+
+
 def build(*, force: bool = False) -> pd.DataFrame:
-    """Fetch every registered source, resolve as-of-deadline, derive
-    `av_chance_pct`, and write `data/processed/availability.parquet`. Prints
-    the same `[availability] joined; coverage {pct}` line `attach()` prints,
-    computed against `player_gw.parquet`'s own (season, gw, player_code)
-    keys, so this CLI demonstrates real join coverage without requiring
-    `data.build_table` to run first."""
+    """Fetch every registered source, resolve as-of-deadline, encode the full
+    availability family (`encode_availability`), and write
+    `data/processed/availability.parquet`. Prints the same
+    `[availability] joined; coverage {pct}` line `attach()` prints, computed
+    against `player_gw.parquet`'s own (season, gw, player_code) keys, so this
+    CLI demonstrates real join coverage without requiring `data.build_table`
+    to run first."""
     if not AVAILABILITY_ENABLED:
         print("  [availability] disabled (AVAILABILITY_ENABLED=False)")
-        return pd.DataFrame(columns=["season", "gw", "player_code", "av_chance_pct"])
+        return pd.DataFrame(columns=["season", "gw", "player_code"] + config.AVAILABILITY_COLS)
     if _OUT.exists() and not force:
         print(f"  [availability] {_OUT.name} exists (use --force to rebuild)")
         return pd.read_parquet(_OUT)
@@ -288,12 +413,7 @@ def build(*, force: bool = False) -> pd.DataFrame:
     deadlines = gw_deadlines()
     snaps = load_sources()
     resolved = resolve_as_of(snaps, deadlines)
-    if resolved.empty:
-        out = pd.DataFrame(columns=["season", "gw", "player_code", "av_chance_pct"])
-    else:
-        out = resolved[["season", "gw", "player_code"]].copy()
-        out["av_chance_pct"] = pd.to_numeric(
-            resolved["chance_of_playing_next_round"], errors="coerce") / 100.0
+    out = encode_availability(resolved)
     out.to_parquet(_OUT, index=False)
 
     n_sources = resolved["source"].nunique() if not resolved.empty else 0
@@ -318,7 +438,18 @@ def attach(full: pd.DataFrame) -> pd.DataFrame:
     `["season", "gw", "player_code"]`. No-op if the kill switch is off or the
     cache is absent -- optional enrichment must never break the pipeline.
     Raises `AssertionError` if the join changes `full`'s row count (a
-    many-to-many join here would corrupt every backtest)."""
+    many-to-many join here would corrupt every backtest).
+
+    Joins whichever `config.AVAILABILITY_COLS` members are actually present
+    on the cached `avail` frame (a pre-Task-1 cache built by an older
+    `data.availability` would only carry `av_chance_pct`; a fresh `--force`
+    rebuild carries all eight). A left merge means a player-gameweek absent
+    from `avail` gets NaN across every joined column TOGETHER -- never a
+    partial fill (T-10-04-02) -- since a single merged row either matches one
+    `avail` row (all present columns populated, `av_days_since_news`
+    possibly still NaN if that row's own `news_added` was null) or matches
+    nothing (every joined column NaN).
+    """
     if not AVAILABILITY_ENABLED:
         return full
     avail = load_availability()
@@ -331,8 +462,8 @@ def attach(full: pd.DataFrame) -> pd.DataFrame:
         raise AssertionError(f"attach(): full is missing required columns {missing}")
 
     before = len(full)
-    merged = full.merge(avail[["season", "gw", "player_code", "av_chance_pct"]],
-                        on=["season", "gw", "player_code"], how="left")
+    cols = need + [c for c in config.AVAILABILITY_COLS if c in avail.columns]
+    merged = full.merge(avail[cols], on=need, how="left")
     if len(merged) != before:
         raise AssertionError(
             f"availability join changed row count {before} -> {len(merged)}")

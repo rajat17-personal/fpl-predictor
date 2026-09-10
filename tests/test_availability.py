@@ -175,7 +175,10 @@ def test_every_source_row_predates_its_gw_deadline():
     resolved = availability.resolve_as_of(snaps, deadlines)
     assert not resolved.empty, "expected at least one resolved row from real source data"
 
-    dl_idx = deadlines.set_index(["season", "gw"])
+    # `resolved` already carries its own per-row `deadline_ts` (plan 10-04's
+    # Task 1 pass-through addition) -- only `kickoff_max` still needs joining
+    # from `deadlines` separately.
+    dl_idx = deadlines.set_index(["season", "gw"])[["kickoff_max"]]
     for source_name, sub in resolved.groupby("source"):
         joined = sub.join(dl_idx, on=["season", "gw"])
         assert (joined["snapshot_ts"] < joined["deadline_ts"]).all(), \
