@@ -1518,12 +1518,36 @@ table's own closing discipline.
 |--------|---------------|------------|----------------------|----------|
 | FPL API | open, no auth | not committed (fetched live) | public API, standard ToS | already the project's primary data source |
 | FPL-Core-Insights | reachable — probed live 2026-09-10 (GW1-3 `playerstats.csv`, columns confirmed) | commit pending 10-06's license check | license unconfirmed at plan time (10-RESEARCH.md Pitfall) — verify before committing | `data/raw/fpl_core_insights/2025-2026/` (gitignored probe, this plan) |
-| Transfermarkt | **unverified** | not committed | unofficial source, ToS unclear | spike gated in 10-05, not yet attempted |
-| figshare pre-scraped dataset | **403 on direct fetch** | not committed | unknown | checked in 10-05 per 10-RESEARCH.md's "check first" note |
+| Transfermarkt | **mostly-open — measured 2026-09-10.** Real 8-page probe (plain `requests` + Chrome User-Agent, `_MIN_INTERVAL_S=3.0`): 7/8 pages `ok` (200, real injury rows parsed, 1-15 rows/page), 0 `challenge`, 0 `http_error`, 0 `parse_error`, 1 `id_unresolved` (B.Fernandes — FPL's abbreviated display name fails Transfermarkt's search endpoint; a name-resolution gap for 10-07, not an access block). Served column headers confirmed verbatim: `Season, Injury, from, until, Days, Games missed` (10-RESEARCH.md A4 exact match) | not committed (raw pages gitignored under `data/raw/transfermarkt/`); **go/no-go decision: A — full backfill authorised**, all seasons 2016-17+, background killable job (10-05 checkpoint, verbatim developer answer "A") | unofficial source, ToS unclear; committed artifact is a derived, normalized spell table decided in 10-07, never the raw scraped page | 8-page real probe (`data/processed/experiments/transfermarkt_probe.json`), this plan |
+| figshare pre-scraped dataset | **INSUFFICIENT — measured 2026-09-10.** The ~107k-injury "Injuries from Transfermarkt.com" dataset 10-RESEARCH.md A5 cites does not exist on figshare's public API (`articles/search` for "Injuries from Transfermarkt" returned only 2 unrelated hits); every `ndownloader.figshare.com` download attempted returned HTTP 202 with `x-amzn-waf-action: challenge` (AWS WAF JS challenge, not clearable by plain `requests`) | not committed | unknown (never reached — WAF-blocked) | `--figshare-check` run, this plan; supersedes the earlier Phase 9 "403 on direct fetch" reading |
 | GDELT DOC 2.0 | keyless, not yet probed | not committed, conditional on D-02's trigger firing | public API | plain `requests`, no `gdeltdoc` package (locked decision, this plan) |
 | Guardian | free key needed, not yet probed | not committed, conditional on D-02's trigger firing | Open Platform ToS | plain `requests` client (locked decision, this plan) |
 | fplreview | **403 to automated access — manual capture only** | never redistributed, never a model input | manual, non-redistributable | 10-RESEARCH.md / plan 10-02 |
 | fbrapi.com | half-down 2026-09-09, **not re-probed per D-04** | not committed | unknown | 09-RESEARCH.md Phase 9 finding (Cloudflare-gated) |
+
+### transfermarkt_injury: go/no-go decision — Option A, full backfill authorised (plan 10-05)
+
+Two bounded checks ran before any backfill infrastructure was built, per the
+Phase 9 `fbref_v2` precedent (spend the probe before the spend). Figshare
+verdict: **INSUFFICIENT** (dataset absent from figshare's own search API;
+every download attempt WAF-challenged). Real 8-page Transfermarkt probe:
+**7/8 pages parsed cleanly**, 0 challenged, 1 `id_unresolved` (a name-lookup
+gap, not an access block) — full per-page evidence in
+`data/processed/experiments/transfermarkt_probe.json`.
+
+Projected full-scope wall clock, computed explicitly per the checkpoint's own
+instructions: **2,623 distinct `player_code` values** across seasons
+2016-17..2025-26 (`data/processed/player_gw.parquet`), one profile-page fetch
+per player at `_MIN_INTERVAL_S = 3.0`s ≈ **2.19h**, plus one search-endpoint
+fetch per player for `tm_player_id` resolution ≈ 2.19h more — **≈4.4h total**
+rate-limit-bound wall clock for a background killable job.
+
+**Developer decision (verbatim): "A"** — Option A, full backfill (D-06 as
+written): all seasons 2016-17+, background killable job. Plan 10-07 is
+authorised to build the 6-season backfill fetcher, cache, and normalized
+join at this full scope; no season-scope reduction (Option B) and no
+figshare substitute (Option C, unavailable — figshare verdict was
+INSUFFICIENT, not USABLE) apply.
 
 ### Unverified prior evidence (Phase 10)
 
