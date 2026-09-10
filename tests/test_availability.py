@@ -273,6 +273,18 @@ def test_unknown_status_code_raises_not_silently_dropped():
         availability.encode_availability(resolved)
 
 
+def test_news_added_postdating_deadline_raises_naming_the_row():
+    """T-10-04-03's escape hatch: a news_added value AFTER the gw deadline
+    means resolve_as_of admitted a row it should have excluded -- raise
+    naming the offending (season, gw, player_code), never clip."""
+    resolved = _resolved_frame(
+        deadline_ts=[pd.Timestamp("2099-01-05 17:30", tz="UTC")],
+        news_added=[pd.Timestamp("2099-01-05 18:00", tz="UTC")],   # after deadline_ts
+    )
+    with pytest.raises(AssertionError, match=r"2099-00"):
+        availability.encode_availability(resolved)
+
+
 @needs_data
 def test_availability_family_present_and_not_rolled_in_features():
     """The family-classification regression gate (plan 10-04's own
