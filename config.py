@@ -198,6 +198,31 @@ AVAILABILITY_COLS = ["av_chance_pct", "av_status_a", "av_status_d", "av_status_i
                      "av_status_s", "av_status_u", "av_days_since_news",
                      "av_snapshot_age_days"]
 
+# Transfermarkt injury-spell history (data/transfermarkt.py) -- OPTIONAL
+# enrichment, computed UNCONDITIONALLY like AVAILABILITY_COLS above: the
+# pipeline no-ops without the committed data/external/transfermarkt/
+# injury_spells.csv (plus the resolved-id cache, tm_id_map.csv), and once it
+# exists the join always runs so player_gw.parquet/features.parquet stay
+# stable across an A/B run (the EXPERIMENTS["transfermarkt_injury"]
+# feature-selection gate lives in backtest/walk_forward.py). A FOURTH
+# leakage-safe family (10-RESEARCH.md Pattern 4's "point-in-time snapshot,
+# as-of-deadline" row), joined by DATE-RANGE OVERLAP against each gameweek's
+# deadline (data.availability.gw_deadlines(), reused -- one definition, one
+# place) rather than a per-fixture key or a shift(1)-then-rolled per-match
+# outcome. These are NOT match outcomes and must NEVER be registered in
+# features/engineer.py's ROLL_STATS.
+#
+# The resolved-vs-unresolved distinction (T-10-07-02's own mitigation): a
+# player_code that resolved a Transfermarkt id but has zero recorded spells
+# is genuinely NOT injured -- 0.0 across the family, never NaN. A player_code
+# that never resolved a Transfermarkt id is genuinely UNKNOWN -- NaN across
+# the family. This line is drawn from the id map's own membership
+# (data/transfermarkt.py::_covered_player_codes), never from the spell
+# table's membership -- a covered player with zero spells must not be
+# confused with an unresolvable one.
+INJURY_COLS = ["tm_injured", "tm_days_out_so_far", "tm_spells_prior_365d",
+              "tm_days_out_prior_365d"]
+
 # --- Modelling (Phase 3): strict time-based split, never random ------------
 # Train on earlier seasons, hold out the most recent complete season as test.
 TRAIN_SEASONS = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21",
@@ -223,6 +248,7 @@ EXPERIMENTS: dict[str, bool] = {
     "ep_next_now": False,
     # --- Phase 10 ---
     "availability_flags": False,
+    "transfermarkt_injury": False,
 }
 
 # Quick task 260909-elx: FPL's own ep_this/ep_next figure (`xp_fpl` here --

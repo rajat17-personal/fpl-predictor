@@ -36,6 +36,15 @@ import config
 _SRC = config.ROOT / "data" / "external" / "kiwi" / "ID_Dictionary.csv"
 _OUT = config.PROCESSED_DIR / "id_crosswalk.parquet"
 
+# Plan 10-07: a small persistent player_code -> tm_player_id map. Lives
+# beside the crosswalk because id resolution is the crosswalk's own job
+# (10-RESEARCH.md Pattern 3) -- the name-to-candidate step still goes through
+# data.transfermarkt's own search-endpoint lookup, never a second name
+# matcher; only the RESOLVED (player_code -> tm_player_id) pair is cached
+# here, against the one canonical FPL-side identity key every other source
+# in this project joins on.
+_TM_ID_MAP = config.DATA_DIR / "external" / "transfermarkt" / "tm_id_map.csv"
+
 # Source name -> a name that resolves via one of resolve_by_name()'s tiers
 # (extend as later plans discover more -- same manual-override convention as
 # data/fbref.py's _NAME_FIXUPS).
@@ -262,6 +271,48 @@ def resolve_by_name(names: pd.Series) -> pd.Series:
     if missing.any():
         out.loc[missing] = keys[missing].map(_fpl_name_index())
     return out.astype("Int64")
+
+
+def tm_id_cache() -> dict[int, str | float]:
+    """Read-through: the persistent `player_code -> tm_player_id` map
+    (`data/external/transfermarkt/tm_id_map.csv`). Returns `{}` when the file
+    is absent -- matching every other optional source's no-op-if-absent
+    contract. A value can be `float("nan")` for a `player_code` whose id
+    resolution was previously ATTEMPTED and failed (so `resolve_tm_id` does
+    not re-search it on every run) -- callers distinguish "never attempted"
+    (key absent) from "attempted, unresolved" (`pd.isna(value)`) explicitly.
+
+    Preserves the `player_code.is_unique` invariant plan 09-02 established
+    for `data/id_crosswalk.py::build` -- asserted here too, since a duplicate
+    `player_code` here would multiply rows in `data/transfermarkt.py::attach`'s
+    downstream join exactly the same way.
+    """
+    if not _TM_ID_MAP.exists():
+        return {}
+    df = pd.read_csv(_TM_ID_MAP)
+    if not df["player_code"].is_unique:
+        raise AssertionError(
+            "id_crosswalk.tm_id_cache(): duplicate player_code would multiply "
+            "rows in every downstream merge")
+    return dict(zip(df["player_code"].astype(int), df["tm_player_id"]))
+
+
+def write_tm_id_cache_entry(player_code: int, tm_player_id: str | None) -> None:
+    """Write-through: upsert one `(player_code, tm_player_id)` pair into the
+    persistent cache. `tm_player_id=None` records a failed resolution attempt
+    (see `tm_id_cache`'s docstring) so it is not re-searched every run.
+    Re-asserts `player_code.is_unique` after every write.
+    """
+    cache = tm_id_cache()
+    cache[int(player_code)] = tm_player_id
+    df = (pd.DataFrame(sorted(cache.items()), columns=["player_code", "tm_player_id"])
+          .reset_index(drop=True))
+    if not df["player_code"].is_unique:
+        raise AssertionError(
+            "id_crosswalk.write_tm_id_cache_entry(): duplicate player_code "
+            "would multiply rows in every downstream merge")
+    _TM_ID_MAP.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(_TM_ID_MAP, index=False)
 
 
 def main() -> int:

@@ -70,7 +70,8 @@ ROLL_STATS = [
 CONTEXT_COLS = (["was_home", "fdr_self", "fdr_opp", "is_dgw", "price_m",
                  "selected", "transfers_balance"]
                 + config.SET_PIECE_COLS + config.ODDS_COLS + config.FBREF_COLS
-                + config.TEAM_STRENGTH_COLS + config.AVAILABILITY_COLS)
+                + config.TEAM_STRENGTH_COLS + config.AVAILABILITY_COLS
+                + config.INJURY_COLS)
 
 ID_COLS = ["season", "player_key", "player_code", "player_id", "name", "team",
            "position", "gw", "fixture_id", "kickoff_time"]
