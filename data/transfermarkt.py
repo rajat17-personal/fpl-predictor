@@ -561,7 +561,8 @@ def build(*, resume: bool = True, seasons: list[str] | None = None,
     if n_skipped:
         print(f"[transfermarkt] resumed: skipped {n_skipped} already-processed player(s)")
 
-    return load_transfermarkt() or pd.DataFrame(columns=_SPELL_COLS)
+    loaded = load_transfermarkt()
+    return loaded if loaded is not None else pd.DataFrame(columns=_SPELL_COLS)
 
 
 def load_transfermarkt() -> pd.DataFrame | None:
