@@ -161,3 +161,94 @@ def test_external_preds_legitimate_roundtrip_not_flagged_implausible(tmp_path, d
 
     external = load_external_predictions(path, "2025-26", df=df_full, baseline_spearman=0.383)
     assert external.attrs["implausible"] is False
+
+
+# --- Phase 10 plan 10-10: the D-15 stage-1 cheap gate (models/bracket/gate.py) --
+
+from models.bracket import gate as bracket_gate  # noqa: E402
+
+
+@pytest.fixture(scope="module")
+def gate_lgbm_result(df_full):
+    """One real run_gate("lgbm") call, shared by every test below that needs
+    a genuine gate result -- run_gate trains on the full config.TRAIN_SEASONS
+    (8 seasons), so this is intentionally computed once, not per-test."""
+    return bracket_gate.run_gate("lgbm", df=df_full)
+
+
+def test_gate_spearman_matches_benchmark_external_definition():
+    """Same numeric definition as backtest/benchmark_external.py::_stats_block,
+    to within 1e-12 on identical synthetic input -- one metric everywhere."""
+    from backtest.benchmark_external import _stats_block
+
+    played = pd.DataFrame({
+        "xp_med": [1.2, 1.9, 3.5, 3.8, 5.5, 5.9],
+        "xp_mean": [1.1, 2.1, 3.4, 3.9, 5.4, 6.1],
+        "xp_fpl": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+        "proj_pts": [1.3, 1.8, 3.6, 3.7, 5.6, 5.8],
+        "y_points": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+    })
+    minutes = pd.Series([90, 90, 90, 90, 90, 90])
+
+    got = bracket_gate.played_only_spearman(played.y_points, played.xp_med, minutes)
+    want = _stats_block(played)["spearman_xp_med"]
+    assert got == pytest.approx(want, abs=1e-12)
+
+
+def test_gate_spearman_filters_to_played_only():
+    """A minutes==0 row must never influence the correlation, regardless of
+    how wildly its prediction disagrees with its (irrelevant) actual."""
+    y_true = pd.Series([1.0, 2.0, 3.0, 999.0])
+    y_pred = pd.Series([1.1, 2.1, 2.9, -999.0])
+    minutes = pd.Series([90, 90, 90, 0])
+    played_only = bracket_gate.played_only_spearman(y_true[:3], y_pred[:3], minutes[:3])
+    with_unplayed = bracket_gate.played_only_spearman(y_true, y_pred, minutes)
+    assert played_only == pytest.approx(with_unplayed, abs=1e-12)
+
+
+def test_advances_only_when_margin_cleared():
+    m = bracket_gate.GATE_MARGIN
+    assert bracket_gate._advances(0.500, 0.500 - m) is True     # exactly at the margin
+    assert bracket_gate._advances(0.500, 0.500 - m + 0.001) is False  # just short
+    assert bracket_gate._advances(None, 0.490) is False          # unavailable candidate
+
+
+def test_mae_recorded_as_diagnostic_never_in_advance_decision():
+    import inspect
+
+    run_gate_src = inspect.getsource(bracket_gate.run_gate)
+    assert "mae" in run_gate_src.lower(), "MAE must still be recorded as a diagnostic"
+    advances_src = inspect.getsource(bracket_gate._advances)
+    assert "mae" not in advances_src.lower(), "MAE must never gate the advance decision"
+
+
+def test_gate_unavailable_candidate_records_status_without_training(monkeypatch, tmp_path):
+    monkeypatch.setattr(config, "EXPERIMENTS_DIR", tmp_path)
+    monkeypatch.setattr(bracket_gate.bracket_registry, "is_available", lambda name: False)
+    result = bracket_gate.run_gate("ridge")
+    assert result["status"] == "unavailable"
+    assert result["spearman_xp_med"] is None
+    assert result["mae_xp_med"] is None
+    assert result["eval_split"] == bracket_gate.EVAL_SPLIT_LABEL
+    assert (tmp_path / "bracket_gate_ridge.json").exists()
+
+
+@needs_data
+def test_gate_never_trains_on_a_test_season(gate_lgbm_result):
+    """Checked against config.TEST_SEASONS (["2025-26"], the shipped model's
+    real held-out season) -- NOT backtest.walk_forward.TEST_SEASONS, which is
+    a different concept (the 6 rolling walk-forward test seasons) that
+    legitimately overlaps config.TRAIN_SEASONS by design. See
+    models/bracket/gate.py's module docstring for the full reasoning."""
+    assert not (set(gate_lgbm_result["train_seasons"]) & set(config.TEST_SEASONS)), \
+        gate_lgbm_result
+    assert gate_lgbm_result["val_season"] not in config.TEST_SEASONS
+
+
+@needs_data
+def test_gate_records_the_in_sample_eval_split_label(gate_lgbm_result):
+    assert gate_lgbm_result["eval_split"] == "val_season_in_sample_early_stopping"
+    assert gate_lgbm_result["status"] == "ok"
+    assert gate_lgbm_result["spearman_xp_med"] is not None
+    assert gate_lgbm_result["mae_xp_med"] is not None
+    assert gate_lgbm_result["n_played_rows"] > 0

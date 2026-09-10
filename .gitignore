@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 
+# --- CatBoost training-log output (auto-dumped to cwd by CatBoostRegressor.fit(),
+# --- models/bracket/gbdt.py) -- runtime logs, not source ---------------------
+catboost_info/
+
 # --- Node ---------------------------------------------------------------
 node_modules/
 frontend/node_modules/
