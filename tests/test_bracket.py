@@ -286,3 +286,46 @@ def test_sequence_uses_raw_stats_not_rolled_features():
     bad = [c for c in list(bracket_sequence.SEQ_STATS) + list(bracket_sequence.STATIC_COLS)
           if c.endswith(rolling_suffixes)]
     assert not bad, bad
+
+
+# --- Phase 10 plan 10-11: the shared raw-torch training loop + MLP candidate ---
+
+from models.bracket import deep as bracket_deep  # noqa: E402
+
+
+def test_torch_adapter_matches_sklearn_predict_contract():
+    """TorchRegressorAdapter satisfies fit(X, y, eval_set=...)/predict(X)
+    (sklearn's contract, models/train.py's stage-2 slot) on tiny synthetic
+    data with max_epochs=2, and tolerates LightGBM-only kwargs
+    (eval_metric/callbacks) without raising."""
+    rng = np.random.RandomState(0)
+    Xtr = rng.randn(64, 5).astype("float32")
+    Xtr[::9, 1] = np.nan   # legitimate missingness (e.g. a first appearance)
+    ytr = (Xtr[:, 0] * 2 + rng.randn(64) * 0.1).astype("float32")
+    Xva, yva = Xtr[:16], ytr[:16]
+
+    reg = bracket_deep.build_mlp("regression_l1", {"hidden": (8, 4), "max_epochs": 2})
+    reg.fit(Xtr, ytr, eval_set=[(Xva, yva)], eval_metric="l1", callbacks=[])
+    preds = reg.predict(Xva)
+
+    assert preds.shape == (16,)
+    assert np.isfinite(preds).all()
+    assert reg.best_iteration_ is not None
+
+
+def test_mlp_search_respects_budget(monkeypatch):
+    """run_search never evaluates more than SEARCH_BUDGET configs, even when
+    the underlying search space is monkeypatched larger -- the hard-stop
+    D-19 declares, proven directly rather than by trusting the grid's own
+    length."""
+    monkeypatch.setattr(bracket_deep, "_search_space",
+                        lambda candidate: [{"hidden": (4, 2)}] * 50)
+    calls = []
+
+    def fit_and_score(cfg):
+        calls.append(cfg)
+        return float(len(calls))   # monotonically increasing fake val_loss
+
+    log = bracket_deep.run_search("mlp", "unit_test", fit_and_score=fit_and_score)
+    assert len(calls) == bracket_deep.SEARCH_BUDGET
+    assert len(log["configs"]) == bracket_deep.SEARCH_BUDGET
