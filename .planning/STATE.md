@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 10
 current_phase_name: xP Experiment Follow-ups
 status: executing
-stopped_at: Completed 10-02-PLAN.md
-last_updated: "2026-09-10T12:06:04.256Z"
+stopped_at: Completed 10-03-PLAN.md
+last_updated: "2026-09-10T12:19:15.931Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 10 execution started
-state_head: e286e94c399c940949767dd5d41264e1198deddf
+state_head: 9ded4f36ac16743b44cd97a45e11afd22b99414e
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 71
-  completed_plans: 54
+  completed_plans: 55
   percent: 70
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 ## Current Position
 
 Phase: 10 (xP Experiment Follow-ups) — EXECUTING
-Plan: 3 of 16
+Plan: 4 of 16
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 10 execution started
 
@@ -118,6 +118,7 @@ Progress: [███████░░░] 70% (52/55 plans complete)
 | Phase 09 P10 | 30min | 3 tasks | 6 files |
 | Phase 10 P01 | 42min | 3 tasks | 10 files |
 | Phase 10 P02 | 25min | 3 tasks | 5 files |
+| Phase 10 P03 | 5min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -245,6 +246,8 @@ Recent decisions affecting current work:
 - [Phase 10]: Phase 10 Plan 01: locked D-02's news-sentiment trigger at pooled played-only spearman_xp_med < 0.500 (0.481 midpoint on record) in IMPROVEMENTS.md before any Phase 10 measuring run — T-10-01-05: pre-declared criteria written after a measurement risks being back-fitted to the number
 - [Phase 10]: OVERALL_LEAGUE_ID=314 kept as a keyword-default argument, never inlined into a URL f-string; confirmed correct by a real live standings run (10-RESEARCH.md A3)
 - [Phase 10]: No mae_consensus scoreboard key -- consensus ownership is a percentage, not points; an MAE against actual points would be meaningless in a published trust artifact
+- [Phase 10]: Phase 10 Plan 3: @reboot crontab line installed alongside pre-existing 30 2 * * * daily.sh line (which was actually missing from this machine's crontab and installed fresh); both confirmed via independent crontab -l re-check
+- [Phase 10]: Phase 10 Plan 3: pre-fix D-08 baseline measured at execution time — 2 files spanning 11 days (9 days missing) in data/snapshots/
 
 ### Pending Todos
 
@@ -260,7 +263,7 @@ Recent decisions affecting current work:
 
 [Issues that affect future work]
 
-- **Time-critical, independent of this milestone:** the daily snapshot cron must run every day — price-model history cannot be backfilled (first snapshot 2026-08-31). Phase 6 closed the loop: cron lines installed and the FPL_ALERT_WEBHOOK failure alert confirmed live (06-UAT.md, 2026-09-07) — a failed run is now noticed same-day.
+- **Time-critical, independent of this milestone:** the daily snapshot cron must run every day — price-model history cannot be backfilled (first snapshot 2026-08-31). Phase 6 closed the alerting loop: cron lines installed and the FPL_ALERT_WEBHOOK failure alert confirmed live (06-UAT.md, 2026-09-07) — a failed run is now noticed same-day. Phase 10 Plan 3 (2026-09-10) closed the remaining WSL-cron gap itself (D-08): only 2 of 11 possible days were actually captured because cron does not fire while the machine is off; `scripts/snapshot_catchup.sh` now runs `@reboot` and captures on first invocation of a missed day, with the gap count surfaced in `data/cron.log` on every daily run.
 - **Milestone invariant:** the vanilla site stays live and authoritative until CUT-01 completes. Phase 7 is calendar-gated on one full real gameweek cycle (deadline → live → finished).
 - Payment gateway / merchant-of-record choice still pending with the user — out of scope here, but PITCH-01's trademark disclaimer feeds the eventual gateway review.
 - **[Phase 4]:** Security enforcement is on but no 04-SECURITY.md exists — run `/gsd-secure-phase 4` to backfill the threat verification (03, 05, and now 09 also lack SECURITY.md; 06-SECURITY.md now exists).
@@ -283,6 +286,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T12:06:04.032Z
-Stopped at: Completed 10-02-PLAN.md
+Last session: 2026-09-10T12:19:15.704Z
+Stopped at: Completed 10-03-PLAN.md
 Resume file: None
