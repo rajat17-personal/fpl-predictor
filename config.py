@@ -168,6 +168,24 @@ UNDERSTAT_COLS = ["us_npxg", "us_xgchain", "us_xgbuildup", "us_shots", "us_key_p
 FOTMOB_COLS = ["fm_tackles", "fm_interceptions", "fm_blocks", "fm_clearances",
               "fm_recoveries", "fm_duels_won"]
 
+# Point-in-time player availability (data/availability.py) -- OPTIONAL
+# enrichment, computed UNCONDITIONALLY like TEAM_STRENGTH_COLS/UNDERSTAT_COLS/
+# FOTMOB_COLS above: the pipeline no-ops without data/processed/availability.parquet,
+# and once it exists the join always runs so player_gw.parquet/features.parquet
+# stay stable across an A/B run (the EXPERIMENTS["availability_flags"]
+# feature-selection gate lives in backtest/walk_forward.py). CRITICAL
+# DIFFERENCE from the three families above: this is a THIRD, genuinely
+# distinct feature family -- neither a MATCH OUTCOME (ROLL_STATS's
+# shift-then-roll) nor static-per-fixture context known at fixture-build time
+# (CONTEXT_COLS's other members). Its join key is a point-in-time snapshot
+# resolved against the gameweek deadline (data/availability.py::resolve_as_of),
+# so it belongs in CONTEXT_COLS (features/engineer.py) -- resolved-as-of-the-
+# deadline is already leakage-safe on its own terms, and _roll's shift(1)-
+# then-rolling would apply the wrong lookback horizon across double
+# gameweeks and postponements -- but it is not a "known ahead of time"
+# fixture fact either.
+AVAILABILITY_COLS = ["av_chance_pct"]
+
 # --- Modelling (Phase 3): strict time-based split, never random ------------
 # Train on earlier seasons, hold out the most recent complete season as test.
 TRAIN_SEASONS = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21",
@@ -191,6 +209,8 @@ EXPERIMENTS: dict[str, bool] = {
     "fbref_v2": False,
     "ep_next_lag": False,
     "ep_next_now": False,
+    # --- Phase 10 ---
+    "availability_flags": False,
 }
 
 # Quick task 260909-elx: FPL's own ep_this/ep_next figure (`xp_fpl` here --

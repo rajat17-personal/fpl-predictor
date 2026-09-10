@@ -159,17 +159,19 @@ def apply_experiment_feature_gating(df: pd.DataFrame, exp: dict) -> pd.DataFrame
     """Drop or add an experiment-gated feature from `df` depending on its flag.
 
     `ts_*` (config.TEAM_STRENGTH_COLS), rolled `us_*` (config.UNDERSTAT_COLS
-    -> ROLL_STATS) and rolled `fm_*` (config.FOTMOB_COLS -> ROLL_STATS) are
-    all computed UNCONDITIONALLY by the pipeline (see config.py's own
-    comments on those three constants) so an experiment toggle never forces a
+    -> ROLL_STATS), rolled `fm_*` (config.FOTMOB_COLS -> ROLL_STATS) and
+    `av_*` (config.AVAILABILITY_COLS -> CONTEXT_COLS) are all computed
+    UNCONDITIONALLY by the pipeline (see config.py's own comments on those
+    four constants) so an experiment toggle never forces a
     data/build_table.py + features/engineer.py rebuild -- the feature-
     selection gate lives here instead, in exactly one place, so a future
-    enrichment family (FBref v2) adds one branch here rather than growing a
-    fourth ad-hoc inline drop expression.
+    enrichment family adds one branch here rather than growing a fifth
+    ad-hoc inline drop expression.
 
     Extracted from plan 09-05's inline team_strength-only gating (D-13), then
-    extended by plan 09-08 (understat) and 09-09 (fotmob); each existing
-    branch's behaviour is unchanged from what its own plan measured.
+    extended by plan 09-08 (understat), 09-09 (fotmob) and 10-01
+    (availability_flags); each existing branch's behaviour is unchanged from
+    what its own plan measured.
 
     `ep_next_lag`/`ep_next_now` (quick task 260909-elx) are this function's
     first branch that ADDS a column rather than dropping one. `xp_fpl` (FPL's
@@ -190,6 +192,8 @@ def apply_experiment_feature_gating(df: pd.DataFrame, exp: dict) -> pd.DataFrame
         drop += [c for c in df.columns if c.startswith("us_")]
     if not exp.get("fotmob", False):
         drop += [c for c in df.columns if c.startswith("fm_")]
+    if not exp.get("availability_flags", False):
+        drop += [c for c in df.columns if c.startswith("av_")]
     out = df.drop(columns=drop) if drop else df
 
     add_lag = exp.get("ep_next_lag", False)

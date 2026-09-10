@@ -49,10 +49,18 @@ ROLL_STATS = [
 # controls whether backtest/walk_forward.py's harness drops these columns before
 # handing the frame to train_predict, so an A/B is a flag away and never forces a
 # features.parquet rebuild. Do not "fix" this by gating inclusion here.
+#
+# config.AVAILABILITY_COLS (av_chance_pct) belongs here, never in ROLL_STATS:
+# a point-in-time availability figure resolved as of the gameweek deadline
+# (data/availability.py::resolve_as_of) is already leakage-safe on its own
+# terms -- it is not a match outcome to be shift(1)-then-rolled -- and
+# _roll's rolling-mean machinery would apply the wrong lookback horizon
+# across double gameweeks and postponements, where "the last N appearances"
+# and "the last N calendar gameweeks" diverge.
 CONTEXT_COLS = (["was_home", "fdr_self", "fdr_opp", "is_dgw", "price_m",
                  "selected", "transfers_balance"]
                 + config.SET_PIECE_COLS + config.ODDS_COLS + config.FBREF_COLS
-                + config.TEAM_STRENGTH_COLS)
+                + config.TEAM_STRENGTH_COLS + config.AVAILABILITY_COLS)
 
 ID_COLS = ["season", "player_key", "player_code", "player_id", "name", "team",
            "position", "gw", "fixture_id", "kickoff_time"]
