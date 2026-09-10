@@ -40,6 +40,7 @@ run_step() {
 trap 'rc=$?; if [ "$rc" -ne 0 ] && [ "$NOTIFIED" -eq 0 ]; then if ! "$PY" -m ops.notify --job daily --step unexpected --message "exit code $rc"; then echo "[daily] alerting failed for unexpected" >&2; fi; fi' EXIT
 
 run_step data.snapshot "$PY" -m data.snapshot
+run_step data.snapshot-gap-report bash scripts/snapshot_catchup.sh --report-only
 run_step models.price-train "$PY" -m models.price --train
 run_step models.price "$PY" -m models.price
 run_step predict.scoreboard "$PY" -m predict.scoreboard

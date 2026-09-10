@@ -249,6 +249,23 @@ def test_catchup_is_a_noop_when_today_exists(tmp_path):
 # --------------------------------------------------------------- cron scripts
 
 
+def test_daily_sh_gap_report_step_runs_after_snapshot_before_price_train():
+    script = config.ROOT / "scripts" / "daily.sh"
+    with open(script, encoding="utf-8") as f:
+        lines = f.read().splitlines()
+
+    snapshot_idx = next(i for i, line in enumerate(lines) if "run_step data.snapshot " in line)
+    gap_report_idx = next(
+        i for i, line in enumerate(lines) if "run_step data.snapshot-gap-report" in line
+    )
+    price_train_idx = next(
+        i for i, line in enumerate(lines) if "run_step models.price-train" in line
+    )
+
+    assert snapshot_idx < gap_report_idx < price_train_idx
+    assert "--report-only" in lines[gap_report_idx]
+
+
 def test_daily_and_weekly_scripts_parse_and_are_executable():
     import subprocess
 
