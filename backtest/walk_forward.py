@@ -24,14 +24,14 @@ import sys
 
 import numpy as np
 import pandas as pd
-from scipy.stats import poisson, skellam
+from scipy.stats import poisson, skellam, spearmanr
 
 import config
 from backtest.season import run_season
 from data import team_strength as ts_mod
 from models import captaincy
 from models.train import load_features, predict_xp, train_predict
-from ops.jsonio import write_json
+from ops.jsonio import read_json, write_json
 
 # Schedule-derived context known ahead of time — safe to graft onto a frozen-form row.
 # `opponent_team_id` is the future fixture's OPPONENT IDENTITY, which is knowable
@@ -96,6 +96,125 @@ def _preds_for(df: pd.DataFrame, test_season: str):
     te["xp_form"] = te["total_points_r5"].fillna(0)
     te = _attach_opponent_id(te)
     return te, models, cols
+
+
+# --- External prediction ingestion (D-14): score a Colab-trained bracket
+# candidate through the exact same run_season/_preds_for-shaped path an
+# in-process LightGBM run uses, so the local harness stays the sole judge.
+# See 10-RESEARCH.md Pitfall 6 (a schema-valid but leakage-corrupt artifact)
+# and Open Question 4 (ground truth is always re-attached locally, never
+# trusted from the artifact).
+
+# The artifact contract is deliberately minimal: (season, gw, player_code,
+# fixture_id, xp_med, xp_mean). `fixture_id` is required, not optional --
+# this project's model granularity is the individual FIXTURE, not the
+# gameweek (features/engineer.py's own ID_COLS says so explicitly), so a
+# gameweek-level artifact could not be scored through run_season without
+# inventing a double-gameweek split rule. Do not "simplify" this contract to
+# gameweek-level in a future Colab notebook.
+_EXTERNAL_PRED_COLS = ["season", "gw", "player_code", "fixture_id", "xp_med", "xp_mean"]
+
+# With the LightGBM baseline at 0.383 pooled played-only Spearman
+# (IMPROVEMENTS.md's own "Benchmark: our xP vs theFPLkiwi" figure) and FPL's
+# own ep_next (which sees genuine pre-deadline news we do not have) at 0.579,
+# a candidate trained on the same features clearing ~0.53 is far likelier to
+# be leakage (test-season contamination in the external training loop) than
+# a genuine modelling breakthrough. This is a WARNING, not a rejection -- the
+# number still gets recorded, with the flag raised, exactly how Phase 9
+# handled its own +337-optimistic-vs-+40-honest finding.
+_MAX_PLAUSIBLE_SPEARMAN_JUMP = 0.15
+
+_GROUND_TRUTH_COLS = {"y_points", "y_minutes", "y_played", "y_started", "y_clean_sheets"}
+
+
+def load_external_predictions(path, test_season: str, *, df: pd.DataFrame | None = None,
+                              baseline_spearman: float | None = None) -> pd.DataFrame:
+    """Ingest an externally-produced (e.g. Colab) per-fixture prediction
+    parquet and validate + score it through the identical shape `_preds_for`
+    returns, so it feeds `backtest.season.run_season` (and every consumer of
+    `main`'s season loop) exactly like an in-process LightGBM run.
+
+    Validated on four axes (D-14/10-RESEARCH.md Pitfall 6):
+      1. schema       -- every column in `_EXTERNAL_PRED_COLS` must be present.
+      2. season       -- the artifact's own `season` column must equal exactly
+         `{test_season}` (catches a notebook that trained one global model
+         and dumped every season into one file).
+      3. ground truth -- any `y_*` column present is DROPPED and warned
+         about; truth is always re-attached locally from `features.parquet`
+         (Open Question 4), never trusted from the artifact.
+      4. row count    -- the join onto the local feature frame must never
+         increase the row count (a fan-out join).
+
+    On top of validation, the played-only Spearman of the artifact's own
+    `xp_med` against real `y_points` is compared to the in-process LightGBM
+    baseline; a jump over `_MAX_PLAUSIBLE_SPEARMAN_JUMP` is flagged loudly
+    (printed, and on the returned frame's `.attrs["implausible"]`) but the
+    number is still recorded -- see the constant's own comment.
+    """
+    artifact = pd.read_parquet(path)
+    missing = [c for c in _EXTERNAL_PRED_COLS if c not in artifact.columns]
+    if missing:
+        raise ValueError(
+            f"external prediction artifact {path} missing required column(s): {missing} "
+            f"(the contract is {_EXTERNAL_PRED_COLS})")
+
+    artifact_seasons = set(artifact["season"].unique())
+    if artifact_seasons != {test_season}:
+        raise ValueError(
+            f"external prediction artifact {path} season set {sorted(artifact_seasons)} "
+            f"!= expected {{{test_season!r}}} -- a candidate that trained one global "
+            "model and dumped every season into one file would fail this check "
+            "(10-RESEARCH.md Pitfall 6)")
+
+    dropped_gt = [c for c in artifact.columns if c in _GROUND_TRUTH_COLS]
+    for c in dropped_gt:
+        print(f"[external] WARNING: artifact carried ground-truth column {c!r} -- "
+              "dropped, re-attached locally from features.parquet (the artifact "
+              "is never the source of truth for what happened)")
+
+    base = load_features() if df is None else df
+    local = base[base["season"] == test_season].copy()
+    before = len(local)
+    artifact_join = artifact[["season", "player_code", "fixture_id", "xp_med", "xp_mean"]]
+    te = local.merge(artifact_join, on=["season", "player_code", "fixture_id"], how="inner")
+    if len(te) > before:
+        raise AssertionError(
+            f"external prediction join increased row count {before} -> {len(te)} for "
+            f"{test_season} -- the artifact has more than one row per "
+            "(player_code, fixture_id)")
+    coverage = len(te) / before if before else 0.0
+    print(f"[external] {test_season}: joined {len(te):,}/{before:,} local rows "
+          f"(coverage {coverage:.1%})")
+
+    te["xp_form"] = te["total_points_r5"].fillna(0)
+    te = _attach_opponent_id(te)
+
+    if baseline_spearman is None:
+        gate_path = config.EXPERIMENTS_DIR / "bracket_gate_lgbm.json"
+        gate = (read_json(gate_path, what="bracket gate LightGBM baseline")
+                if gate_path.exists() else {})
+        baseline_spearman = gate.get(test_season) if isinstance(gate, dict) else None
+    if baseline_spearman is None:
+        print(f"[external] {test_season}: no LightGBM baseline available "
+              "(config.EXPERIMENTS_DIR/'bracket_gate_lgbm.json' not found or missing "
+              "this season) -- skipping the implausibility check. This note is "
+              "always printed; the check is never silently skipped.")
+        te.attrs["implausible"] = None
+        return te
+
+    played = te[te["y_minutes"] > 0]
+    ext_spearman = float(spearmanr(played["xp_med"], played["y_points"]).statistic)
+    jump = ext_spearman - baseline_spearman
+    implausible = jump > _MAX_PLAUSIBLE_SPEARMAN_JUMP
+    te.attrs["implausible"] = implausible
+    if implausible:
+        print(f"[external] IMPLAUSIBLE: external xp_med played-only Spearman "
+              f"{ext_spearman:.4f} exceeds the in-process LightGBM baseline "
+              f"{baseline_spearman:.4f} by {jump:.4f} (> {_MAX_PLAUSIBLE_SPEARMAN_JUMP:.2f}). "
+              "The likeliest cause is test-season contamination in the external "
+              "training loop, not a modelling breakthrough -- see 10-RESEARCH.md "
+              "Pitfall 6. The number below is recorded WITH this flag raised.")
+    return te
 
 
 def _plan_col(preds: pd.DataFrame, horizon: int = 4, decay: float = 0.84) -> pd.DataFrame:
@@ -323,9 +442,27 @@ def main(argv=None) -> int:
                          "gap between the two is the project's own repeated "
                          "+337-optimistic-vs-+40-honest failure mode, made visible "
                          "rather than assumed away for any horizon-touching change")
+    ap.add_argument("--external-preds", default=None,
+                    help="path to an externally-produced (e.g. Colab) per-fixture "
+                         "prediction parquet (see load_external_predictions's "
+                         "_EXTERNAL_PRED_COLS contract), scored through the season "
+                         "loop in place of an in-process LightGBM run for each "
+                         "selected season -- D-14's seam for judging a Colab bracket "
+                         "candidate. Cannot combine with --experiments capt_ceiling "
+                         "(captaincy needs a real models/cols pair a frozen artifact "
+                         "does not carry); multi_safe is always recorded as None for "
+                         "these seasons, with a printed note, rather than substituting "
+                         "a locally-trained model's models/cols")
     args = ap.parse_args(argv)
 
     exp = config.resolve_experiments(args.experiments)
+    if args.external_preds and exp["capt_ceiling"]:
+        raise SystemExit(
+            "--external-preds cannot be combined with --experiments capt_ceiling: "
+            "capt_ceiling needs a real models/cols pair (captaincy.fit_ceiling_artifact) "
+            "that a frozen external prediction artifact does not carry -- substituting "
+            "a locally-trained model's models/cols would report a multi_safe/capt_ceiling "
+            "figure that describes a different model than the one under test.")
     capt_col_active = "xp_capt_ceiling" if exp["capt_ceiling"] else None
     capt_lambda = (config.CAPT_CEILING_LAMBDA if args.capt_lambda is None
                    else args.capt_lambda)
@@ -346,13 +483,20 @@ def main(argv=None) -> int:
     df = apply_experiment_feature_gating(df, exp)
     rows, chip_recs = [], []
     for T in seasons:
-        te, models, cols = _preds_for(df, T)
-        if exp["capt_ceiling"]:
-            # Leakage-safe: fit the ceiling artifact on the validation season
-            # immediately prior to T, never on the shipped 2025-26 artifact.
-            val_season = DATA_SEASONS[DATA_SEASONS.index(T) - 1]
-            artifact = captaincy.fit_ceiling_artifact(models, df, val_season, cols)
-            te = captaincy.add_ceiling_ev(te, artifact, lam=capt_lambda)
+        if args.external_preds:
+            # D-14 seam: score a frozen, externally-produced artifact through
+            # the identical harness path instead of training in-process.
+            # models/cols are unavailable for a frozen artifact -- callers
+            # needing captaincy.fit_ceiling_artifact are refused above.
+            te, models, cols = load_external_predictions(args.external_preds, T), None, None
+        else:
+            te, models, cols = _preds_for(df, T)
+            if exp["capt_ceiling"]:
+                # Leakage-safe: fit the ceiling artifact on the validation season
+                # immediately prior to T, never on the shipped 2025-26 artifact.
+                val_season = DATA_SEASONS[DATA_SEASONS.index(T) - 1]
+                artifact = captaincy.fit_ceiling_artifact(models, df, val_season, cols)
+                te = captaincy.add_ceiling_ev(te, artifact, lam=capt_lambda)
         # Multiple teams: jittered replicas of the core model config.
         totals = [int(run_season(_jitter(te, "xp_med", s), "xp_med",
                                  use_chips=False).points.sum())
@@ -365,9 +509,19 @@ def main(argv=None) -> int:
         cdf = run_season(te, "xp_med", capt_col=capt_col_active or "xp_mean", use_chips=False)
         capt_mean = int(cdf.points.sum())
         capt_capture = cdf.capt_pts.sum() / max(cdf.best_pts.sum(), 1)
-        m_safe = int(run_season(leakage_safe_plan(te, models, cols,
-                                                  team_strength=exp["team_strength"]),
-                                "xp_plan", use_chips=False).points.sum())     # leakage-safe
+        if args.external_preds:
+            # A frozen artifact carries no models/cols, so leakage_safe_plan
+            # (which needs predict_xp(models, ...)) cannot run -- record an
+            # honest None rather than substituting a locally-trained model's
+            # models/cols, which would describe a different model than the
+            # one under test (T-10-09-04).
+            m_safe = None
+            print(f"[wf] {T}: multi_safe skipped -- --external-preds artifacts carry "
+                  "no models/cols to compute leakage_safe_plan")
+        else:
+            m_safe = int(run_season(leakage_safe_plan(te, models, cols,
+                                                      team_strength=exp["team_strength"]),
+                                    "xp_plan", use_chips=False).points.sum())  # leakage-safe
         form = int(run_season(te, "xp_form", use_chips=False).points.sum())
         hold = int(run_season(te, "xp_med", use_chips=False, max_transfers=0).points.sum())
 
@@ -391,7 +545,12 @@ def main(argv=None) -> int:
     print(res.to_string())
 
     n = len(seasons)
-    gm = res.mean().round(0).astype(int)
+    # A plain `res.mean().round(0).astype(int)` blows up if any column is
+    # all-NaN (multi_safe is always None/NaN for --external-preds seasons,
+    # T-10-09-04) -- astype(int) cannot hold NaN. Kept as a plain dict rather
+    # than a Series so a None stays a real None (not a fabricated int).
+    gm = {c: (None if res[c].isna().all() else int(round(float(res[c].mean()))))
+          for c in res.columns}
     # pandas' default ddof=1 std is NaN for a single-row Series (n=1) -- a real
     # possibility now that --seasons can select a subset for fast iteration
     # (D-14). 0.0 is the honest answer: there is no season-to-season spread to
@@ -403,12 +562,20 @@ def main(argv=None) -> int:
           f"(±{int(season_std)}/season, SE {se_model:.0f})")
     print(f"  capt-by-mean     : {gm['capt_mean']}   -> vs core "
           f"{gm['capt_mean']-gm['model_mean']:+d} (captain slot uses E[pts])")
-    print(f"  multi-GW (SAFE)  : {gm['multi_safe']}   -> vs myopic core "
-          f"{gm['multi_safe']-gm['model_mean']:+d} (leakage-free, honest)")
+    if gm["multi_safe"] is None:
+        print("  multi-GW (SAFE)  : n/a  (skipped -- --external-preds artifacts carry no "
+              "models/cols to compute leakage_safe_plan)")
+    else:
+        print(f"  multi-GW (SAFE)  : {gm['multi_safe']}   -> vs myopic core "
+              f"{gm['multi_safe']-gm['model_mean']:+d} (leakage-free, honest)")
     if args.optimistic_plan:
-        print(f"  multi-GW (OPTIMISTIC) : {gm['multi_optimistic']}   -> vs SAFE "
-              f"{gm['multi_optimistic']-gm['multi_safe']:+d} (peeks at future form -- "
-              f"the honest-vs-flattering gap, not a number to plan against)")
+        if gm["multi_safe"] is None:
+            print(f"  multi-GW (OPTIMISTIC) : {gm['multi_optimistic']}   -> vs SAFE "
+                  "n/a (multi_safe unavailable for --external-preds seasons)")
+        else:
+            print(f"  multi-GW (OPTIMISTIC) : {gm['multi_optimistic']}   -> vs SAFE "
+                  f"{gm['multi_optimistic']-gm['multi_safe']:+d} (peeks at future form -- "
+                  f"the honest-vs-flattering gap, not a number to plan against)")
     print(f"  model + chips    : {gm['model+chips']}")
     print(f"  form baseline    : {gm['form']}   -> model edge +{gm['model_mean']-gm['form']}")
     print(f"  hold (no xfers)  : {gm['hold']}   -> active mgmt +{gm['model_mean']-gm['hold']}")
@@ -451,7 +618,7 @@ def main(argv=None) -> int:
             "model+chips": int(gm["model+chips"]),
             "capt_mean": int(gm["capt_mean"]),
             "capt_capture": capt_capture_avg,
-            "multi_safe": int(gm["multi_safe"]),
+            "multi_safe": gm["multi_safe"],  # None for --external-preds seasons (T-10-09-04)
             "form": int(gm["form"]),
             "hold": int(gm["hold"]),
             "chip_deltas": chip_deltas_summary,
