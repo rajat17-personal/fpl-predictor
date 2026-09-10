@@ -361,6 +361,8 @@ def test_granularity_bracket_writes_gate_schema(monkeypatch, df_full):
 
 # --- Phase 10 plan 10-13: the GRU + transformer sequence candidates (D-12) ---
 
+import json  # noqa: E402
+
 from models.bracket import recurrent as bracket_recurrent  # noqa: E402
 from models.bracket import transformer as bracket_transformer  # noqa: E402
 from models.bracket import registry as bracket_registry  # noqa: E402
@@ -420,3 +422,45 @@ def test_registry_is_available_never_raises_for_deep_candidates():
     candidates whose factory does a lazy torch import."""
     for name in ("mlp", "rnn", "transformer"):
         assert bracket_registry.is_available(name) in (True, False)
+
+
+# --- Phase 10 plan 10-13: the Colab handoff export + manifest split authority ---
+
+@needs_data
+def test_exported_bundle_roundtrips_to_the_same_tensors(tmp_path, df_full):
+    """Export one season (the lightest valid test season, to keep this test
+    fast), reload the `.npz`/`.parquet` from disk, and assert the tensors
+    are element-wise equal to a fresh `build_sequences` call -- and that the
+    manifest's split triple matches `backtest.walk_forward`'s own
+    expanding-window computation for the same season. That second assertion
+    is what makes the manifest trustworthy as the notebook's split
+    authority (T-10-13-02)."""
+    import numpy as np
+
+    from backtest.walk_forward import DATA_SEASONS
+    from models.bracket import sequence as bracket_sequence
+    from models.bracket.registry import export_sequence_bundle
+
+    test_season = "2018-19"   # DATA_SEASONS index 2 -- the smallest valid export union
+    out_dir = export_sequence_bundle([test_season], tmp_path / "colab_input")
+    manifest = json.loads((out_dir / "manifest.json").read_text())
+
+    raw = pd.read_parquet(config.PROCESSED_DIR / "player_gw.parquet")
+    gws = sorted(df_full.loc[df_full.season == test_season, "gw"].unique().tolist())
+    fresh = [bracket_sequence.build_sequences(test_season, int(gw), raw=raw, feat=df_full)
+            for gw in gws]
+    fresh_x_seq = torch.cat([b.x_seq for b in fresh], dim=0).numpy()
+    fresh_mask = torch.cat([b.mask for b in fresh], dim=0).numpy()
+    fresh_x_static = torch.cat([b.x_static for b in fresh], dim=0).numpy()
+
+    loaded = np.load(out_dir / f"{test_season}_tensors.npz")
+    assert np.array_equal(loaded["x_seq"], fresh_x_seq, equal_nan=True)
+    assert np.array_equal(loaded["mask"], fresh_mask)
+    assert np.array_equal(loaded["x_static"], fresh_x_static, equal_nan=True)
+
+    i = DATA_SEASONS.index(test_season)
+    exp_train, exp_val = DATA_SEASONS[:i - 1], DATA_SEASONS[i - 1]
+    sp = manifest["splits"][test_season]
+    assert list(sp["train_seasons"]) == list(exp_train)
+    assert sp["val_season"] == exp_val
+    assert sp["test_season"] == test_season

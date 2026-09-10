@@ -87,3 +87,101 @@ def build_regressor(name: str, objective: str, params: dict):
             f"unknown bracket candidate '{name}' -- valid keys: {sorted(CANDIDATES)}")
     factory, _ = CANDIDATES[name]
     return factory(objective, params)
+
+
+def export_sequence_bundle(seasons: list[str], out_dir):
+    """Serialize `models/bracket/sequence.py::SequenceBundle` tensors plus
+    the identity frame for the Colab handoff (D-13's GRU/transformer
+    candidates), writing a `manifest.json` that is the notebook's SPLIT
+    AUTHORITY -- the anti-Pitfall-6 device (10-RESEARCH.md): the notebook
+    reads its splits from here, it never derives its own.
+
+    `seasons` is the list of TEST seasons the caller wants a Colab run for
+    (e.g. `["2025-26"]`). For each one, the exact `(train_seasons,
+    val_season, test_season)` triple is computed by the IDENTICAL
+    expanding-window rule `backtest.walk_forward._preds_for` uses, and
+    recorded under `manifest["splits"][test_season]`. The tensor files
+    written to `out_dir` cover the UNION of every season any requested test
+    season's split triple touches (its train seasons, its val season, and
+    itself) -- a real Colab training loop needs all of them, not just the
+    test season's own rows, and `models/bracket/sequence.py` builds each
+    season's history from that season alone (never crossing a season
+    boundary), so one exported file per needed season is sufficient; no
+    season is ever exported twice even if two requested test seasons share
+    training seasons.
+
+    Never trusted as an artifact CONSUMED back into this repo without going
+    through `backtest.walk_forward.load_external_predictions` -- this
+    function only produces the notebook's INPUT.
+    """
+    import hashlib
+    from pathlib import Path
+
+    import numpy as np
+    import pandas as pd
+    import torch
+
+    import config
+    from backtest.walk_forward import DATA_SEASONS
+    from models.bracket import sequence as bracket_sequence
+    from models.train import load_features
+    from ops.jsonio import write_json
+
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    feat = load_features()
+    raw = pd.read_parquet(config.PROCESSED_DIR / "player_gw.parquet")
+    features_sha256 = hashlib.sha256(
+        (config.PROCESSED_DIR / "features.parquet").read_bytes()).hexdigest()
+
+    splits: dict = {}
+    needed_seasons: set[str] = set()
+    for test_season in seasons:
+        i = DATA_SEASONS.index(test_season)
+        if i < 2:
+            raise ValueError(
+                f"{test_season}: need >=2 prior seasons (same rule "
+                "backtest.walk_forward._preds_for enforces)")
+        train_seasons, val_season = DATA_SEASONS[:i - 1], DATA_SEASONS[i - 1]
+        splits[test_season] = {
+            "train_seasons": list(train_seasons),
+            "val_season": val_season,
+            "test_season": test_season,
+        }
+        needed_seasons |= set(train_seasons) | {val_season, test_season}
+
+    for season in sorted(needed_seasons):
+        gws = sorted(feat.loc[feat.season == season, "gw"].unique().tolist())
+        bundles = [bracket_sequence.build_sequences(season, int(gw), raw=raw, feat=feat)
+                  for gw in gws]
+        x_seq = torch.cat([b.x_seq for b in bundles], dim=0)
+        mask = torch.cat([b.mask for b in bundles], dim=0)
+        x_static = torch.cat([b.x_static for b in bundles], dim=0)
+        y = torch.cat([b.y for b in bundles], dim=0)
+        minutes = torch.cat([b.minutes for b in bundles], dim=0)
+        ids = pd.concat([b.ids for b in bundles], ignore_index=True)
+
+        safe = season.replace("/", "-")
+        np.savez(out_dir / f"{safe}_tensors.npz",
+                 x_seq=x_seq.numpy(), mask=mask.numpy(), x_static=x_static.numpy(),
+                 y=y.numpy(), minutes=minutes.numpy())
+        ids.to_parquet(out_dir / f"{safe}_ids.parquet", index=False)
+
+    manifest = {
+        "seq_window": bracket_sequence.SEQ_WINDOW,
+        "seq_stats": list(bracket_sequence.SEQ_STATS),
+        "static_cols": list(bracket_sequence.STATIC_COLS),
+        "shapes": {
+            "x_seq": [None, bracket_sequence.SEQ_WINDOW, len(bracket_sequence.SEQ_STATS)],
+            "mask": [None, bracket_sequence.SEQ_WINDOW],
+            "x_static": [None, len(bracket_sequence.STATIC_COLS)],
+        },
+        "dtypes": {"x_seq": "float32", "mask": "bool", "x_static": "float32",
+                   "y": "float32", "minutes": "float32"},
+        "features_sha256": features_sha256,
+        "seasons_exported": sorted(needed_seasons),
+        "splits": splits,
+    }
+    write_json(manifest, out_dir / "manifest.json", indent=1)
+    return out_dir
