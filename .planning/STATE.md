@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 10
 current_phase_name: xP Experiment Follow-ups
 status: executing
-stopped_at: Completed 10-05-PLAN.md
-last_updated: "2026-09-10T13:27:51.348Z"
+stopped_at: Completed 10-06-PLAN.md
+last_updated: "2026-09-10T16:24:23.621Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 10 execution started
-state_head: 64b0a8fb1ee38b57fe78ec6d05a87f8a5aaf2992
+state_head: 24110261e0985cbcd6eff8e2ed1951d9636ea010
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 71
-  completed_plans: 57
+  completed_plans: 58
   percent: 70
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 ## Current Position
 
 Phase: 10 (xP Experiment Follow-ups) — EXECUTING
-Plan: 6 of 16
+Plan: 7 of 16
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 10 execution started
 
@@ -121,6 +121,7 @@ Progress: [███████░░░] 70% (52/55 plans complete)
 | Phase 10 P03 | 5min | 3 tasks | 3 files |
 | Phase 10 P04 | 30min | 3 tasks | 4 files |
 | Phase 10 P05 | 17min | 3 tasks | 3 files |
+| Phase 10 P06 | 55min | 3 tasks | 41 files |
 
 ## Accumulated Context
 
@@ -254,6 +255,8 @@ Recent decisions affecting current work:
 - [Phase 10]: Phase 10 Plan 04: resolve_as_of's selection/dedup logic unchanged from 10-01; extended only with a deadline_ts/news_added pass-through so encode_availability has per-row context without altering which row wins
 - [Phase 10]: Phase 10 Plan 04: 'source' kept as an on-disk-only column in availability.parquet (added by build() after encode_availability, never part of config.AVAILABILITY_COLS) so --report can break coverage down per provider without it reaching features.parquet
 - [Phase 10]: Phase 10 Plan 05: Figshare pre-scraped injury dataset verdict INSUFFICIENT (absent from search API, WAF-challenged downloads); real 8-page Transfermarkt probe measured mostly-open access (7/8 ok, 1 id_unresolved); developer go/no-go decision verbatim A -- full backfill, all seasons 2016-17+, background killable job, authorising plan 10-07
+- [Phase 10]: Phase 10 Plan 06: license posture Option A (theFPLkiwi pattern) human-approved verbatim 'A'; vendored all 38 2025-26 FPL-Core-Insights gameweeks into data/availability.py's existing committed-provider read path (934.7 KB, well under 20 MB); 2025-26 availability coverage 92.2% -> 92.7%
+- [Phase 10]: Phase 10 Plan 06: committed CSV layout follows data/availability.py's existing nested GW<n>_playerstats.csv read path rather than the plan text's literal flat filename instruction -- Rule 1 deviation, zero changes to data/availability.py needed, all verify gates pass
 
 ### Pending Todos
 
@@ -292,6 +295,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T13:27:51.122Z
-Stopped at: Completed 10-05-PLAN.md
+Last session: 2026-09-10T16:24:23.395Z
+Stopped at: Completed 10-06-PLAN.md
 Resume file: None
