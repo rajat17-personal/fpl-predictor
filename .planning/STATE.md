@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 10
 current_phase_name: xP Experiment Follow-ups
 status: executing
-stopped_at: Phase 10 context gathered
-last_updated: "2026-09-10T10:45:14.537Z"
+stopped_at: Completed 10-01-PLAN.md
+last_updated: "2026-09-10T11:30:53.845Z"
 last_activity: 2026-09-10
-last_activity_desc: Phase 09 complete, transitioned to Phase 7
-state_head: 36aaaf4c1a87e365cae668bad994676f50911a61
+last_activity_desc: Phase 10 execution started
+state_head: f417eaa17f9cea32608f5f5917ba3a9f65f2804a
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 71
-  completed_plans: 52
+  completed_plans: 53
   percent: 70
 ---
 
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-08)
 
 **Core value:** The weekly recommendations (xP table, squad, captains, transfers) must keep flowing reliably — every change must leave the pipeline, API, and site at least as correct and more trustworthy than before.
-**Current focus:** Phase 7 — Parity Validation & Cutover
+**Current focus:** Phase 10 — xP Experiment Follow-ups
 
 ## Current Position
 
-Phase: 10 (xP Experiment Follow-ups) — READY TO EXECUTE
-Plan: Not started
+Phase: 10 (xP Experiment Follow-ups) — EXECUTING
+Plan: 2 of 16
 Status: Ready to execute
-Last activity: 2026-09-10 — RL v3 9h run evaluated: beats chips_v2 on 2025-26, still -97 vs shipped heuristic; rejected, curve recorded
+Last activity: 2026-09-10 — Phase 10 execution started
 
-Progress: [███████████████████░] 95% (52/55 plans complete)
+Progress: [███████░░░] 70% (52/55 plans complete)
 
 ## Performance Metrics
 
@@ -116,6 +116,7 @@ Progress: [███████████████████░] 95% (52
 | Phase 09 P08 | 64min | 3 tasks | 9 files |
 | Phase 09 P09 | 6h 29min | 3 tasks | 7 files |
 | Phase 09 P10 | 30min | 3 tasks | 6 files |
+| Phase 10 P01 | 42min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -239,6 +240,8 @@ Recent decisions affecting current work:
 - [Phase 09]: fbref_v2 confirmed not-acquirable: three real-Chrome spike attempts all hung inside the UC-mode reconnect call while a plain driver confirms the site still serves Cloudflare's challenge page -- a harder access failure than the prior documented value-blanking finding; no new scraping infrastructure built (D-04)
 - [Phase 09]: Final combined run (D-13) measured model+chips 2262, identical to the plan 09-01 baseline and 18 short of the D-05 >=2,280 bar -- no flag was adjusted to chase it — Every one of the phase's eight experiment flags ended default-off (all REJECTED/not-triggered/not-acquirable per plans 09-03 through 09-09), so the shipped default config equals the opening baseline by construction
 - [Phase 09]: Zero product wiring added to predict/live.py or predict/export.py this phase -- confirmed via a new tests/test_product.py export-contract regression test and a real end-to-end python -m predict.export run — The plan's own instruction is to wire nothing for a flag that stayed off; since none of the eight flags adopted, the task's only real work was the no-op verification
+- [Phase 10]: Phase 10 Plan 01: fpl_core_insights provider directory layout is <base>/<season-as-in-source-repo>/GW<n>_playerstats.csv (flat), this plan's own choice since 10-06's committed vendoring has not run yet — 10-RESEARCH.md Pitfall 2: probe schema live before designing against it; layout documented in data/availability.py's module docstring
+- [Phase 10]: Phase 10 Plan 01: locked D-02's news-sentiment trigger at pooled played-only spearman_xp_med < 0.500 (0.481 midpoint on record) in IMPROVEMENTS.md before any Phase 10 measuring run — T-10-01-05: pre-declared criteria written after a measurement risks being back-fitted to the number
 
 ### Pending Todos
 
@@ -277,6 +280,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T07:44:50.911Z
-Stopped at: Phase 10 context gathered
-Resume file: .planning/phases/10-xp-experiment-follow-ups/10-CONTEXT.md
+Last session: 2026-09-10T11:30:53.632Z
+Stopped at: Completed 10-01-PLAN.md
+Resume file: None
