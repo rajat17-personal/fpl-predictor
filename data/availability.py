@@ -69,6 +69,7 @@ import pandas as pd
 
 import config
 from data import id_map
+from ops.jsonio import write_json
 
 # Module-level kill switch (09-PATTERNS.md convention, matching
 # data/fotmob.py::FOTMOB_ENABLED): flipping this to False makes every public
@@ -414,6 +415,11 @@ def build(*, force: bool = False) -> pd.DataFrame:
     snaps = load_sources()
     resolved = resolve_as_of(snaps, deadlines)
     out = encode_availability(resolved)
+    # `source` is on-disk-only provenance for `--report`'s per-(season,
+    # source) breakdown -- never part of config.AVAILABILITY_COLS, so
+    # attach()'s merge (which selects only AVAILABILITY_COLS members) never
+    # lets it reach player_gw.parquet/features.parquet.
+    out["source"] = resolved["source"] if not resolved.empty else pd.Series(dtype="object")
     out.to_parquet(_OUT, index=False)
 
     n_sources = resolved["source"].nunique() if not resolved.empty else 0
@@ -472,14 +478,104 @@ def attach(full: pd.DataFrame) -> pd.DataFrame:
     return merged
 
 
+_COVERAGE_OUT = config.EXPERIMENTS_DIR / "availability_coverage.json"
+
+
+def report() -> dict:
+    """Read-only per-season, per-source coverage + snapshot-staleness report.
+
+    Loads the EXISTING `availability.parquet` (never rebuilds it -- no
+    network access, no write to `_OUT`) and prints, per (season, source):
+    row count, distinct players, distinct gameweeks, `av_chance_pct`
+    non-null rate, and the median/95th-percentile `av_snapshot_age_days`.
+    Then, per season: the fraction of that season's `player_gw.parquet` rows
+    (deduplicated on the join key, matching `build()`'s own coverage calc)
+    carrying a non-null `av_chance_pct` -- the number D-09's "covered
+    season" language refers to -- with a loud `WARNING ... below 50%` line
+    (mirroring `backtest/benchmark_external.py::score`'s own sub-50% warning)
+    for any season under that bar, so a thin join can never be quietly
+    reported as a result.
+
+    Writes the same figures to `config.EXPERIMENTS_DIR /
+    "availability_coverage.json"` (via `ops.jsonio.write_json`) so plan 10-08
+    can cite exact numbers instead of re-deriving them from a printed table.
+
+    T-10-04-05: this function is READ-ONLY. It must never call `build()` or
+    write to `_OUT` -- a coverage check during an adoption run must never be
+    able to perturb the artifact being judged.
+    """
+    if not _OUT.exists():
+        print(f"  [availability] {_OUT.name} does not exist -- run "
+              f"`python -m data.availability` (or --force) first")
+        payload = {"per_season": {}, "per_source": {}}
+        write_json(payload, _COVERAGE_OUT, indent=2)
+        return payload
+
+    d = pd.read_parquet(_OUT)
+    keys = pd.read_parquet(config.PROCESSED_DIR / "player_gw.parquet",
+                           columns=["season", "gw", "player_code"]).drop_duplicates()
+
+    per_source: dict = {}
+    if not d.empty and "source" in d.columns:
+        for (season, source), sub in d.groupby(["season", "source"], sort=True):
+            ages = sub["av_snapshot_age_days"].dropna()
+            row = {
+                "n_rows": int(len(sub)),
+                "n_players": int(sub["player_code"].nunique()),
+                "n_gws": int(sub["gw"].nunique()),
+                "chance_pct_non_null_rate": float(sub["av_chance_pct"].notna().mean()),
+                "snapshot_age_days_median": float(ages.median()) if len(ages) else None,
+                "snapshot_age_days_p95": float(ages.quantile(0.95)) if len(ages) else None,
+            }
+            per_source[f"{season}|{source}"] = row
+            print(f"  [availability] {season} / {source}: n={row['n_rows']:,} "
+                  f"players={row['n_players']} gws={row['n_gws']} "
+                  f"chance_pct_non_null={row['chance_pct_non_null_rate']:.1%} "
+                  f"snapshot_age_days median={row['snapshot_age_days_median']} "
+                  f"p95={row['snapshot_age_days_p95']}")
+
+    per_season: dict = {}
+    for season, keys_season in keys.groupby("season", sort=True):
+        if d.empty or "av_chance_pct" not in d.columns:
+            joined = keys_season.assign(av_chance_pct=pd.NA)
+        else:
+            joined = keys_season.merge(
+                d[["season", "gw", "player_code", "av_chance_pct"]],
+                on=["season", "gw", "player_code"], how="left")
+        n = len(joined)
+        n_covered = int(joined["av_chance_pct"].notna().sum())
+        cov = float(n_covered / n) if n else 0.0
+        per_season[season] = {"n_rows": n, "n_covered": n_covered, "coverage": cov}
+        print(f"  [availability] season {season}: coverage {cov:.1%} "
+              f"({n_covered:,}/{n:,} rows)")
+        if cov < 0.5:
+            print(f"[availability] WARNING {season}: coverage {cov:.1%} below 50%")
+
+    payload = {"per_season": per_season, "per_source": per_source}
+    write_json(payload, _COVERAGE_OUT, indent=2)
+    print(f"  [availability] wrote {_COVERAGE_OUT.relative_to(config.ROOT)}")
+    return payload
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true", help="ignore the cache, rebuild")
+    ap.add_argument(
+        "--report", action="store_true",
+        help="READ-ONLY: print + write per-season/per-source coverage and "
+             "snapshot-staleness percentiles from the EXISTING "
+             "availability.parquet cache -- never rebuilds it, never touches "
+             "the network")
     args = ap.parse_args(argv)
 
     if not AVAILABILITY_ENABLED:
         print("[availability] disabled (AVAILABILITY_ENABLED=False)")
         return 0
+
+    if args.report:
+        report()
+        return 0
+
     out = build(force=args.force)
     print(f"availability: {len(out):,} rows")
     print(f"wrote {_OUT.relative_to(config.ROOT)}")
