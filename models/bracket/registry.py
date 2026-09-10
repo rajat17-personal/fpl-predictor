@@ -6,12 +6,17 @@ classifier, the calibration path, and the `ComponentModel` DEF/GK structure
 are all untouched, and only the conditional-points regressor construction
 is routed through here.
 
-`CANDIDATES` intentionally contains only the candidates this plan actually
-builds (`lgbm`, `ridge`, `xgb`, `catboost`); `config.BRACKET_CANDIDATES`
-additionally reserves `mlp`/`rnn`/`transformer` names for future plans
-(10-11/10-13) that are not yet built and are not in `CANDIDATES` -- callers
-must always check `set(registry.CANDIDATES) <= set(config.BRACKET_CANDIDATES)`,
-never the reverse.
+`CANDIDATES` now covers all seven `config.BRACKET_CANDIDATES` names (plan
+10-10's `lgbm`/`ridge`/`xgb`/`catboost`, plan 10-11's `mlp`, and this plan's
+`rnn`/`transformer`) -- `set(registry.CANDIDATES) == set(config.BRACKET_CANDIDATES)`.
+The three deep-candidate factories (`mlp`/`rnn`/`transformer`) import their
+owning module LAZILY, inside the factory function body rather than at this
+module's top level: `models/bracket/deep.py`, `recurrent.py` and
+`transformer.py` all import `torch` at module scope, which would make this
+whole registry unimportable on a machine without torch installed if imported
+eagerly here. `is_available` never triggers that import either -- it only
+resolves `importlib.util.find_spec("torch")`, so it can answer False for a
+missing package rather than raising.
 """
 from __future__ import annotations
 
@@ -27,12 +32,34 @@ def _lgbm_factory(objective: str, params: dict):
     return LGBMRegressor(objective=objective, **params)
 
 
+def _mlp_factory(objective: str, params: dict):
+    """Plan 10-11's tabular MLP candidate -- lazy import (see module docstring)."""
+    from models.bracket import deep
+    return deep.build_mlp(objective, params)
+
+
+def _rnn_factory(objective: str, params: dict):
+    """This plan's GRU sequence candidate -- lazy import (see module docstring)."""
+    from models.bracket import recurrent
+    return recurrent.build_gru(objective, params)
+
+
+def _transformer_factory(objective: str, params: dict):
+    """This plan's transformer sequence candidate -- lazy import (see module
+    docstring)."""
+    from models.bracket import transformer as transformer_mod
+    return transformer_mod.build_transformer(objective, params)
+
+
 # name -> (factory callable, module import name required for availability)
 CANDIDATES = {
     "lgbm": (_lgbm_factory, "lightgbm"),
     "ridge": (classical.RidgeRegressorFactory(), "sklearn"),
     "xgb": (gbdt.XgbRegressorFactory(), "xgboost"),
     "catboost": (gbdt.CatBoostRegressorFactory(), "catboost"),
+    "mlp": (_mlp_factory, "torch"),
+    "rnn": (_rnn_factory, "torch"),
+    "transformer": (_transformer_factory, "torch"),
 }
 
 

@@ -357,3 +357,66 @@ def test_granularity_bracket_writes_gate_schema(monkeypatch, df_full):
     assert not missing, missing
     assert "granularity" in out and "granularity_scores" in out
     assert set(out["granularity_scores"]) == {"per_position", "pooled"}
+
+
+# --- Phase 10 plan 10-13: the GRU + transformer sequence candidates (D-12) ---
+
+from models.bracket import recurrent as bracket_recurrent  # noqa: E402
+from models.bracket import transformer as bracket_transformer  # noqa: E402
+from models.bracket import registry as bracket_registry  # noqa: E402
+
+
+def test_sequence_regressors_consume_the_padding_mask():
+    """The important test: build a synthetic bundle with known padding
+    (including one first-appearance row that is fully padded), predict, then
+    overwrite the PADDED timesteps with large arbitrary values, predict
+    again, and assert the two prediction vectors are bit-identical for BOTH
+    the GRU and the transformer. A model that quietly attends to padding
+    would pass every shape assertion and produce a plausible, wrong number."""
+    torch.manual_seed(0)
+    window, n_stats, n_static, n_rows = 10, 5, 3, 4
+    x_seq = torch.randn(n_rows, window, n_stats)
+    x_static = torch.randn(n_rows, n_static)
+    lengths = torch.tensor([10, 6, 1, 0])   # last row: a first appearance
+    idx = torch.arange(window).unsqueeze(0)
+    mask = idx < (window - lengths).unsqueeze(1)   # True = padded
+
+    models = [
+        bracket_recurrent.GruSeqRegressor(n_stats=n_stats, n_static=n_static, hidden_size=8),
+        bracket_transformer.TransformerSeqRegressor(n_stats=n_stats, n_static=n_static,
+                                                     window=window),
+    ]
+    for model in models:
+        model.eval()
+        with torch.no_grad():
+            pred1 = model(x_seq, mask, x_static)
+
+        x_seq_tampered = x_seq.clone()
+        x_seq_tampered[mask] = 1e6   # only touches PADDED positions
+
+        with torch.no_grad():
+            pred2 = model(x_seq_tampered, mask, x_static)
+
+        assert torch.equal(pred1, pred2), f"{type(model).__name__} attends to padding"
+        assert torch.isfinite(pred1).all(), f"{type(model).__name__} produced non-finite output"
+
+
+def test_transformer_size_matches_locked_budget():
+    """10-01-PLAN.md's locked Transformer budget row."""
+    assert (bracket_transformer.D_MODEL, bracket_transformer.N_HEAD,
+            bracket_transformer.N_LAYERS, bracket_transformer.DIM_FF,
+            bracket_transformer.DROPOUT) == (64, 4, 2, 128, 0.1)
+
+
+def test_registry_covers_all_seven_bracket_candidates():
+    import config
+    missing = [c for c in config.BRACKET_CANDIDATES if c not in bracket_registry.CANDIDATES]
+    assert not missing, missing
+    assert set(bracket_registry.CANDIDATES) == set(config.BRACKET_CANDIDATES)
+
+
+def test_registry_is_available_never_raises_for_deep_candidates():
+    """is_available answers True/False, never raises -- even for the deep
+    candidates whose factory does a lazy torch import."""
+    for name in ("mlp", "rnn", "transformer"):
+        assert bracket_registry.is_available(name) in (True, False)
