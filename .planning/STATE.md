@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 Phase: 7 — Parity Validation & Cutover
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-09-09 — Completed quick task 260909-elx: ep_next experiment verified, both flags rejected
+Last activity: 2026-09-10 — RL v3 9h run evaluated: beats chips_v2 on 2025-26, still -97 vs shipped heuristic; rejected, curve recorded
 
 Progress: [███████████████████░] 95% (52/55 plans complete)
 

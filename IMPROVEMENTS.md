@@ -1409,6 +1409,43 @@ solver reference; no extension, no extra seeds. Purpose: extend the measured
 compute→points curve (30min→v1, 120min→v2, 540min→v3) by one more point on the
 best-covered season.
 
+### Addendum (2026-09-10): rl_strategy v3 — 9h single-season run: beats the solver scheduler, still loses to the shipped heuristic
+
+Box spent exactly as declared above (3 seeds x 540 min on 2025-26, all `capped: true`,
+~237-248k timesteps each — ~5x v2's per-policy experience). Adoption evals
+`wf_rl_v3_adopt_2025-26_seed{0,1,2}.json` (1 season x 5 replicas each); all 2025-26
+references from the same harness:
+
+| arm (2025-26 only) | model+chips |
+|---|---:|
+| v1 heuristic scheduler (shipped default, `wf_baseline_5season`) | **2237** |
+| **rl v3 seed-mean (540-min box)** | **2140** (2116 / 2187 / 2117) |
+| chips_v2 solver-scored scheduler (`wf_chips_v2_5season`) | 2101 |
+| rl v2 seed-mean (120-min box) | 2059 (2046 / 2117 / 2014) |
+| rl v1 seed-mean (30-min box) | 1985 (1898 / 1898 / 2160) |
+
+- **The notable crossing:** every v3 seed individually beats the solver-scored
+  scheduler on this season (worst seed 2116 vs 2101) — the literal D-02 bar
+  ("beat chips_v2") is met for the first time, on this one season. But chips_v2 was
+  itself rejected for losing to the v1 heuristic, and v3 still trails that shipped
+  default by **−97** (2140 vs 2237), so nothing is adoptable: replacing the v1
+  scheduler with the v3 policy would cost points.
+- **The compute→points curve, third point (2025-26 seed-means):** 30 min → 1985,
+  120 min → 2059 (+74), 540 min → 2140 (+81). Strikingly log-linear: each ~4.5x
+  compute multiplication buys roughly +75-80 points. Extrapolating the SAME rate
+  (optimistic — diminishing returns are the norm), closing the remaining −97 to the
+  v1 heuristic needs one to two more quadruplings: ~40 hours to multiple days of GPU
+  per policy, to at best MATCH a zero-cost heuristic. Single-season caveats apply
+  (n=1 season, season std ≈55, seed spread 71).
+- **Verdict: still REJECTED for adoption** (`config.EXPERIMENTS['rl_strategy']`
+  stays `False`), but the finding is upgraded from "RL loses" to "RL learns on a
+  clean log-linear curve whose exchange rate is uneconomical." If GPU-hours ever
+  become free-tier abundant, this curve is the business case to re-open — and the
+  measured crossing over chips_v2 means the policy's ceiling is not obviously below
+  solver-level scheduling. v1/v2/v3 policy artifacts all preserved
+  (`models/artifacts/` + `rl_v2_policies/` + `rl_v3_policies/`; v1's 2025-26 pair
+  restored from `rl_v1_2025-26_backup`).
+
 ## Reference findings (why the priorities)
 
 Levers that beat noise: model vs form baseline (+83..92/season), active transfers
