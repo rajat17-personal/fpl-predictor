@@ -24,11 +24,12 @@ import sys
 import joblib
 import numpy as np
 import pandas as pd
-from lightgbm import (LGBMClassifier, LGBMRanker, LGBMRegressor, early_stopping,
+from lightgbm import (LGBMClassifier, LGBMRanker, early_stopping,
                       log_evaluation)
 from sklearn.isotonic import IsotonicRegression
 
 import config
+from models.bracket import registry as bracket_registry
 
 ARTIFACTS = config.ROOT / "models" / "artifacts"
 ARTIFACTS.mkdir(parents=True, exist_ok=True)
@@ -70,16 +71,20 @@ def load_features() -> pd.DataFrame:
 
 def train_predict(df: pd.DataFrame, train_seasons, val_season, test_seasons,
                   params: dict | None = None, objectives: dict | None = None,
-                  minutes_model: str = "binary", calibrate: bool = False):
+                  minutes_model: str = "binary", calibrate: bool = False,
+                  stage2: str = "lgbm"):
     """Train per-position two-stage models on the given split and return the test
-    rows with xp_<tag> columns added, plus the models and feature list."""
+    rows with xp_<tag> columns added, plus the models and feature list.
+
+    stage2: passthrough to `train_position`'s D-12 model-class bracket seam."""
     objectives = objectives or STAGE2_OBJECTIVES
     cols = feature_cols(df)
     tr = df[df.season.isin(train_seasons)]
     va = df[df.season == val_season]
     te = df[df.season.isin(test_seasons)].copy()
     models = {pos: train_position(pos, tr, va, cols, params, objectives,
-                                  minutes_model=minutes_model, calibrate=calibrate)
+                                  minutes_model=minutes_model, calibrate=calibrate,
+                                  stage2=stage2)
               for pos in config.POSITIONS}
     for tag in objectives:
         te[f"xp_{tag}"] = predict_xp(models, te, cols, tag)
@@ -120,8 +125,12 @@ class ComponentModel:
         return self.resid_reg.predict(X) + p_cs * self.CS_VALUE
 
 
-def _train_cs_component(trp_p, vap_p, cols, params):
-    """Clean-sheet classifier + residual (non-CS) points regressor, for DEF/GK."""
+def _train_cs_component(trp_p, vap_p, cols, params, stage2: str = "lgbm"):
+    """Clean-sheet classifier + residual (non-CS) points regressor, for DEF/GK.
+
+    The clean-sheet classifier stays LightGBM regardless of `stage2` -- only
+    the residual points regressor is swappable (D-12's "one swap seam" never
+    touches a classifier)."""
     ytr, yva = trp_p.y_clean_sheets, vap_p.y_clean_sheets
     clf = LGBMClassifier(**params)
     clf.fit(_prep(trp_p, cols), ytr, eval_set=[(_prep(vap_p, cols), yva)],
@@ -130,10 +139,9 @@ def _train_cs_component(trp_p, vap_p, cols, params):
 
     rtr = trp_p.y_points - ComponentModel.CS_VALUE * trp_p.y_clean_sheets
     rva = vap_p.y_points - ComponentModel.CS_VALUE * vap_p.y_clean_sheets
-    reg = LGBMRegressor(objective="regression_l1", **params)
-    reg.fit(_prep(trp_p, cols), rtr, eval_set=[(_prep(vap_p, cols), rva)],
-            eval_metric="l1", callbacks=[early_stopping(50, verbose=False), log_evaluation(0)])
-    return ComponentModel(clf, reg), reg.best_iteration_
+    reg = bracket_registry.build_regressor(stage2, "regression_l1", params)
+    _fit_stage2(stage2, reg, _prep(trp_p, cols), rtr, _prep(vap_p, cols), rva)
+    return ComponentModel(clf, reg), getattr(reg, "best_iteration_", None)
 
 
 def _train_ranker(trp_p, vap_p, cols, params):
@@ -163,14 +171,40 @@ class _ConstantModel:
         return np.full(len(X), self.value)
 
 
-def _fit_reg(objective, params, trX, trY, vaX, vaY):
-    reg = LGBMRegressor(objective=objective, **params)
-    reg.fit(trX, trY, eval_set=[(vaX, vaY)], eval_metric="l1",
-            callbacks=[early_stopping(50, verbose=False), log_evaluation(0)])
+def _fit_reg(objective, params, trX, trY, vaX, vaY, stage2: str = "lgbm"):
+    reg = bracket_registry.build_regressor(stage2, objective, params)
+    _fit_stage2(stage2, reg, trX, trY, vaX, vaY)
     return reg
 
 
-def _train_3state(pos, trp, vap, cols, params, objectives):
+def _fit_stage2(stage2: str, reg, trX, trY, vaX, vaY):
+    """Fit an unfitted stage-2 regressor from `models.bracket.registry.
+    build_regressor` on the given train/val split.
+
+    `stage2="lgbm"` fits via the EXACT same call LightGBM's stage-2
+    regressor always used pre-bracket (`early_stopping(50)` callback,
+    `eval_metric="l1"`) -- this is the identical code path stage2="lgbm"
+    always took, not merely an equivalent one, so the shipped path is
+    byte-unchanged. Every challenger uses its own library's early-stopping
+    mechanism at the SAME patience (D-19 allocates no search budget beyond
+    matching it): XGBoost's `early_stopping_rounds` is set at construction
+    (models/bracket/gbdt.py) so a plain `eval_set` here is enough; CatBoost's
+    is also set at construction. Ridge (no boosting, no early stopping) just
+    fits once on the training split -- it ignores `vaX`/`vaY` entirely.
+    """
+    if stage2 == "lgbm":
+        reg.fit(trX, trY, eval_set=[(vaX, vaY)], eval_metric="l1",
+                callbacks=[early_stopping(50, verbose=False), log_evaluation(0)])
+    elif stage2 == "xgb":
+        reg.fit(trX, trY, eval_set=[(vaX, vaY)], verbose=False)
+    elif stage2 == "catboost":
+        reg.fit(trX, trY, eval_set=(vaX, vaY), verbose=False)
+    else:
+        reg.fit(trX, trY)
+    return reg
+
+
+def _train_3state(pos, trp, vap, cols, params, objectives, stage2: str = "lgbm"):
     """C.1 minutes upgrade: no-play / cameo (<60) / start (>=60) classifier, with
     separate conditional-points regressors for starts and cameos:
         xP = P(start)·E[pts|start] + P(cameo)·E[pts|cameo]
@@ -197,7 +231,7 @@ def _train_3state(pos, trp, vap, cols, params, objectives):
                 store[tag] = _ConstantModel(t.y_points.mean() if len(t) else 1.0)
             else:
                 store[tag] = _fit_reg(objective, params, _prep(t, cols), t.y_points,
-                                      _prep(v, cols), v.y_points)
+                                      _prep(v, cols), v.y_points, stage2=stage2)
     return {"kind": "3state", "clf": clf, "regs_start": regs_start,
             "regs_cameo": regs_cameo, "clf_best": clf.best_iteration_,
             "reg_best": {}}
@@ -205,19 +239,26 @@ def _train_3state(pos, trp, vap, cols, params, objectives):
 
 def train_position(pos: str, tr: pd.DataFrame, va: pd.DataFrame, cols: list[str],
                    params: dict | None = None, objectives: dict | None = None,
-                   minutes_model: str = "binary", calibrate: bool = False):
+                   minutes_model: str = "binary", calibrate: bool = False,
+                   stage2: str = "lgbm"):
     """Train stage-1 (minutes) and stage-2 conditional-points regressor(s).
 
     minutes_model: "binary" (default, P(play)) or "3state" (no-play/cameo/start).
     calibrate: isotonic-recalibrate binary P(play) on the validation season
     (fixes the DEF under-confidence found by models.calibration).
+    stage2: the D-12 model-class bracket's swap seam -- one of
+    `models.bracket.registry.CANDIDATES` ("lgbm" default, "ridge", "xgb",
+    "catboost"). Only the conditional-points regressor is swapped; the
+    stage-1 P(play) classifier above is LightGBM in every case, and
+    stage2="lgbm" takes the exact pre-bracket code path (byte-equivalent,
+    not merely equivalent).
     """
     params = params or _LGB_COMMON
     objectives = objectives or STAGE2_OBJECTIVES
     trp, vap = tr[tr.position == pos], va[va.position == pos]
 
     if minutes_model == "3state":
-        return _train_3state(pos, trp, vap, cols, params, objectives)
+        return _train_3state(pos, trp, vap, cols, params, objectives, stage2=stage2)
 
     # Stage 1: probability the player features in the match at all.
     clf = LGBMClassifier(**params)
@@ -239,21 +280,19 @@ def train_position(pos: str, tr: pd.DataFrame, va: pd.DataFrame, cols: list[str]
             continue
         if objective == "cs":     # dedicated clean-sheet decomposition for DEF/GK
             if pos in ("GK", "DEF"):
-                regs[tag], best[tag] = _train_cs_component(trp_p, vap_p, cols, params)
+                regs[tag], best[tag] = _train_cs_component(trp_p, vap_p, cols, params,
+                                                            stage2=stage2)
             else:                 # MID/FWD: clean sheets negligible -> plain L1
-                reg = LGBMRegressor(objective="regression_l1", **params)
-                reg.fit(_prep(trp_p, cols), trp_p.y_points,
-                        eval_set=[(_prep(vap_p, cols), vap_p.y_points)], eval_metric="l1",
-                        callbacks=[early_stopping(50, verbose=False), log_evaluation(0)])
-                regs[tag], best[tag] = reg, reg.best_iteration_
+                reg = bracket_registry.build_regressor(stage2, "regression_l1", params)
+                _fit_stage2(stage2, reg, _prep(trp_p, cols), trp_p.y_points,
+                           _prep(vap_p, cols), vap_p.y_points)
+                regs[tag], best[tag] = reg, getattr(reg, "best_iteration_", None)
             continue
-        reg = LGBMRegressor(objective=objective, **params)
-        reg.fit(_prep(trp_p, cols), trp_p.y_points,
-                eval_set=[(_prep(vap_p, cols), vap_p.y_points)],
-                eval_metric="l1",
-                callbacks=[early_stopping(50, verbose=False), log_evaluation(0)])
+        reg = bracket_registry.build_regressor(stage2, objective, params)
+        _fit_stage2(stage2, reg, _prep(trp_p, cols), trp_p.y_points,
+                   _prep(vap_p, cols), vap_p.y_points)
         regs[tag] = reg
-        best[tag] = reg.best_iteration_
+        best[tag] = getattr(reg, "best_iteration_", None)
 
     return {"clf": clf, "regs": regs, "cal": cal,
             "clf_best": clf.best_iteration_, "reg_best": best}

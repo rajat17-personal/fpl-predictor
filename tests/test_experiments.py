@@ -13,6 +13,8 @@ from backtest.enrichment_slices import cell_stats
 from backtest.season import run_season
 from backtest.walk_forward import apply_experiment_feature_gating, resolve_scheduler
 from models import captaincy
+from models.bracket import registry as bracket_registry
+from models.train import feature_cols, load_features, predict_xp, train_position
 
 FEATURES = config.PROCESSED_DIR / "features.parquet"
 RAW = config.PROCESSED_DIR / "player_gw.parquet"
@@ -22,7 +24,9 @@ needs_data = pytest.mark.skipif(not (FEATURES.exists() and RAW.exists()),
 _EXPERIMENT_KEYS = {"capt_ceiling", "capt_mc", "chips_v2", "team_strength",
                     "rl_strategy", "understat", "fotmob", "fbref_v2",
                     "ep_next_lag", "ep_next_now", "availability_flags",
-                    "transfermarkt_injury"}
+                    "transfermarkt_injury", "bracket_ridge", "bracket_xgb",
+                    "bracket_catboost", "bracket_mlp", "bracket_rnn",
+                    "bracket_transformer"}
 
 
 # --- config.EXPERIMENTS / resolve_experiments() -----------------------------
@@ -520,3 +524,111 @@ def test_paired_cluster_bootstrap_degenerate_ratio_metric_collapses_to_point():
     observed = float(on_ratio - off_ratio)
     assert out["ci_lo"] == pytest.approx(observed)
     assert out["ci_hi"] == pytest.approx(observed)
+
+
+# --- models.bracket (Phase 10 plan 10-10: D-12 model-class bracket) ---------
+
+_TR_SEASONS = ["2016-17", "2017-18"]
+_VA_SEASON = "2018-19"
+
+
+@pytest.fixture(scope="module")
+def _bracket_split():
+    """A small season subset (2 train seasons + 1 val season), not the full
+    8-season TRAIN_SEASONS -- these tests check PREDICTION EQUIVALENCE and
+    class wiring, not accuracy, so a small/fast split is the honest choice."""
+    df = load_features()
+    cols = feature_cols(df)
+    tr = df[df.season.isin(_TR_SEASONS)]
+    va = df[df.season == _VA_SEASON]
+    return tr, va, cols
+
+
+def test_registry_candidates_subset_of_bracket_candidates():
+    assert set(bracket_registry.CANDIDATES) <= set(config.BRACKET_CANDIDATES)
+
+
+def test_registry_is_available_ridge_always_true():
+    """sklearn is already a project dependency -- "ridge" never needs the
+    dev-only experiments lockfile."""
+    assert bracket_registry.is_available("ridge") is True
+
+
+def test_registry_is_available_unknown_name_returns_false_not_raise():
+    assert bracket_registry.is_available("bogus") is False
+
+
+def test_registry_is_available_false_when_package_missing(monkeypatch):
+    """Simulates a candidate whose required package is NOT installed (e.g. a
+    machine without requirements-experiments.txt) -- is_available must
+    return False, never raise."""
+    monkeypatch.setattr(bracket_registry.importlib.util, "find_spec", lambda name: None)
+    assert bracket_registry.is_available("xgb") is False
+
+
+def test_registry_build_regressor_bogus_name_raises_naming_valid_keys():
+    with pytest.raises(ValueError) as exc:
+        bracket_registry.build_regressor("bogus", "regression", {})
+    msg = str(exc.value)
+    assert "bogus" in msg
+    for name in bracket_registry.CANDIDATES:
+        assert name in msg
+
+
+@needs_data
+def test_stage2_lgbm_default_matches_explicit_prediction_equivalence(_bracket_split):
+    """The regression gate proving the bracket parameterization changed
+    NOTHING for the shipped path: stage2 defaulted vs stage2="lgbm" explicit
+    take the identical code path (models/train.py::_fit_stage2), so
+    predictions must match to within 1e-9, not merely be "close"."""
+    tr, va, cols = _bracket_split
+    m_default = {"MID": train_position("MID", tr, va, cols)}
+    m_explicit = {"MID": train_position("MID", tr, va, cols, stage2="lgbm")}
+    pred_default = predict_xp(m_default, va, cols, "med").dropna()
+    pred_explicit = predict_xp(m_explicit, va, cols, "med").dropna()
+    assert len(pred_default) > 0
+    assert np.allclose(pred_default.to_numpy(), pred_explicit.to_numpy(), atol=1e-9)
+
+
+@needs_data
+def test_stage2_ridge_swaps_only_the_conditional_points_regressor(_bracket_split):
+    """stage2="ridge" replaces the stage-2 regressor's CLASS but the stage-1
+    P(play) classifier stays LGBMClassifier regardless."""
+    from lightgbm import LGBMClassifier, LGBMRegressor
+    from sklearn.pipeline import Pipeline
+
+    tr, va, cols = _bracket_split
+    m_lgbm = train_position("MID", tr, va, cols, stage2="lgbm")
+    m_ridge = train_position("MID", tr, va, cols, stage2="ridge")
+
+    assert isinstance(m_lgbm["regs"]["med"], LGBMRegressor)
+    assert isinstance(m_ridge["regs"]["med"], Pipeline)
+    assert isinstance(m_lgbm["clf"], LGBMClassifier)
+    assert isinstance(m_ridge["clf"], LGBMClassifier)  # unchanged by stage2
+
+
+@needs_data
+def test_stage2_unknown_value_raises_naming_value_and_valid_keys(_bracket_split):
+    tr, va, cols = _bracket_split
+    with pytest.raises(ValueError) as exc:
+        train_position("MID", tr, va, cols, stage2="not-a-real-candidate")
+    msg = str(exc.value)
+    assert "not-a-real-candidate" in msg
+    for name in bracket_registry.CANDIDATES:
+        assert name in msg
+
+
+@needs_data
+def test_stage2_ridge_def_component_path_swaps_only_residual_regressor(_bracket_split):
+    """DEF's clean-sheet decomposition (ComponentModel) still fires with
+    stage2="ridge": the clean-sheet classifier stays LightGBM, and only the
+    residual (non-CS) points regressor is the swapped class."""
+    from lightgbm import LGBMClassifier
+    from sklearn.pipeline import Pipeline
+
+    tr, va, cols = _bracket_split
+    m = train_position("DEF", tr, va, cols, objectives={"cs_tag": "cs"}, stage2="ridge")
+    component = m["regs"]["cs_tag"]
+    assert isinstance(component.cs_clf, LGBMClassifier)
+    assert isinstance(component.resid_reg, Pipeline)
+    assert m["reg_best"]["cs_tag"] is None  # Ridge has no best_iteration_

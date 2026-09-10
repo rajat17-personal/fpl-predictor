@@ -249,7 +249,25 @@ EXPERIMENTS: dict[str, bool] = {
     # --- Phase 10 ---
     "availability_flags": False,
     "transfermarkt_injury": False,
+    # --- Phase 10 plan 10-10: D-12 model-class bracket -- stage-2 regressor
+    # swap. Each flag names a `models.bracket.registry.CANDIDATES` (or a
+    # future-plan) entry the D-15 cheap gate (models/bracket/gate.py) has
+    # measured; a candidate advances only by a deliberate edit here after
+    # its gate result clears GATE_MARGIN, never by default.
+    "bracket_ridge": False,
+    "bracket_xgb": False,
+    "bracket_catboost": False,
+    "bracket_mlp": False,        # reserved for a future plan (10-11/10-13)
+    "bracket_rnn": False,        # reserved for a future plan (10-11/10-13)
+    "bracket_transformer": False,  # reserved for a future plan (10-11/10-13)
 }
+
+# The D-12 model-class bracket's full candidate roster (D-19). Only "lgbm",
+# "ridge", "xgb" and "catboost" are built by plan 10-10 --
+# `models.bracket.registry.CANDIDATES` is a SUBSET of this tuple; "mlp",
+# "rnn" and "transformer" are reserved names for future plans (10-11/10-13)
+# and are not yet constructible.
+BRACKET_CANDIDATES = ("lgbm", "ridge", "xgb", "catboost", "mlp", "rnn", "transformer")
 
 # Quick task 260909-elx: FPL's own ep_this/ep_next figure (`xp_fpl` here --
 # config.py maps vaastav's `xP` column onto it) as a model feature. The

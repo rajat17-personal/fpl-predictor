@@ -1,0 +1,23 @@
+# Development-only stack for the Phase 10 plan 10-10 model-class bracket
+# (D-03/D-12/D-19). This lockfile exists solely for the stage-2 regressor
+# swap experiment in models/bracket/ -- comparing LightGBM against GBDT
+# siblings on the exact same feature set. Per D-16 this stack must NEVER be
+# merged into requirements.txt or requirements-dev.txt, and must NEVER be
+# installed by the Docker image or by any GitHub Actions workflow -- it is
+# installed manually, once, on the developer machine with
+# `uv pip sync requirements-experiments.txt --require-hashes`.
+# Both packages passed the D-16 blocking-human package-legitimacy gate
+# (10-10-PLAN.md Task 1; verbatim approval "approve both" recorded in
+# 10-10-SUMMARY.md). Live-PyPI re-verification at execution time found zero
+# drift from 10-RESEARCH.md's audited pins.
+#
+# torch is NOT pinned here -- it already lives in requirements-rl.txt and
+# plans 10-11/10-13 use it from there; duplicating it across two lockfiles
+# would create two sources of truth for one pin.
+xgboost==3.4.1     # GBDT sibling candidate under D-12/D-19 -- histogram
+                   # tree boosting, a different implementation family from
+                   # LightGBM's leaf-wise growth, used to measure whether the
+                   # model CLASS (not just its inputs) moves season points
+catboost==1.2.10   # GBDT sibling candidate under D-12/D-19 -- ordered
+                   # boosting + native categorical handling, the third
+                   # distinct GBDT implementation family in the bracket
