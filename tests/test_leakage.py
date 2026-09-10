@@ -11,6 +11,7 @@ RAW = config.PROCESSED_DIR / "player_gw.parquet"
 TEAM_STRENGTH = config.PROCESSED_DIR / "team_strength.parquet"
 UNDERSTAT = config.PROCESSED_DIR / "understat.parquet"
 FOTMOB = config.PROCESSED_DIR / "fotmob.parquet"
+TRANSFERMARKT = config.DATA_DIR / "external" / "transfermarkt" / "injury_spells.csv"
 needs_data = pytest.mark.skipif(not (FEATURES.exists() and RAW.exists()),
                                 reason="run the data pipeline first")
 
@@ -199,3 +200,87 @@ def test_ep_next_lag_gate_matches_independent_masked_shift(feat):
     exp = masked.shift(1)
 
     assert np.allclose(got.fillna(-1).values, exp.fillna(-1).values)
+
+
+@pytest.mark.skipif(not TRANSFERMARKT.exists(),
+                    reason="run `python -m data.transfermarkt --build` first")
+def test_transfermarkt_injury_dates_precede_kickoff():
+    """The todo's own explicit leakage requirement
+    (.planning/todos/pending/2026-09-10-transfermarkt-injury-history.md):
+    "extend tests/test_leakage.py to assert injury-spell dates precede
+    fixture kickoff". Run against the REAL committed spell table joined to
+    the REAL player_gw.parquet -- never synthetic data. Every gameweek where
+    `injury_status_as_of` reports an active spell must have that spell's
+    contributing `from_date` strictly before BOTH `deadline_ts` (the bound
+    the join itself uses) AND every kickoff in that gameweek
+    (`kickoff_max` -- `gw_deadlines()`'s own docstring records the
+    postponement caveat that makes this the harder bound, and the one the
+    todo names)."""
+    import data.transfermarkt as tm
+    from data.availability import gw_deadlines
+
+    spells = tm.load_transfermarkt()
+    assert spells is not None and not spells.empty, \
+        "committed spell table exists but failed to load or is empty"
+    spells = spells.dropna(subset=["player_code", "from_date"]).copy()
+    spells["player_code"] = spells["player_code"].astype("Int64")
+    spells["from_date"] = pd.to_datetime(spells["from_date"], utc=True)
+    spells["until_date"] = pd.to_datetime(spells["until_date"], utc=True)
+
+    deadlines = gw_deadlines()
+    raw = pd.read_parquet(RAW, columns=["season", "gw", "player_code", "kickoff_time"])
+    raw = raw.dropna(subset=["kickoff_time"])
+    kickoff_max = (raw.groupby(["season", "gw"], sort=False)["kickoff_time"].max()
+                   .reset_index(name="kickoff_max"))
+
+    covered_codes = set(spells["player_code"].unique())
+    keyed = (raw[["season", "gw", "player_code"]].drop_duplicates())
+    keyed = keyed[keyed["player_code"].astype("Int64").isin(covered_codes)]
+    keyed = (keyed.merge(deadlines[["season", "gw", "deadline_ts"]],
+                         on=["season", "gw"], how="inner")
+             .merge(kickoff_max, on=["season", "gw"], how="inner"))
+    assert not keyed.empty, "no player-gw rows overlap the committed spell table's players"
+
+    checked = 0
+    offenders = []
+    for row in keyed.itertuples(index=False):
+        deadline_ts = pd.Timestamp(row.deadline_ts)
+        if deadline_ts.tzinfo is None:
+            deadline_ts = deadline_ts.tz_localize("UTC")
+        kickoff_ts = pd.Timestamp(row.kickoff_max)
+        if kickoff_ts.tzinfo is None:
+            kickoff_ts = kickoff_ts.tz_localize("UTC")
+
+        sp = spells[spells["player_code"] == row.player_code]
+        status = tm.injury_status_as_of(sp, row.player_code, deadline_ts)
+        if not status["injured"]:
+            continue
+        checked += 1
+
+        active = sp[(sp["from_date"] <= deadline_ts)
+                    & (sp["until_date"].isna() | (sp["until_date"] >= deadline_ts))]
+        worst_from = active["from_date"].max()
+        if not (worst_from < deadline_ts):
+            offenders.append((int(row.player_code), row.season, int(row.gw),
+                              "deadline_ts", str(worst_from)))
+        if not (worst_from < kickoff_ts):
+            offenders.append((int(row.player_code), row.season, int(row.gw),
+                              "kickoff_max", str(worst_from)))
+
+    assert checked > 0, "no active-spell player-gws found -- cannot exercise the assertion"
+    assert not offenders, f"spell from_date does not precede bound: {offenders[:10]}"
+
+
+@needs_data
+def test_transfermarkt_injury_features_are_raw_context_not_rolled(feat):
+    """Task 3's second required regression, mirroring
+    test_availability_features_are_raw_context_not_rolled's own template: the
+    tm_ family (config.INJURY_COLS) is raw pre-match context
+    (features/engineer.py's CONTEXT_COLS), never rolled -- a regression gate
+    against a future edit "helpfully" moving the family into ROLL_STATS.
+    Holds trivially before plan 10-08's build_table.py wiring lands (no tm_
+    columns exist in features.parquet yet), and stays true afterward."""
+    rolled = [c for c in feat.columns
+             if c.startswith("tm_") and any(
+                 c.endswith(sfx) for sfx in ("_r3", "_r5", "_r10", "_rall"))]
+    assert not rolled, f"injury columns must never be rolled: found {rolled}"

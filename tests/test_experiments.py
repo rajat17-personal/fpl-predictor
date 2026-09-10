@@ -21,7 +21,8 @@ needs_data = pytest.mark.skipif(not (FEATURES.exists() and RAW.exists()),
 
 _EXPERIMENT_KEYS = {"capt_ceiling", "capt_mc", "chips_v2", "team_strength",
                     "rl_strategy", "understat", "fotmob", "fbref_v2",
-                    "ep_next_lag", "ep_next_now", "availability_flags"}
+                    "ep_next_lag", "ep_next_now", "availability_flags",
+                    "transfermarkt_injury"}
 
 
 # --- config.EXPERIMENTS / resolve_experiments() -----------------------------
@@ -134,6 +135,51 @@ def test_feature_gating_missing_key_defaults_to_off():
     df = pd.DataFrame({"ts_attack_self": [1.0], "us_npxg_r5": [0.2]})
     out = apply_experiment_feature_gating(df, {})
     assert list(out.columns) == [] and len(out) == 1
+
+
+# --- backtest/walk_forward.py::apply_experiment_feature_gating (plan 10-07) --
+
+def test_feature_gating_drops_tm_family_when_off():
+    df = pd.DataFrame({"tm_injured": [1.0], "tm_days_out_so_far": [3.0],
+                       "minutes_r5": [90.0]})
+    out = apply_experiment_feature_gating(df, {"transfermarkt_injury": False})
+    assert not any(c.startswith("tm_") for c in out.columns)
+    assert "minutes_r5" in out.columns
+
+
+def test_feature_gating_keeps_tm_family_when_on():
+    df = pd.DataFrame({"tm_injured": [1.0], "tm_days_out_so_far": [3.0]})
+    out = apply_experiment_feature_gating(df, {"transfermarkt_injury": True})
+    assert "tm_injured" in out.columns and "tm_days_out_so_far" in out.columns
+
+
+TRANSFERMARKT = config.DATA_DIR / "external" / "transfermarkt" / "injury_spells.csv"
+
+
+@pytest.mark.skipif(not (FEATURES.exists() and RAW.exists() and TRANSFERMARKT.exists()),
+                    reason="run the data pipeline then `python -m data.transfermarkt "
+                          "--build` first")
+def test_transfermarkt_injury_gate_drops_or_keeps_all_four_on_real_attach():
+    """The Task 3 gate proof against REAL data, using `data.transfermarkt.attach`
+    directly rather than `models.train.load_features()` -- plan 10-07's own
+    Task 2 states the `data/build_table.py` wiring that would put `tm_*`
+    columns into a real `features.parquet` lands in plan 10-08 Task 1, not
+    here (deliberate sequencing, not an oversight). This test exercises the
+    real `attach()` + real `apply_experiment_feature_gating` together so the
+    gate is proven end to end without depending on that later wiring commit."""
+    import data.transfermarkt as tm
+    from models.train import load_features
+
+    d = load_features()
+    with_tm = tm.attach(d)
+
+    off = apply_experiment_feature_gating(with_tm, config.resolve_experiments("none"))
+    left = [c for c in off.columns if c.startswith("tm_")]
+    assert not left, left
+
+    on = apply_experiment_feature_gating(with_tm, config.resolve_experiments("transfermarkt_injury"))
+    kept = [c for c in on.columns if c.startswith("tm_")]
+    assert len(kept) == len(config.INJURY_COLS), kept
 
 
 # --- backtest/walk_forward.py::apply_experiment_feature_gating (quick 260909-elx) --
