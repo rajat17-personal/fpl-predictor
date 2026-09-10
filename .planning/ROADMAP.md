@@ -390,22 +390,50 @@ Plans:
 **Plans:** 16 plans across 10 waves
 
 Plans:
+**Wave 1**
 
 - [ ] 10-01-PLAN.md — TRACER: one availability column end-to-end (capture → provider → as-of-deadline join → flag → harness) + Phase G pre-declared criteria
 - [ ] 10-02-PLAN.md — Tier 3: top-100 consensus + fplreview manual capture, both scored in the scoreboard
 - [ ] 10-03-PLAN.md — D-08: anacron-style snapshot catch-up + daily gap report
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 10-04-PLAN.md — Full OpenFPL availability encoding + D-10 safe fallback + coverage report
 - [ ] 10-05-PLAN.md — Transfermarkt access: figshare check + bounded probe + go/no-go
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 10-06-PLAN.md — D-05: FPL-Core-Insights vendor + verify + committed snapshot
 - [ ] 10-07-PLAN.md — Transfermarkt injury backfill + spell-overlap join + leakage test
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 10-08-PLAN.md — Tier-1 adoption runs (D-09 dual criterion, 6-season A/B) + D-02 trigger verdict
 - [ ] 10-09-PLAN.md — External-prediction ingestion seam (the Colab handoff prerequisite, D-14)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
 - [ ] 10-10-PLAN.md — Bracket A: package gate + Ridge/XGBoost/CatBoost + D-15 cheap gate
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
 - [ ] 10-11-PLAN.md — Bracket B: sequence builder (D-20) + D-21 leakage test + MLP at both granularities
 - [ ] 10-12-PLAN.md — Conditional news sentiment (D-02 trigger-routed)
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
 - [ ] 10-13-PLAN.md — Bracket C: GRU + transformer + Colab handoff (D-13/D-14)
+
+**Wave 8** *(blocked on Wave 7 completion)*
+
 - [ ] 10-14-PLAN.md — Bracket verdict: gate-winner 6-season runs + D-17 ONNX export + ledger
+
+**Wave 9** *(blocked on Wave 8 completion)*
+
 - [ ] 10-15-PLAN.md — Tail (D-04): manual FBref snapshot decision + RL reward-shaping notes
+
+**Wave 10** *(blocked on Wave 9 completion)*
+
 - [ ] 10-16-PLAN.md — Close-out: D-11 split-verdict combined run + D-01..D-21 audit + product-surface proof
 
 ---
