@@ -22,3 +22,28 @@ fastapi>=0.110
 uvicorn>=0.29
 httpx>=0.27         # FastAPI TestClient
 joblib>=1.3
+
+# Transfermarkt/FBref scraping stack (data/transfermarkt.py, data/fbref.py) --
+# nothing in this repo imports lxml, bs4, or html5lib by name: they are reached
+# only through pandas.read_html's internal flavor dispatch
+# (pandas.io.html._validate_flavor(None) -> ("lxml", "bs4")), so they were
+# invisible to a reader, a dependency scanner, and the test suite until now.
+# Both legs are live because data/transfermarkt.py:189 and data/fbref.py:55
+# call read_html with no flavor argument, and pandas' bs4 leg requires
+# html5lib alongside bs4, not instead of it. certifi is already resolved
+# transitively via requests/httpx/understatapi, but is pinned directly here
+# because that transitive-only guarantee is exactly what failed during the
+# WINDOWS.md entries 4-5 incident (a `uv pip sync` stripped the shared conda
+# env to the lockfiles, and the Transfermarkt backfill then crashed three
+# times in a row: certifi, then html5lib, then beautifulsoup4, plus a fourth
+# ad-hoc lxml reinstall during recovery). Do NOT remove these as "unused" --
+# grepping for their import names will not find any call site.
+lxml>=6.1,<7        # upper bound guards the C-extension major version, same
+                     # reasoning as pulp's <4.0 bound above
+beautifulsoup4>=4.13  # imports as `bs4` -- a legitimate, decades-old
+                       # distribution/import name mismatch, human-verified
+                       # against pypi.org in quick task 260911-8as Task 1
+html5lib>=1.1        # required alongside bs4 for pandas' bs4 read_html leg,
+                      # not a replacement for it
+certifi>=2025.11.12  # already resolved transitively; pinned directly so the
+                      # guarantee survives a from-lockfile-only rebuild
