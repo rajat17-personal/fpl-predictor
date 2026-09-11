@@ -1,16 +1,26 @@
-"""Offline tests for data/transfermarkt.py's probe-only surface (plan 10-05).
+"""Offline tests for data/transfermarkt.py's probe-only surface (plan 10-05)
+plus a permanent dependency-availability gate (quick task 260911-8as).
 
-All three tests run with zero network access: `parse_injury_table` is
-exercised against small in-memory HTML strings (never a real captured page,
-per D-07's "raw page cache may stay uncommitted" posture), and `probe` is
-exercised with `data.transfermarkt._fetch_page` monkeypatched.
+All tests run with zero network access: `parse_injury_table` is exercised
+against small in-memory HTML strings (never a real captured page, per D-07's
+"raw page cache may stay uncommitted" posture), `probe` is exercised with
+`data.transfermarkt._fetch_page` monkeypatched, and the dependency-
+availability tests exercise `pandas.read_html`'s own parser dispatch
+directly against locally installed packages.
 """
 from __future__ import annotations
 
+import io
+import os
+
+import certifi
 import pandas as pd
 import pytest
+import requests.certs
 
 import data.transfermarkt as tm
+
+_ONE_ROW_TABLE_HTML = "<table><tr><th>a</th><th>b</th></tr><tr><td>1</td><td>2</td></tr></table>"
 
 _INJURY_TABLE_HTML = """
 <table>
@@ -84,3 +94,30 @@ def test_probe_records_verdict_per_page_without_raising(monkeypatch):
         assert row["verdict"] in {"ok", "challenge", "http_error", "parse_error", "id_unresolved"}
         # every fetch (search included) returned None -> id never resolved
         assert row["verdict"] == "id_unresolved"
+
+
+def test_read_html_lxml_flavor_is_installed():
+    # data/transfermarkt.py:189 and data/fbref.py:55 call read_html with no
+    # flavor argument, so pandas tries "lxml" first -- this pins that leg
+    # explicitly. Raises ImportError if lxml is absent.
+    df = pd.read_html(io.StringIO(_ONE_ROW_TABLE_HTML), flavor="lxml")[0]
+    assert df.shape == (1, 2)
+
+
+def test_read_html_bs4_flavor_is_installed():
+    # The bs4 leg is pandas' fallback when lxml's stricter parser rejects
+    # real-world markup (transfermarkt.com's pages take this path; the clean
+    # HTML above never does, which is exactly how a missing html5lib
+    # survived CI before quick task 260911-8as). pandas' bs4 dispatch
+    # requires html5lib alongside bs4, not instead of it -- this raises
+    # ImportError if EITHER package is absent.
+    df = pd.read_html(io.StringIO(_ONE_ROW_TABLE_HTML), flavor="bs4")[0]
+    assert df.shape == (1, 2)
+
+
+def test_requests_ca_bundle_resolves_to_certifi():
+    # A missing/empty CA bundle is what pushes a developer toward
+    # verify=False, exposing scraping traffic to MITM (T-8as-03).
+    bundle = requests.certs.where()
+    assert bundle == certifi.where()
+    assert os.path.getsize(bundle) > 100_000
