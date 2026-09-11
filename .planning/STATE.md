@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 10
 current_phase_name: xP Experiment Follow-ups
 status: executing
-stopped_at: Completed 10-12-PLAN.md (D-02 declined on cost)
-last_updated: "2026-09-11T12:46:43.496Z"
+stopped_at: Completed 10-14-PLAN.md (model-class bracket closed, 7/7 HOLD; D-17 not triggered)
+last_updated: "2026-09-11T13:03:18.556Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 10 execution started
-state_head: 45872c5a0e466b2ade2cd4d9ea824580b7d9f51e
+state_head: 5bdd349be6c8410c79b7362f00866ac793f83139
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 71
-  completed_plans: 65
+  completed_plans: 66
   percent: 70
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 ## Current Position
 
 Phase: 10 (xP Experiment Follow-ups) — EXECUTING
-Plan: 14 of 16
+Plan: 15 of 16
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 10 execution started
 
@@ -130,6 +130,7 @@ Progress: [███████░░░] 70% (52/55 plans complete)
 | Phase quick-260911-7fy P01 | 21min | 3 tasks | 5 files |
 | Phase 10 P08 | N/A (spanned session restart) | 3 tasks | 3 files |
 | Phase 10 P12 | ~15min | 1 tasks | 2 files |
+| Phase 10 P14 | 55min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -282,6 +283,8 @@ Recent decisions affecting current work:
 - [Phase 10]: [Phase 10] Phase 10 Plan 08: availability_flags REJECTED (D-09 dual criterion, neither leg met: 2025-26 model+chips +0 vs +25 bar, pooled Spearman +0.0000 vs +0.03 bar); transfermarkt_injury REJECTED (6-season model+chips 2262->2242, -20 vs >=2280 bar, a regression against its own fresh control); both flags stay default-off, code stays merged (D-08)
 - [Phase 10]: [Phase 10] Phase 10 Plan 08: D-02 news-sentiment trigger FIRED (measured post-Tier-1 pooled played-only spearman_xp_med 0.3874 < locked 0.500 threshold) -- plan 10-12 is required to build the news-sentiment experiment; the benchmark's two scoreable seasons (2021-22, 2022-23) carry zero availability_flags coverage, so the +0.0042 movement from base is attributable entirely to transfermarkt_injury
 - [Phase 10]: Phase 10 Plan 12: D-02 news-sentiment trigger fired (0.3874 < 0.500) but human declined on cost (projected 9.0-14.1 day GDELT-throttled fetch vs the danielfrees/mlpremier negative prior); recorded in IMPROVEMENTS.md as declined-on-cost, distinct from not-triggered -- no code written, Tasks 2/3 skipped per precondition
+- [Phase 10]: Phase 10 Plan 14: D-15 gate applied mechanically to all seven bracket candidates -- 7/7 HOLD, zero advance (ridge/xgb/catboost/mlp against LightGBM's 0.3900 val-split baseline; rnn/transformer against their own 0.3424 same-season baseline). No 6-season walk-forward run triggered.
+- [Phase 10]: Phase 10 Plan 14: D-17's conditional onnxruntime/ONNX-export checkpoint did not trigger (no torch candidate cleared its bar) -- recorded in the capt_mc non-decision shape; nothing installed, models/bracket/export.py never created.
 
 ### Pending Todos
 
@@ -322,6 +325,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-11T12:46:43.282Z
-Stopped at: Completed 10-12-PLAN.md (D-02 declined on cost)
+Last session: 2026-09-11T13:03:18.317Z
+Stopped at: Completed 10-14-PLAN.md (model-class bracket closed, 7/7 HOLD; D-17 not triggered)
 Resume file: None
