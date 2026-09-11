@@ -218,13 +218,14 @@ def test_phase10_flags_default_off_leaves_export_contract_unchanged():
     regression test. A future phase that adopts one of these flags and
     deliberately wires it into the export must update this assertion."""
     import glob
+    from pathlib import Path
 
     payload_paths = sorted(glob.glob(str(config.ROOT / "web" / "data" / "*.json")))
     assert payload_paths, "no web/data/*.json payloads found -- run python -m predict.export first"
 
     bad = []
     for path in payload_paths:
-        text = open(path).read()
+        text = Path(path).read_text()
         for prefix in _PHASE10_FEATURE_PREFIXES:
             if prefix in text:
                 bad.append((path, prefix))
