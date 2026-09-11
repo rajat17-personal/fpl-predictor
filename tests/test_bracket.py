@@ -313,11 +313,12 @@ def test_torch_adapter_matches_sklearn_predict_contract():
     assert reg.best_iteration_ is not None
 
 
-def test_mlp_search_respects_budget(monkeypatch):
+def test_mlp_search_respects_budget(monkeypatch, tmp_path):
     """run_search never evaluates more than SEARCH_BUDGET configs, even when
     the underlying search space is monkeypatched larger -- the hard-stop
     D-19 declares, proven directly rather than by trusting the grid's own
     length."""
+    monkeypatch.setattr(config, "EXPERIMENTS_DIR", tmp_path)
     monkeypatch.setattr(bracket_deep, "_search_space",
                         lambda candidate: [{"hidden": (4, 2)}] * 50)
     calls = []
@@ -332,15 +333,23 @@ def test_mlp_search_respects_budget(monkeypatch):
 
 
 @needs_data
-def test_granularity_bracket_writes_gate_schema(monkeypatch, df_full):
+def test_granularity_bracket_writes_gate_schema(monkeypatch, tmp_path, df_full):
     """run_granularity_bracket("mlp") writes a gate result whose key set is
     a SUPERSET of bracket_gate_lgbm.json's (plan 10-13's comparison table
     and plan 10-14's ledger read all seven candidates' gate files
     uniformly), plus granularity + granularity_scores for both variants.
     Monkeypatched to a single tiny config and max_epochs=1 so the suite
-    stays fast."""
+    stays fast. config.EXPERIMENTS_DIR is redirected to tmp_path so this
+    run never clobbers the live, measured bracket_gate_mlp.json."""
     import json
 
+    # Capture the real baseline BEFORE redirecting EXPERIMENTS_DIR -- it
+    # only exists in the live directory.
+    baseline_path = config.EXPERIMENTS_DIR / "bracket_gate_lgbm.json"
+    assert baseline_path.exists(), "run plan 10-10's gate first (python -m models.bracket.gate)"
+    baseline = json.loads(baseline_path.read_text())
+
+    monkeypatch.setattr(config, "EXPERIMENTS_DIR", tmp_path)
     monkeypatch.setattr(bracket_deep, "_search_space",
                         lambda candidate: [{"hidden": (4, 2), "dropout": 0.0,
                                             "lr": 1e-3, "weight_decay": 0.0}])
@@ -349,14 +358,16 @@ def test_granularity_bracket_writes_gate_schema(monkeypatch, df_full):
 
     out = bracket_deep.run_granularity_bracket("mlp", df=df_full)
 
-    baseline_path = config.EXPERIMENTS_DIR / "bracket_gate_lgbm.json"
-    assert baseline_path.exists(), "run plan 10-10's gate first (python -m models.bracket.gate)"
-    baseline = json.loads(baseline_path.read_text())
-
     missing = [k for k in baseline if k not in out]
     assert not missing, missing
     assert "granularity" in out and "granularity_scores" in out
     assert set(out["granularity_scores"]) == {"per_position", "pooled"}
+
+    # Isolation: this run's writes must land under tmp_path, never the
+    # live config.EXPERIMENTS_DIR.
+    assert (tmp_path / "bracket_gate_mlp.json").exists()
+    assert (tmp_path / "bracket_search_mlp_per_position.json").exists()
+    assert (tmp_path / "bracket_search_mlp_pooled.json").exists()
 
 
 # --- Phase 10 plan 10-13: the GRU + transformer sequence candidates (D-12) ---
