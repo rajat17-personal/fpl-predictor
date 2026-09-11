@@ -1498,8 +1498,8 @@ anything against them (T-10-01-05).
 
 | flag | criterion | measured | verdict | default |
 |------|-----------|----------|---------|---------|
-| availability_flags | D-09 dual criterion: 2025-26 model+chips +25, pooled played-only Spearman +0.03 over 0.383 | pending | pending | off |
-| transfermarkt_injury | model+chips contribution measured via the harness | pending | pending | off |
+| availability_flags | D-09 dual criterion: 2025-26 model+chips +25, pooled played-only Spearman +0.03 over 0.383 | 2025-26 model+chips 2172->2172 (+0, need +25); pooled Spearman 0.3832->0.3832 (+0.0000, need +0.03) | REJECTED (dual criterion, neither leg met) | off |
+| transfermarkt_injury | model+chips contribution measured via the harness | 6-season model+chips 2262->2242 (-20, need >=2280) | REJECTED | off |
 | news_sentiment | D-02 conditional build; if built, model+chips contribution measured via the harness | pending | pending | off |
 | bracket_ridge | D-15 cheap gate: val played-only Spearman >= LightGBM + 0.010 | pending | pending | off |
 | bracket_xgb | D-15 cheap gate: val played-only Spearman >= LightGBM + 0.010 | pending | pending | off |
@@ -1511,6 +1511,125 @@ anything against them (T-10-01-05).
 Every row starts `pending`; each plan in this phase fills its own row as it
 measures it, and plan 10-16 confirms none remain — matching the Phase F
 table's own closing discipline.
+
+### availability_flags: dual-criterion adoption verdict (plan 10-08)
+
+- **Commands run.** `scripts/experiment_run.sh avail_base_2526 --seasons 2025-26 --replicas 5`
+  and `scripts/experiment_run.sh avail_on_2526 --seasons 2025-26 --replicas 5 --experiments availability_flags`
+  (artifacts `data/processed/experiments/wf_avail_base_2526.json` /
+  `wf_avail_on_2526.json`); `python -m backtest.benchmark_external --experiments none --tag tier1_base`
+  and `--experiments availability_flags --tag tier1_avail` (artifacts
+  `benchmark_tier1_base.json` / `benchmark_tier1_avail.json`). All four run
+  against the frozen `features.parquet` Task 1 recorded
+  (sha256 `ae809b5b6169ee776363e543fd6c50e78017cf1f36e1c3742807feb16336dc3f`,
+  253,509 rows x 172 columns) — verified unchanged (byte-identical hash) at
+  measurement time.
+- **D-09 dual criterion, BOTH required:**
+
+  | leg | base | flag on | delta | bar | met? |
+  |---|---:|---:|---:|---:|:--:|
+  | (a) 2025-26 `model+chips` | 2172 | 2172 | +0 | >= +25 | NO |
+  | (b) pooled played-only `spearman_xp_med` (2021-22, 2022-23, n=17,488) | 0.3832 | 0.3832 | +0.0000 | >= +0.03 over 0.383 | NO |
+
+  Neither leg moved at all — the flag-on and flag-off runs produced
+  byte-identical `model+chips` and identical pooled Spearman to four decimal
+  places. **D-07 auto-adopt verdict: REJECTED** (dual criterion needs both;
+  zero of two are met). `config.EXPERIMENTS['availability_flags']` stays
+  `False` (already the default; no flip). Per D-08 all code stays merged —
+  `data/availability.py`, the `av_*` feature family, and the
+  `apply_experiment_feature_gating` branch are computed unconditionally and
+  simply unused as model features by default.
+- **This is not a thin-join verdict.** 2025-26 availability coverage is
+  **92.7%** (10-06-SUMMARY.md, up from the pre-vendoring 92.2%) — a
+  well-covered season, not a sparse probe. The flat reading is a real
+  measurement against real coverage, not an artifact of missing data.
+- **D-09(b)'s flat reading has a structural explanation, stated plainly
+  rather than left implicit.** `backtest.benchmark_external`'s scoreable
+  seasons are **2021-22 and 2022-23** (the only seasons theFPLkiwi's
+  committed snapshot carries enough gameweeks to score) — and
+  `availability_flags` has **zero coverage in either season**
+  (`data/availability.py`'s providers only cover 2025-26 onward). The
+  `tier1_base` and `tier1_avail` pooled blocks are therefore numerically
+  identical on every stat column to four decimal places by construction,
+  not because the flag has no value anywhere — D-09(b)'s own pre-declared
+  basis simply cannot see 2025-26 at all. The rule is still applied
+  mechanically against the number D-09(b) actually names.
+- **Phase F's own figure, for comparison.** 10-01-SUMMARY.md's tracer run
+  (`wf_t1_av_off` / `wf_t1_av_on`, single-replica) already recorded
+  2025-26 `model+chips = 2172` for both the off and on states. This plan's
+  fresh, 5-replica, full-coverage (92.7%, not 10-01's 10.8% probe) re-run
+  reproduced the **identical 2172** for both arms — Task 1's rebuild (which
+  added the `tm_*` injury family to `features.parquet`, always stripped by
+  gating when the flag driving this A/B is off) did not move this
+  particular number, contrary to the plan's own anticipation that it might.
+
+### transfermarkt_injury: 6-season adoption verdict (plan 10-08)
+
+- **Commands run.** `scripts/experiment_run.sh tm_base6 --replicas 5` and
+  `scripts/experiment_run.sh tm_on6 --replicas 5 --experiments transfermarkt_injury`
+  (artifacts `data/processed/experiments/wf_tm_base6.json` /
+  `wf_tm_on6.json`), against the same frozen `features.parquet`.
+- **Standard 6-season protocol, primary bar:**
+
+  | metric | fresh base (6-season) | flag on | delta | bar | met? |
+  |---|---:|---:|---:|---:|:--:|
+  | `model+chips` | 2262 | 2242 | **-20** | >= 2,280 | NO |
+
+  Not merely short of the bar — a genuine **regression** against its own
+  contemporaneous control. **D-07 auto-adopt verdict: REJECTED.**
+  `config.EXPERIMENTS['transfermarkt_injury']` stays `False` (already the
+  default; no flip). Per D-08 all code stays merged — `data/transfermarkt.py`,
+  `config.INJURY_COLS`, and the `apply_experiment_feature_gating` branch are
+  computed unconditionally and simply unused as model features by default.
+- **Coverage, measured live against the completed backfill** (2026-09-11,
+  via `data.transfermarkt.attach()` on the real `player_gw.parquet`, all
+  2,623 distinct `player_code` values in scope): **id-resolved coverage
+  79.7%** row-level (`tm_days_out_so_far` non-null share), **82.6%**
+  player-level (2,166/2,623 `player_code` values resolved a Transfermarkt
+  id), **active-spell rate 11.0%** among id-resolved rows. The backfill
+  itself is complete: 12,503 injury spells across 1,697 players in
+  `data/external/transfermarkt/injury_spells.csv`; the remaining 926
+  id-resolved players (2,623 total id-map entries minus 1,697 with recorded
+  spells) legitimately have zero injury-history rows (mostly youth players
+  with no Transfermarkt injury table), not a resolution failure — matching
+  10-07-SUMMARY.md's own resolved-vs-unresolved distinction
+  (`_covered_player_codes()`).
+- **Unverified-prior caveat (A1).** The IJCSS 2025 paper
+  (`10.2478/ijcss-2025-0008`) the original todo cites for this source's
+  expected value could not be located or verified this session (recorded in
+  "Unverified prior evidence" below) — this measured -20-point regression
+  stands on its own honest harness result, not as a confirmation or
+  refutation of that unverified prior.
+
+### D-02 news-sentiment trigger evaluation (plan 10-08)
+
+- **Locked threshold:** pooled played-only `spearman_xp_med` **< 0.500**
+  triggers building the news-sentiment experiment; **>= 0.500** records it
+  not-triggered (IMPROVEMENTS.md "Declared criteria", plan 10-01).
+- **Command run:** `python -m backtest.benchmark_external --experiments availability_flags,transfermarkt_injury --tag tier1`
+  (artifact `data/processed/experiments/benchmark_tier1.json`).
+- **Measured:** pooled played-only `spearman_xp_med` = **0.3874**
+  (seasons 2021-22, 2022-23, n=17,488).
+- **Mechanical outcome: 0.3874 < 0.500 → BUILD.** Plan 10-12 is required to
+  build the news-sentiment experiment per D-02's own pre-declared rule.
+- **Structural caveat, stated per the plan's own requirement.** These two
+  benchmark seasons carry **zero `availability_flags` coverage** —
+  `benchmark_tier1_base.json` (both flags off, 0.3832) and
+  `benchmark_tier1_avail.json` (availability only, 0.3832) are numerically
+  identical to four decimal places on every column, confirming the
+  availability family contributed nothing measurable to this particular
+  number. The entire movement from the fresh base (0.3832) to the combined
+  Tier-1 run (0.3874, **+0.0042**) is attributable to `transfermarkt_injury`
+  alone, which does have real (if modest) coverage in 2021-22/2022-23. This
+  does not change D-02's mechanical outcome — the trigger measures whether
+  the ranking gap is still open, not which experiment moved it, and it is
+  still well short of 0.500 either way.
+- **Prior evidence for tuning budget.** `danielfrees/mlpremier` (arXiv
+  2405.02412) published a **negative** result for Guardian-based news
+  sentiment — it underperformed both its own CNN and its Ridge/LightGBM
+  baselines in that paper's own reported comparison. Plan 10-12 should treat
+  this as the governing prior on how much tuning budget the sentiment
+  experiment deserves once built, not assume a positive result is likely.
 
 ### Data provenance and access risk (Phase 10)
 
