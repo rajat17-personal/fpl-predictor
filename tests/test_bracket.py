@@ -222,6 +222,88 @@ def test_mae_recorded_as_diagnostic_never_in_advance_decision():
     assert "mae" not in advances_src.lower(), "MAE must never gate the advance decision"
 
 
+# --- Phase 10 plan 10-14: the D-15 advance rule applied mechanically over ---
+# --- all seven candidates' recorded gate results (the final bracket ledger) --
+
+def _classify(result: dict, baseline_spearman: float) -> str:
+    """The exact classification plan 10-14's own printed comparison table
+    (and the SUMMARY it is copied into verbatim) applies to each candidate's
+    recorded `bracket_gate_<candidate>.json`: `NOT_RUN` for a candidate that
+    was never scored (`status != "ok"`, e.g. `not_run_compute_exhausted`),
+    `ADVANCE` for a scored candidate whose Spearman clears
+    `bracket_gate.GATE_MARGIN` over the baseline, `HOLD` otherwise. Built on
+    `bracket_gate._advances` (the one tested advance-boundary function) so
+    this classification is never a second, undocumented copy of the rule --
+    it only ADDS the status branch `_advances` alone does not express."""
+    if result.get("status") != "ok":
+        return "NOT_RUN"
+    if bracket_gate._advances(result.get("spearman_xp_med"), baseline_spearman):
+        return "ADVANCE"
+    return "HOLD"
+
+
+def test_gate_advance_rule_is_mechanical():
+    """A pure-logic proof over a synthetic table, independent of any real
+    training run: the advance decision is exactly
+    `spearman >= lgbm_spearman + GATE_MARGIN`; a candidate with a BETTER MAE
+    but a WORSE Spearman does not advance (MAE never gates, mirroring
+    `test_mae_recorded_as_diagnostic_never_in_advance_decision` at the
+    classification layer); a `not_run_compute_exhausted` candidate is
+    neither advanced nor treated as a HOLD -- it has no comparable result at
+    all and must be visibly distinct from both outcomes in the ledger."""
+    lgbm_spearman = 0.3900
+    margin = bracket_gate.GATE_MARGIN
+
+    winner = {"status": "ok", "spearman_xp_med": round(lgbm_spearman + margin, 4),
+              "mae_xp_med": 1.9000}
+    better_mae_worse_spearman = {"status": "ok", "spearman_xp_med": lgbm_spearman - 0.05,
+                                  "mae_xp_med": 1.0000}
+    just_short = {"status": "ok",
+                  "spearman_xp_med": round(lgbm_spearman + margin - 0.0001, 4),
+                  "mae_xp_med": 1.7000}
+    exhausted = {"status": "not_run_compute_exhausted", "spearman_xp_med": None,
+                 "mae_xp_med": None}
+
+    assert _classify(winner, lgbm_spearman) == "ADVANCE"
+    assert _classify(better_mae_worse_spearman, lgbm_spearman) == "HOLD"
+    assert _classify(just_short, lgbm_spearman) == "HOLD"
+    assert _classify(exhausted, lgbm_spearman) == "NOT_RUN"
+
+
+_all_seven_gate_files_exist = all(
+    (config.EXPERIMENTS_DIR / f"bracket_gate_{c}.json").exists()
+    for c in ("lgbm", "ridge", "xgb", "catboost", "mlp", "rnn", "transformer"))
+
+
+@pytest.mark.skipif(not _all_seven_gate_files_exist,
+                    reason="run python -m models.bracket.gate (and the Colab handoff, "
+                           "plan 10-13) first to produce all seven bracket_gate_*.json files")
+def test_gate_advance_rule_is_mechanical_over_the_seven_recorded_candidates():
+    """The same `_classify` rule applied to the seven REAL, recorded
+    `bracket_gate_<candidate>.json` files (D-15's actual final-ledger
+    verdict, plan 10-14): every one HOLDs -- proven here against the live
+    gate files rather than re-asserted from memory, so this test breaks if a
+    future gate re-run ever silently changes the recorded verdict without a
+    corresponding ledger update."""
+    import json
+
+    real = {}
+    for c in ("lgbm", "ridge", "xgb", "catboost", "mlp", "rnn", "transformer"):
+        real[c] = json.loads(
+            (config.EXPERIMENTS_DIR / f"bracket_gate_{c}.json").read_text())
+
+    lgbm_real_base = real["lgbm"]["spearman_xp_med"]
+    for c in ("ridge", "xgb", "catboost", "mlp"):
+        assert _classify(real[c], lgbm_real_base) == "HOLD", (c, real[c])
+
+    # rnn/transformer are judged against their OWN recorded baseline
+    # (`baseline_spearman`, the test-season LightGBM figure their Colab
+    # artifact was actually compared against) -- never the val-split lgbm
+    # figure above, per the plan's own single-season-vs-six-season warning.
+    for c in ("rnn", "transformer"):
+        assert _classify(real[c], real[c]["baseline_spearman"]) == "HOLD", (c, real[c])
+
+
 def test_gate_unavailable_candidate_records_status_without_training(monkeypatch, tmp_path):
     monkeypatch.setattr(config, "EXPERIMENTS_DIR", tmp_path)
     monkeypatch.setattr(bracket_gate.bracket_registry, "is_available", lambda name: False)
