@@ -1848,6 +1848,213 @@ itself. A shaped reward is a training aid for the optimizer to climb faster;
 scoring a policy by its shaped reward would be scoring the aid rather than
 the actual result.
 
+### Final combined run (plan 10-16, D-11 split verdicts)
+
+**Command.** `scripts/experiment_run.sh combined_phase10 --replicas 5` →
+`python -m backtest.walk_forward --tag combined_phase10 --replicas 5` (6
+seasons, 5 replicas — the harness's own defaults — with `--experiments`
+deliberately **not passed**). Artifact:
+`data/processed/experiments/wf_combined_phase10.json`.
+
+**The full-coverage winner set is empty, mechanically derived from the
+ledger, not from impression.** Every one of the nine Phase 10 flags this
+plan's Task 1 classified:
+
+| flag | class | verdict |
+|---|---|---|
+| `availability_flags` | partial-coverage (D-09) | REJECTED — dual criterion, neither leg met |
+| `transfermarkt_injury` | full-coverage | REJECTED — 6-season `model+chips` regressed -20 |
+| `news_sentiment` | full-coverage (conditional) | DECLINED ON COST — never built, no measurement exists to combine |
+| `bracket_ridge` | full-coverage | HOLD — D-15 gate |
+| `bracket_xgb` | full-coverage | HOLD — D-15 gate |
+| `bracket_catboost` | full-coverage | HOLD — D-15 gate |
+| `bracket_mlp` | full-coverage | HOLD — D-15 gate |
+| `bracket_rnn` | partial-coverage (single-season Colab) | HOLD — D-15 gate, own baseline |
+| `bracket_transformer` | partial-coverage (single-season Colab) | HOLD — D-15 gate, own baseline |
+
+Zero flags cleared their own pre-declared criterion. Per this task's own
+instruction, an empty full-coverage winner set means the combined run is
+run with **no `--experiments` flag at all**, reproducing the shipped
+default `config.EXPERIMENTS` exactly — the same shape Phase 9's own
+`final_combined` run took when its own winner set was empty.
+
+**Result:**
+
+| season | model_mean | model+chips | capt_mean | capt_capture | multi_safe | form | hold |
+|--------|-----------:|------------:|----------:|-------------:|-----------:|-----:|-----:|
+| 2020-21 | 2074 | 2091 | 2071 | 0.541 | 1967 | 2077 | 1517 |
+| 2021-22 | 2119 | 2305 | 2123 | 0.583 | 2312 | 2174 | 1610 |
+| 2022-23 | 2148 | 2380 | 2183 | 0.563 | 2269 | 2079 | 1835 |
+| 2023-24 | 2191 | 2210 | 2086 | 0.483 | 2146 | 1960 | 1741 |
+| 2024-25 | 2137 | 2417 | 2260 | 0.614 | 2101 | 2107 | 2230 |
+| 2025-26 | 2122 | 2172 | 2174 | 0.595 | 2086 | 1797 | 1439 |
+
+6-season means: `model_mean` = 2132, **`model+chips` = 2262**, `capt_mean` =
+2150, `capt_capture` = 0.563, `multi_safe` = 2147, `form` = 2032, `hold` =
+1729 — **bit-for-bit identical** to `wf_final_combined.json` (Phase 9's own
+close-out) and to `wf_baseline_phase9.json` (the plan 09-01 baseline this
+whole project's honest-harness frontier is judged against). This is not a
+coincidence to explain away: Phase 10's shipped default `config.EXPERIMENTS`
+is byte-identical to Phase 9's, so the two harness runs measure the exact
+same configuration and produce the exact same number.
+
+| comparator | model+chips | delta vs. this run |
+|---|---:|---:|
+| Phase 9 opening/closing baseline (`wf_baseline_phase9.json` / `wf_final_combined.json`) | 2262 | 0 |
+| Phase 10 opening baseline (10-01-SUMMARY.md, re-confirmed) | 2262 | 0 |
+| D-05/primary bar | 2280 | −18 |
+| **this run (`wf_combined_phase10.json`)** | **2262** | — |
+
+**The split, stated explicitly per D-11.** `availability_flags` does **not**
+appear in this run's enabled flag set (verified programmatically: `on =
+[k for k,v in experiments.items() if v]` is the empty list) — it was
+deliberately held out even though its own dual-criterion verdict is
+REJECTED (10-08), because D-11 forbids folding a one-season-coverage signal
+into a six-season average regardless of that signal's own verdict. Its
+verdict stands on its own, recorded separately in the "availability_flags:
+dual-criterion adoption verdict (plan 10-08)" section above — no
+apples-to-oranges combination was computed or reported.
+
+**D-10's gate, run first, per the task's own required order.**
+`pytest tests/test_availability.py::test_missing_snapshot_degrades_to_nan_not_raise`
+→ **1 passed**. The gate passed, but this is moot for the actual shipped
+config: `availability_flags`'s own D-09 verdict (REJECTED, neither leg met)
+already forbids the flip independent of D-10 — the gate is recorded as
+run and passing per the plan's own mandatory-first-verify requirement, not
+because a flip was pending on it.
+
+**Shipped default: no change, a genuine no-op.** `config.py`'s
+`EXPERIMENTS` dict is **byte-identical before and after this plan**
+(`git diff --stat config.py` — empty) and `tests/test_experiments.py`'s
+`test_experiments_registry_default_off` was **left untouched** — the test's
+own assertion (`assert not any(config.EXPERIMENTS.values())`) already
+covers this plan's actual outcome with no edit needed, since zero flags
+adopted. The shipped default at Phase 10's close is exactly what it was at
+Phase 10's open, and exactly what Phase 9 closed with: every experiment
+flag `False`.
+
+### Decisions audit (plan 10-16, D-01 through D-21)
+
+Walking `.planning/phases/10-xp-experiment-follow-ups/10-CONTEXT.md`'s
+twenty-one implementation decisions in order, one row per decision, stating
+its outcome and citing the evidence — mirroring Phase 9's own "Decisions
+audit (plan 09-10, D-01 through D-16)" section shape, above. This audit
+also resolves the phase's eight `resolves_phase: 10` todos: each is named
+below by its file stem, with the plan that closed it.
+
+**Todos resolved (all eight `resolves_phase: 10` items):**
+
+| todo (file stem, minus date) | resolution |
+|---|---|
+| `availability-flags-pplay` | Built and measured — REJECTED, D-09 dual criterion, neither leg met (plan 10-04/10-06/10-08) |
+| `transfermarkt-injury-history` | Built and measured — REJECTED, -20 vs the ≥2,280 bar (plan 10-05/10-07/10-08) |
+| `model-class-bracket` | Built and measured — 7/7 candidates gated, 0/7 advance (plans 10-10/10-11/10-13/10-14) |
+| `news-sentiment-conditional` | Trigger fired (0.3874 < 0.500) but DECLINED ON COST by the human (plan 10-08/10-12) |
+| `top100-consensus-benchmark` | Built — live in `predict/scoreboard.py`, diagnostic-only (plan 10-02) |
+| `fplreview-scoreboard-benchmark` | Built — live in `predict/scoreboard.py`, manual-assisted capture, diagnostic-only (plan 10-02) |
+| `manual-fbref-snapshot` | Acquired (Go, all ten seasons) then dropped on a verified acquisition-format defect — no join built, ten CSVs committed as evidence (plan 10-15) |
+| `rl-reward-shaping-revisit` | Notes-only recorded, no training (plan 10-15) |
+
+**D-01 through D-21:**
+
+| decision | what it required | outcome | evidence |
+|---|---|---|---|
+| **D-01** | Tier-3 benchmarks first, then Tier-1, then Tier-2 | Honored literally — 10-02 (Tier 3) → 10-03/10-04/10-05/10-06/10-07/10-08 (Tier 1) → 10-09/10-10/10-11/10-12/10-13/10-14 (Tier 2) → 10-15 (dead tail) | plan sequence itself; 10-CONTEXT.md's own order |
+| **D-02** | Pre-declared 0.500 Spearman trigger, not vibes | Honored — locked 0.500 threshold before any Tier-1 run (10-01); trigger measured and fired (0.3874 < 0.500, 10-08); human then DECLINED on cost, recorded distinctly from not-triggered (10-12) | "D-02 news-sentiment trigger evaluation (plan 10-08)"; "D-02 news-sentiment: declined on cost, NOT not-triggered (plan 10-12)" |
+| **D-03** | Model-class bracket runs unconditionally | Honored literally — all seven candidates (lgbm baseline + 6 challengers) gated regardless of Tier-1's outcome | "Model-class bracket: two-stage gate results and adoption verdict (plans 10-10 to 10-14)" |
+| **D-04** | FBref manual snapshot + RL notes stay dead-tail, in scope | Honored — both tail items closed in 10-15: FBref Go/A then Drop/C (a second, plan-unanticipated decision on a new finding); RL notes-only, zero training | 10-15-SUMMARY.md; "fbref_v2: manual snapshot" and "RL reward shaping" sections above |
+| **D-05** | Vendor + verify FPL-Core-Insights 2025-26 backfill before any use | Honored literally, with a correction to its own "optional" wording (see "What this phase did not resolve" below): vendored all 38 2025-26 gameweeks (license posture Option A, human-approved), 2025-26 availability coverage 92.2% → 92.7% | 10-06-SUMMARY.md |
+| **D-06** | Transfermarkt backfill ALL seasons 2016-17+, background killable job, full 6-season A/B | Honored literally — 2,623 players, 12,503 spells, 1,697 players with spells; measured on the full 6-season protocol (10-08) | 10-07-SUMMARY.md; "transfermarkt_injury: 6-season adoption verdict (plan 10-08)" |
+| **D-07** | Transfermarkt storage as a committed normalized snapshot | Honored literally — `data/external/transfermarkt/injury_spells.csv` + `tm_id_map.csv` committed with README | 10-07-SUMMARY.md |
+| **D-08** | Snapshot cron anacron-style catch-up, in scope | Honored literally — `@reboot` catch-up installed and verified live | 10-03-SUMMARY.md |
+| **D-09** | Availability dual criterion, both legs required | Honored, mechanically applied — neither leg moved at all (2025-26 `model+chips` +0 vs +25 bar; pooled Spearman +0.0000 vs +0.03 bar) → REJECTED | "availability_flags: dual-criterion adoption verdict (plan 10-08)" |
+| **D-10** | Safe-fallback test gates any availability flip | Honored — `test_missing_snapshot_degrades_to_nan_not_raise` asserted passing in this plan before considering any flip (moot, since D-09 already forbids it) | this plan's Task 1, first `<verify>` — 1 passed |
+| **D-11** | Split verdicts: combined run = full-coverage winners only, availability judged separately | Honored literally — this plan's combined run (above) has an empty full-coverage winner set; `availability_flags` verified absent from its flag set programmatically | "Final combined run (plan 10-16, D-11 split verdicts)" above |
+| **D-12** | Six-candidate roster, LightGBM stage-2 swap only | Honored literally — Ridge/XGBoost/CatBoost/MLP/GRU/transformer, all replacing only `E[pts\|played]`, `P(play)` stays LightGBM throughout | "Model-class bracket" section above |
+| **D-13** | Hybrid compute: 200 Colab units + open-ended local, hard stop at exhaustion | Honored in spirit, not fully literally — Colab-side unit consumption was **not reported** by the human's Colab session (recorded as "not reported," not assumed zero); local WSL wall clocks fully recorded per candidate | "D-13 compute accounting" in the Model-class bracket section |
+| **D-14** | Colab↔local handoff via a frozen-artifact scoring seam | Honored literally — `export_sequence_bundle` → Colab notebook → committed `colab_rnn_2025-26.parquet`/`colab_transformer_2025-26.parquet` → scored via `backtest.walk_forward --external-preds`, local harness the sole judge. Seam was built and round-trip-proven (2133 `model+chips`, both sides, 100% coverage) in plan 10-09 **before** any Colab candidate existed | 10-09-SUMMARY.md; 10-13-SUMMARY.md |
+| **D-15** | Two-stage cheap gate, val Spearman ≥ LightGBM+0.010, MAE diagnostic-only | Honored literally, mechanically applied across all seven candidates via a tested function (`models/bracket/gate.py::_advances`) — 7/7 HOLD, 0/7 ADVANCE, so no 6-season walk-forward run was triggered for any bracket candidate | `tests/test_bracket.py::test_gate_advance_rule_is_mechanical*`; "Model-class bracket" section |
+| **D-16** | New packages through a dev-only hash-locked lockfile + blocking-human gate | Honored literally — `xgboost==3.4.1`/`catboost==1.2.10` human-approved ("approve both", zero PyPI drift) into `requirements-experiments.txt`; confirmed referenced by nothing in `Dockerfile`/`.github/workflows/*.yml` | STATE.md decisions log (10-10); `grep -rl requirements-experiments Dockerfile .github/workflows/` → 0 hits (re-confirmed this plan) |
+| **D-17** | If a torch candidate clears the bar, adopt via runtime-free ONNX export | Correctly NOT triggered — no torch candidate (`mlp`/`rnn`/`transformer`) cleared `GATE_MARGIN`; nothing installed, `models/bracket/export.py` never created, recorded in the `capt_mc` non-decision shape | 10-14-SUMMARY.md; `onnxruntime` absent from every lockfile/Dockerfile/workflow (re-confirmed this plan) |
+| **D-18** | Deep candidates run both pooled and per-position granularity variants | Honored literally for `mlp` (pooled won, 0.3942 vs 0.3924); departed for `rnn`/`transformer` — the Colab notebook trained one fixed configuration directly rather than sweeping both variants locally, recorded as a run-record deviation, not corrected after the fact | 10-11-SUMMARY.md (mlp); 10-14-SUMMARY.md's D-19 accounting (rnn/transformer) |
+| **D-19** | Asymmetric tuning budget: 12 configs/deep-candidate/granularity, classical get defaults only | Honored literally for `mlp` (12/12 at both granularities) and for ridge/xgb/catboost (0/12, by design); departed for `rnn`/`transformer` (0/12 — single fixed Colab configuration, not a local search), recorded as a run-record fact | "D-19 budget accounting" in the Model-class bracket section |
+| **D-20** | Sequence inputs: raw per-GW stats (~10 GWs, padded/masked) + static side-vector post-encoder | Honored literally — `models/bracket/sequence.py::SEQ_WINDOW=10`, season-scoped, strict `kickoff_time` bound | 10-11-SUMMARY.md |
+| **D-21** | New leakage-safe assertions for the sequence builder, proven on real data | Honored literally — `tests/test_leakage.py::test_sequence_features_no_future_gw_leakage` asserts every timestep feeding a GW-g prediction comes from GWs < g, run against real `features.parquet` | `tests/test_leakage.py:275` |
+
+### What this phase did not resolve
+
+- **The primary D-05/2,280 bar was not cleared, and the phase closes at
+  exactly the number it opened at.** This plan's combined run (above)
+  measures `model+chips` = **2262**, identical to both Phase 9's own close
+  and Phase 10's own open — **18 points short of ≥2,280**. Whether any
+  lever outside this phase's nine-flag menu could clear it remains an open
+  question for a future phase.
+- **`transfermarkt_injury` (REJECTED, -20 regression) and `availability_flags`
+  (REJECTED, D-09 dual criterion, neither leg met) were both built,
+  measured honestly, and declined** — not not-acquirable, not
+  declined-on-cost, genuinely measured and rejected against their own
+  pre-declared bars. See their own sections above for the full numbers.
+- **`news_sentiment` was declined on cost, not not-triggered** — the D-02
+  trigger fired (0.3874 < 0.500) but a human chose not to spend the
+  projected 9.0–14.1 day GDELT-throttled build against the
+  `danielfrees/mlpremier` negative prior. `data/news.py` was never written.
+  A future revisit starts from that cost estimate, not from a "ruled out"
+  verdict. See "D-02 news-sentiment: declined on cost, NOT not-triggered
+  (plan 10-12)" above.
+- **All seven model-class bracket candidates HOLD; the model-class question
+  is closed with numbers, not closed by adoption.** LightGBM remains the
+  shipped stage-2 regressor for every position. See "Model-class bracket"
+  above for the full seven-row table.
+- **`fbref_v2`'s FBref manual-snapshot acquisition succeeded, but the
+  acquired columns carry no leakage-safe (or any) signal to join.** This is
+  distinct from the leakage-limitation shape this task's own instructions
+  anticipated ("the columns exist but are not leakage-safe for within-season
+  backtesting"): the actual finding is stronger — `config.FBREF_COLS`'s
+  three source columns (`Tkl+Int`, `Blocks`, `Clr`) are **100% empty in all
+  5,454 rows across all ten acquired seasons**, confirmed live on FBref's
+  own page (not an export-tool artifact) via a browser screenshot and an
+  incognito re-test. No adoption number was ever attempted against a
+  defective source. The ten CSVs and their README are committed as a
+  permanent evidentiary record for any future revisit. See "fbref_v2:
+  manual snapshot — acquisition decision and outcome (plan 10-15)" above.
+- **Neither hypothetical deferred-wiring item this task anticipated ever
+  materialized, because neither item's upstream trigger ever fired.** A
+  `data/build_table.py` news-attach block was never written, because
+  `news_sentiment` was declined before any code was written (no attach
+  block exists to defer). The `requirements.in` promotion of `onnxruntime`
+  never became relevant, because D-17 never triggered (no torch candidate
+  adopted, nothing installed). Both are recorded here as genuinely moot,
+  not silently skipped.
+- **The two unverifiable priors this phase inherited remain unverified.**
+  The IJCSS 2025 paper (`10.2478/ijcss-2025-0008`) the original
+  `transfermarkt-injury-history` todo cites for its expected value could
+  not be located or verified in any Phase 10 plan — every claim attributed
+  to it stays `[ASSUMED]`; the measured -20-point regression stands on its
+  own honest-harness result, not as a confirmation or refutation of that
+  paper. `danielfrees/mlpremier` (arXiv 2405.02412) — the paper the
+  `news-sentiment-conditional` todo cites — published a genuinely
+  **negative** result for Guardian-based news sentiment, which weighed
+  directly into the human's DECLINE decision on cost. See "Unverified
+  prior evidence (Phase 10)" above.
+- **Both Colab-trained sequence candidates (`rnn`, `transformer`) were
+  measured on a single season (2025-26), never the 6-season protocol,**
+  because their single-season HOLD margins were wide enough (-0.4213 and
+  -0.2831 against their own 0.3424 baseline) that extending to 6 seasons
+  was never warranted. The Colab unit cost of that extension is unknown —
+  the human's Colab session did not report units consumed for either
+  candidate's training run (10-14-SUMMARY.md), so no per-additional-season
+  unit-cost figure can be projected from this phase's own data.
+- **The structural fact worth carrying forward, stated plainly.** The EXP-1
+  benchmark (`backtest.benchmark_external`) that both D-02's trigger and
+  D-09(b)'s second leg are judged against has only two scoreable seasons
+  (2021-22, 2022-23) — and `availability_flags` has **zero coverage** in
+  either of them (its providers only cover 2025-26 onward). Every D-02/D-09(b)
+  reading this phase produced therefore measures whether the ranking gap is
+  still open on a basis that cannot see the one experiment built
+  specifically to close it — not whether anything actually closed it. Any
+  future attempt on this gap needs a benchmark basis that overlaps the
+  seasons the candidate experiment actually covers.
+
 ### Data provenance and access risk (Phase 10)
 
 | source | access status | committed? | license/ToS posture | evidence |
