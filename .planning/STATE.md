@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 10
 current_phase_name: xP Experiment Follow-ups
 status: executing
-stopped_at: Completed 10-11-PLAN.md
-last_updated: "2026-09-10T19:14:03.635Z"
+stopped_at: Completed 10-13-PLAN.md
+last_updated: "2026-09-11T05:55:28.775Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 10 execution started
-state_head: dffdaaa2ffd5e4777d7d94915a6269db0012ca7e
+state_head: 6a4524a48f70ff4d433be026150ca84ac2a755bc
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 71
-  completed_plans: 62
+  completed_plans: 63
   percent: 70
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 ## Current Position
 
 Phase: 10 (xP Experiment Follow-ups) — EXECUTING
-Plan: 11 of 16
+Plan: 12 of 16
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 10 execution started
 
@@ -126,6 +126,7 @@ Progress: [███████░░░] 70% (52/55 plans complete)
 | Phase 10 P09 | 25min | 2 tasks | 2 files |
 | Phase 10 P10 | 80min | 3 tasks | 12 files |
 | Phase 10-xp-experiment-follow-ups P11 | 55min | 3 tasks | 4 files |
+| Phase 10 P13 | 35min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -271,6 +272,8 @@ Recent decisions affecting current work:
 - [Phase 10]: [Phase 10] Phase 10 Plan 10: uv pip sync (not install) against a shared conda env wiped every package outside the target lockfile, including project-critical deps; recovered via uv pip install -r <file> --require-hashes across all four project lockfiles, full pytest green before continuing -- future installs into this env must use install, never sync
 - [Phase 10]: 10-11: leakage-safe sequence builder (SEQ_WINDOW=10, season-scoped, strict kickoff_time bound) + shared raw-torch training loop/adapter; MLP measured at both D-18 granularities -- pooled wins (Spearman 0.3942 vs lgbm 0.3900, +0.0042), HOLD against GATE_MARGIN=0.010
 - [Phase 10]: 10-11: same plan-text bug class as 10-10 recurred (verify command checked backtest.walk_forward.TEST_SEASONS instead of config.TEST_SEASONS) -- corrected per 10-10's own precedent, code assertions were already correct
+- [Phase 10]: [Phase 10] Phase 10 Plan 13: Both Colab sequence candidates (GRU, transformer) HOLD by a wide margin (Spearman -0.0789 and 0.0593 vs 0.3424 LightGBM baseline) -- D-12 bracket complete at 7/7 candidates gated, 0 advancing, no config.EXPERIMENTS bracket_* flag flipped
+- [Phase 10]: [Phase 10] Phase 10 Plan 13: tests/test_bracket.py::test_granularity_bracket_writes_gate_schema pollutes the live bracket_gate_mlp.json on every pytest run (missing a config.EXPERIMENTS_DIR tmp_path monkeypatch) -- restored manually 3x this session, logged to WINDOWS.md entry 6, not fixed in-scope
 
 ### Pending Todos
 
@@ -309,6 +312,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T19:14:03.414Z
-Stopped at: Completed 10-11-PLAN.md
+Last session: 2026-09-11T05:55:28.523Z
+Stopped at: Completed 10-13-PLAN.md
 Resume file: None
