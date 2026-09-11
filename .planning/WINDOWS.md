@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 3
 waived_count: 0
-fixed_count: 2
-total_count: 5
-last_updated: 2026-09-10T18:26:27.667Z
+fixed_count: 3
+total_count: 6
+last_updated: 2026-09-11T09:56:21.910Z
 ---
 
 # Broken Windows Ledger
@@ -20,6 +20,7 @@ last_updated: 2026-09-10T18:26:27.667Z
 | 3 | 05 | deviation | .planning/phases/05-container-build-ci-pipeline/05-PATTERNS.md | 141 | Personal email <redacted-personal-email> present in a planning doc (quoted as historical/before-fix context, not live infra); out of this task's file scope (.gitignore, installer only) — left for a human decision before push (D-16), surfaced at the 05-05 push checkpoint. | fixed |  | 2026-09-04T13:46:43.491Z | 2026-09-04T14:27:53.257Z |
 | 4 | 10 | deviation | models/bracket/gate.py |  | Plan 10-10 Task 3's <verify> checked run_gate's train_seasons against backtest.walk_forward.TEST_SEASONS (6 rolling walk-forward seasons), which legitimately overlaps config.TRAIN_SEASONS by design; implemented against config.TEST_SEASONS (the real held-out season) instead, per T-10-10-03's actual intent | open |  | 2026-09-10T18:26:20.716Z |  |
 | 5 | 10 | deviation | requirements-experiments.txt |  | Executing this plan's literal install mechanism (uv pip sync requirements-experiments.txt --require-hashes) treated the WHOLE shared conda env python314 as its sync target and removed everything not in that one small lockfile -- including project-critical packages (torch, lightgbm, sklearn, fastapi, pulp) and unrelated non-project packages (jupyter/transformers/yt-dlp/wordcloud/etc). Recovered project deps via non-destructive uv pip install -r <file> --require-hashes against requirements.txt/requirements-dev.txt/requirements-rl.txt/requirements-experiments.txt plus one ad-hoc lxml reinstall; full pytest suite confirmed green after recovery. Non-project packages outside any lockfile are NOT recoverable to their exact prior versions. Future installs into this shared env must use 'uv pip install -r <file> --require-hashes', never '--sync'. | open |  | 2026-09-10T18:26:27.667Z |  |
+| 6 | 10 | deviation | tests/test_bracket.py |  | test_granularity_bracket_writes_gate_schema writes its monkeypatched toy MLP gate result directly to the live data/processed/experiments/bracket_gate_mlp.json (missing a config.EXPERIMENTS_DIR tmp_path monkeypatch) -- overwrites the real 10-11 measured result (pooled, 0.3942) every time the suite runs; restored manually three times in plan 10-13 | fixed |  | 2026-09-11T05:54:51.019Z | 2026-09-11T09:56:21.910Z |
 
 ````json
 [
@@ -82,6 +83,18 @@ last_updated: 2026-09-10T18:26:27.667Z
     "reason": "",
     "recorded_at": "2026-09-10T18:26:27.667Z",
     "resolved_at": null
+  },
+  {
+    "id": 6,
+    "kind": "deviation",
+    "phase": "10",
+    "file": "tests/test_bracket.py",
+    "line": null,
+    "description": "test_granularity_bracket_writes_gate_schema writes its monkeypatched toy MLP gate result directly to the live data/processed/experiments/bracket_gate_mlp.json (missing a config.EXPERIMENTS_DIR tmp_path monkeypatch) -- overwrites the real 10-11 measured result (pooled, 0.3942) every time the suite runs; restored manually three times in plan 10-13",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-09-11T05:54:51.019Z",
+    "resolved_at": "2026-09-11T09:56:21.910Z"
   }
 ]
 ````
