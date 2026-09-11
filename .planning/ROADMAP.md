@@ -387,7 +387,7 @@ Plans:
 **Goal:** Pursue Phase 9's measured leads under the same honest-harness discipline (D-05/D-07/D-08 pattern: pre-declared criteria, default-off flags, ledger verdicts). Scope = the six 2026-09-09 pending todos: (1) ep_next + availability-flag features to attack the ranking gap (our Spearman 0.383 vs ep_next's 0.579 on the EXP-1 benchmark); (2) per-position + covered-rows re-measurement of understat/fotmob accuracy; (3) manual FBref CSV snapshot committed like the kiwi data, joined via the crosswalk; (4) high-replica (≥25) capt_ceiling adoption re-run recorded as a Phase F addendum; (5) RL v2 bigger-timestep run (120-min/policy box declared 2026-09-09, training launched, artifacts in data/processed/experiments/rl_v2_policies/) with its 5-season adoption comparison; (6) RL reward-shaping notes (potential-based shaping only, if ever revisited). Adoption bar unchanged: ≥2,280 model+chips vs the 2,262 baseline. Scope extended 2026-09-10 from the research sweep (six new todos): Tier 1 — availability flags into P(play) from our own daily snapshots (optional one-time vendored 2025-26 backfill), Transfermarkt injury history (all-seasons backfillable); Tier 2 — model-class bracket (LSTM/GRU, XGBoost/CatBoost, Ridge, MLP vs LightGBM, Spearman-gated), conditional Guardian/GDELT news sentiment; Tier 3 — top-100 consensus + fplreview scoreboard benchmarks. Manual FBref snapshot deprioritized below all of these.
 **Requirements**: TODO-AVAIL-FLAGS, TODO-TM-INJURY, TODO-BRACKET, TODO-NEWS, TODO-TOP100, TODO-FPLREVIEW, TODO-FBREF-MANUAL, TODO-RL-SHAPING, PHASE10-CRON, PHASE10-COLAB-SEAM, PHASE10-CRITERIA (this phase is not mapped in REQUIREMENTS.md — its spec is the eight `resolves_phase: 10` todos plus three infrastructure items; the IDs above are the traceability keys the plan set uses)
 **Depends on:** Phase 9
-**Plans:** 15/16 plans executed across 10 waves
+**Plans:** 16/16 plans executed across 10 waves
 
 Plans:
 **Wave 1**
@@ -434,7 +434,7 @@ Plans:
 
 **Wave 10** *(blocked on Wave 9 completion)*
 
-- [ ] 10-16-PLAN.md — Close-out: D-11 split-verdict combined run + D-01..D-21 audit + product-surface proof
+- [x] 10-16-PLAN.md — Close-out: D-11 split-verdict combined run + D-01..D-21 audit + product-surface proof
 
 ---
 *Roadmap created: 2026-08-31*

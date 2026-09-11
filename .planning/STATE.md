@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 current_phase: 10
 current_phase_name: xP Experiment Follow-ups
-status: executing
-stopped_at: "Completed 10-15-PLAN.md (FBref manual snapshot: acquired then dropped on an acquisition-format defect; RL reward-shaping notes recorded, notes-only)"
-last_updated: "2026-09-11T15:18:56.762Z"
+status: verifying
+stopped_at: "Completed 10-16-PLAN.md (Phase 10 close-out: D-11 split-verdict combined run, D-01..D-21 decisions audit, product contract proven unchanged)"
+last_updated: "2026-09-11T15:41:12.599Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 10 execution started
-state_head: 1d8b3c77fa6eae4d323426524845ab3a519624ef
+state_head: ecd9ec0e725b87d1457aaf7d8a5563a79127140b
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 71
-  completed_plans: 67
+  completed_plans: 68
   percent: 70
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 
 Phase: 10 (xP Experiment Follow-ups) — EXECUTING
 Plan: 16 of 16
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-10 — Phase 10 execution started
 
 Progress: [███████░░░] 70% (52/55 plans complete)
@@ -132,6 +132,7 @@ Progress: [███████░░░] 70% (52/55 plans complete)
 | Phase 10 P12 | ~15min | 1 tasks | 2 files |
 | Phase 10 P14 | 55min | 2 tasks | 2 files |
 | Phase 10 P15 | spanned checkpoints | 3 tasks | 12 files |
+| Phase 10 P16 | 55min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -288,6 +289,8 @@ Recent decisions affecting current work:
 - [Phase 10]: Phase 10 Plan 14: D-17's conditional onnxruntime/ONNX-export checkpoint did not trigger (no torch candidate cleared its bar) -- recorded in the capt_mc non-decision shape; nothing installed, models/bracket/export.py never created.
 - [Phase 10]: Phase 10 Plan 15: FBref manual snapshot acquired (Task 1 'A') then dropped on a verified acquisition-format defect (Task 2 finding, Task 2 decision 'C') -- config.FBREF_COLS's Tkl+Int/Blocks/Clr source columns 100% empty in all 5,454 rows across all ten seasons, confirmed live on FBref's own page (not an export-tool bug) via browser screenshot + incognito re-test; no load_manual_snapshot written, flag stays False, ten CSVs+README committed as evidence
 - [Phase 10]: Phase 10 Plan 15: RL reward-shaping notes recorded (potential-based-only correction, Ng/Harada/Russell 1999, log-linear compute curve, D-16 declare-before-training rule) -- notes-only per D-04, no training ran, optimize/rl_env.py and rl_train.py byte-identical
+- [Phase 10]: Phase 10 Plan 16: D-11 split-verdict combined run measured model+chips=2262 (empty full-coverage winner set, all nine Phase 10 flags REJECTED/HOLD/DECLINED) -- bit-for-bit identical to Phase 9's own close and Phase 10's own open, 18 short of the >=2,280 bar; config.py is a genuine byte-identical no-op, tests/test_experiments.py untouched
+- [Phase 10]: Phase 10 Plan 16: product surface proven unchanged via a real python -m predict.export run + new tests/test_product.py regression (test_phase10_flags_default_off_leaves_export_contract_unchanged); IMPROVEMENTS.md's D-01 through D-21 decisions audit and all eight resolves_phase:10 todos closed with recorded outcomes -- Phase 10 fully closed
 
 ### Pending Todos
 
@@ -328,6 +331,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-11T15:18:56.526Z
-Stopped at: Completed 10-15-PLAN.md (FBref manual snapshot: acquired then dropped on an acquisition-format defect; RL reward-shaping notes recorded, notes-only)
+Last session: 2026-09-11T15:41:12.356Z
+Stopped at: Completed 10-16-PLAN.md (Phase 10 close-out: D-11 split-verdict combined run, D-01..D-21 decisions audit, product contract proven unchanged)
 Resume file: None
