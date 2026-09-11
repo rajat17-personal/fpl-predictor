@@ -1,6 +1,10 @@
+---
+last_mapped_commit: 382338e2c164a4433cd73cdbb12ffc9be2621493
+---
+
 # Coding Conventions
 
-**Analysis Date:** 2026-09-01
+**Analysis Date:** 2026-09-11
 
 ## Naming Patterns
 
@@ -8,8 +12,9 @@
 - Python: `snake_case.py` for modules (e.g., `data/ingest.py`, `models/train.py`, `optimize/squad_ilp.py`)
 - TypeScript/React: PascalCase for components (e.g., `frontend/src/components/ThemeToggle.tsx`), camelCase for utilities (e.g., `frontend/src/lib/format.ts`)
 - Test files: 
-  - Python: `test_*.py` (e.g., `tests/test_legality.py`, `tests/test_leakage.py`)
+  - Python: `test_*.py` (e.g., `test_legality.py`, `test_leakage.py`, `test_bracket.py`, `test_availability.py`)
   - TypeScript/React: `*.test.ts`, `*.test.tsx` (e.g., `frontend/src/lib/format.test.ts`, `frontend/src/components/ThemeToggle.test.tsx`)
+  - Playwright E2E: `*.spec.ts` (e.g., `e2e/specs/xp-table.spec.ts`, `e2e/specs/team-solver.spec.ts`)
 
 **Functions:**
 - Python:
@@ -20,6 +25,7 @@
   - React hooks: `useCamelCase` (e.g., `useTheme()`, `useSortable()`, `usePageMeta()`)
   - React components: `PascalCase` (e.g., `ThemeToggle`, `XpTable`, `PageShell`)
   - Private/internal: `camelCase` or `_camelCase` prefix (e.g., `getMediaQueryList()`, `applyResolvedTheme()`)
+  - Playwright helpers: `camelCase` (e.g., `gotoReady()`, `watchOrigin()`, `openCardMenu()`)
 
 **Variables:**
 - Python: `snake_case` (e.g., `horizon_sum`, `sell_values`, `xp_med`, `total_points`)
@@ -27,6 +33,7 @@
 - Constants:
   - Python ALL_CAPS: `BUDGET = 100.0`, `SQUAD_SIZE = 15`, `MAX_PER_CLUB = 3`, `SEASONS = [...]`
   - TypeScript/React PascalCase or ALL_CAPS: `THEME_STORAGE_KEY = "fpl-theme"`, `EN_DASH = "–"`, `NUMERIC_KEYS = new Set(...)`
+  - Playwright constants: ALL_CAPS (e.g., `FROZEN_NOW`, `GW`, `ENTRY`, `BLANK_CLUBS = ["ARS", "AVL", ...]`)
 
 **Types:**
 - Python:
@@ -42,15 +49,21 @@
 ## Code Style
 
 **Formatting:**
-- Python: 4-space indentation (standard Python)
+- Python: 4-space indentation (standard Python), 100-character line length target (enforced by `ruff.toml`)
 - TypeScript/React: 2-space indentation (enforced by Vite/Prettier)
-- Line length: ~100 characters target in Python, ~80-100 in TypeScript
-- No explicit linter/formatter config for Python (no `.flake8`, `.pylintrc`), but code follows implicit conventions
-- TypeScript: tsconfig.json present (`frontend/tsconfig.app.json`); no explicit prettier/eslint config (uses Vite defaults)
+- Playwright: 2-space indentation
+- Line length: 100 characters target in Python (per `ruff.toml:line-length = 100`), 80-100 in TypeScript
 
 **Linting:**
-- Python: No linter configured (code follows implicit conventions: clean imports, type hints, docstrings)
-- TypeScript/React: No ESLint config detected; TypeScript compiler in strict mode (`tsc --noEmit` used in CI)
+- Python: `ruff` configured in `ruff.toml` (not `pyproject.toml` — repo has no packaging metadata)
+  - Target: Python 3.14
+  - Rules: Explicit default selection `["E4", "E7", "E9", "F"]` (pycodestyle errors, Pyflakes)
+  - Config: `ruff.toml` at repo root
+  - Excludes: `data/raw`, `data/processed`, `data/snapshots`, `models/artifacts`, `frontend`, `web`, `.planning`, `e2e/node_modules`, `e2e/fixtures`, `e2e/playwright-report`, `e2e/test-results`
+  - CI gate: `ruff check .` (see `.github/workflows/ci.yml`)
+- TypeScript/React: TypeScript compiler in strict mode (`tsc -b` with project references)
+  - No ESLint config detected; code follows implicit conventions
+- Playwright: No linting configured; code follows implicit conventions
 
 ## Import Organization
 
@@ -66,9 +79,15 @@
 3. Component/utility imports: `import { fetchJson } from "../lib/api"`, `import { Spinner } from "../components/Spinner"`
 4. Style imports (if any): `import "./index.css"`
 
+**Order (Playwright):**
+1. Framework imports: `import { test, expect, type Page } from "@playwright/test"`
+2. Helper imports: `import { gotoReady, watchOrigin, FROZEN_NOW } from "../helpers/page"`
+3. Test fixtures: `import fixtureData from "../fixtures/v1/normal/api/capture.json"`
+
 **Path Aliases:**
 - Python: No path aliases; imports use absolute from project root: `import config`, `from data.ingest import fetch_vaastav_season`
 - TypeScript/React: Relative paths used (e.g., `import { fetchJson } from "../lib/api"`); no `jsconfig.json` path aliases
+- Playwright: Relative paths with `..` navigation (e.g., `import { gotoReady } from "../helpers/page"`)
 
 ## Error Handling
 
@@ -84,6 +103,11 @@
 - **Promise errors:** `fetch()` with `.ok` check (see `frontend/src/routes/XpTable.test.tsx:25-30`)
 - **Try/catch:** For localStorage access and optional features (see `frontend/src/lib/theme.ts:21-38`)
 - **Graceful degradation:** Return null/undefined or default value on error; no throwing from event handlers (see `getMediaQueryList()` returns null on error)
+
+**Playwright Patterns:**
+- **Navigation errors:** Assertions on page state after navigation (no explicit error throws)
+- **Timeout handling:** Playwright built-in timeout (30 seconds per test, 10 seconds per assertion)
+- **Stale element retries:** Testing Library queries auto-retry; explicit `.toBeVisible()` checks for timing
 
 ## Logging
 
@@ -101,6 +125,10 @@
 - Rarely used in component code (prefer error boundaries, test assertions)
 - When used: `console.error()` for unrecoverable errors only; never `console.log()` in production code
 
+**Playwright:**
+- No logging in specs; use `--reporter=verbose` to see test execution details
+- CLI output and exit codes convey all necessary info (`npx playwright test` or `npm run test` from `e2e/`)
+
 ## Comments
 
 **Python:**
@@ -116,6 +144,12 @@
 - Comments document the coupling between files (e.g., frontend/src/lib/theme.ts mirrors frontend/index.html's inline script)
 - No JSDoc/TSDoc; vanilla comments suffice
 
+**Playwright:**
+- Multi-line docstring (comment block) at test top: Explain WHY the test matters, what it validates, and fixture/data dependencies (see `e2e/specs/xp-table.spec.ts:4-33`)
+- Hand-derived expected values: Always explain WHERE the literal string/number came from (e.g., "row 1 hand-derived from e2e/fixtures/v1/normal/web-data/xp_table.json")
+- Inline comments: Explain timing/sequencing rules and concurrent operation safeguards (see `e2e/helpers/page.ts:20-31`)
+- Never comment what code does (e.g., `// click the button` — Playwright method name says it all); comment WHY ordering matters
+
 ## Function Design
 
 **Python:**
@@ -130,6 +164,11 @@
 - Return types: Always annotated (e.g., `function resolveTheme(...): ResolvedTheme { ... }`)
 - Parameters: Destructured when passing multiple related values (e.g., React component props)
 
+**Playwright:**
+- Helper functions: Reusable across specs (e.g., `gotoReady()`, `openCardMenu()`, `cardActionsNames()`)
+- Async/await: All navigation and query functions are async; always `await` before assertion
+- Test structure: Describe blocks group related tests; each `it()` is independent (no cross-test state)
+
 ## Module Design
 
 **Python:**
@@ -143,6 +182,11 @@
 - No barrel files (`index.ts` re-exports); imports use explicit paths: `import { fetchJson } from "../lib/api"` not `from "../lib"`
 - Types exported alongside functions: `export type XpRow = { ... }; export function fetchXpTable(...) { ... }`
 
+**Playwright:**
+- Helpers as utility modules: `e2e/helpers/page.ts` exports reusable functions (`gotoReady`, `watchOrigin`, constants `FROZEN_NOW`, `GW`)
+- No barrel files; specs import directly from helpers
+- Fixtures as JSON files: `e2e/fixtures/v1/{normal,blank,dgw}/` directory structure mirrors API contract structure
+
 ## CLI Entry Points (Python Only)
 
 **Pattern:**
@@ -154,4 +198,4 @@
 
 ---
 
-*Convention analysis: 2026-09-01*
+*Convention analysis: 2026-09-11*

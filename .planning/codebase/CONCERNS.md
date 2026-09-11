@@ -1,8 +1,13 @@
+---
+schema: concerns
+last_mapped_commit: 382338e2c164a4433cd73cdbb12ffc9be2621493
+---
+
 # Codebase Concerns
 
-<!-- refreshed: 2026-09-01 -->
+<!-- refreshed: 2026-09-11 -->
 
-**Analysis Date:** 2026-09-01
+**Analysis Date:** 2026-09-11
 
 ## Tech Debt
 
@@ -54,6 +59,18 @@
 - Impact: Minor version upgrades (19.2.9, 19.3.0) can introduce unexpected behavior changes or type mismatches in @types/react
 - Fix approach: Change to exact versions: `"react": "19.2.8"` and `"react-dom": "19.2.8"`; apply same to `@types/react` and `@types/react-dom` (lines 29-30)
 
+**Destructive `uv pip sync` on shared conda env (WINDOWS #5):**
+- Issue: Phase 10 instruction executed `uv pip sync requirements-experiments.txt --require-hashes` on the shared `python314` conda environment, which treated the entire env as its sync target and removed all packages NOT in that single lockfile (including project-critical packages: torch, lightgbm, sklearn, fastapi, pulp)
+- Files: `requirements-experiments.txt`, recovery workflow documented in `.planning/WINDOWS.md` entry 5
+- Impact: Production environment can be instantly destroyed if someone runs `uv pip sync` instead of `uv pip install` against a narrow experiments lockfile; recovery requires manual reinstallation of untracked packages
+- Fix approach: Document this as a DANGER in the requirements-rl.in / requirements-experiments.in headers; always use `uv pip install -r <file> --require-hashes`, never `--sync`; consider a guard script that checks if running against a shared env before allowing `--sync`
+
+**Linting scope changed from blanket exclusions to granular ones:**
+- Issue: `ruff.toml` previously excluded `data` and `e2e` directories entirely, hiding 10 tracked Python files from CI lint and preflight gate checks; now uses subtree-specific exclusions
+- Files: `ruff.toml` (lines 14-28), documented in 06-06-PLAN.md
+- Impact: Exclusions are now correct and comprehensive, BUT the change means future readers must carefully track which directories are checked; a NameError shipped unnoticed when `e2e/scripts/capture_fixtures.py` was blanket-excluded
+- Fix approach: Maintain explicit per-subtree exclusions; document that only regenerable/vendored directories should be excluded; validate coverage on each CI run
+
 ## Known Bugs
 
 **File handles not closed (resource leak):**
@@ -98,6 +115,20 @@
 - Workaround: Type the URL directly into the address bar or use browser navigation
 - Fix approach: Modify the `a` component override in ReactMarkdown to detect root-relative `href` and render react-router's `<Link>` instead of a plain anchor
 
+**Frontend TypeScript errors only caught during build, not typecheck (WINDOWS #1):**
+- Symptom: `npm run typecheck` runs `tsc --noEmit` against the solution `tsconfig.json` but type-checks 0 files; only `npm run build` (tsc -b) actually catches type errors
+- Files: `frontend/package.json` (package.json script `typecheck`)
+- Trigger: Run `npm run typecheck` before CI; errors silently pass
+- Workaround: Always run `npm run build` to catch real type errors
+- Fix approach: Configure the solution tsconfig to check the source tree; or use a separate CI type-check step with the proper config
+
+**Test pollution: monkeypatched experiment data overwrites live results (WINDOWS #6, FIXED 2026-09-11):**
+- Symptom: `tests/test_bracket.py::test_granularity_bracket_writes_gate_schema` monkeypatches the MLP gate result and writes directly to `data/processed/experiments/bracket_gate_mlp.json` instead of a tmp_path, overwriting real measured results every time the test runs
+- Files: `tests/test_bracket.py` (missing `config.EXPERIMENTS_DIR` tmp_path monkeypatch)
+- Trigger: Run pytest; the live measured result is clobbered by toy test data
+- Status: FIXED 2026-09-11 — test now uses proper monkeypatch isolation
+- Fix approach (already applied): Monkeypatch `config.EXPERIMENTS_DIR` to a tmp_path in the test fixture; validate that isolated writes don't touch the live repo
+
 ## Security Considerations
 
 **API key exposed in cron logs:**
@@ -118,6 +149,12 @@
 - Current mitigation: None; dev environment uses conda-managed python314 which pins transitive deps
 - Recommendations: Use `==` versions in production lockfile (e.g. `pip freeze > requirements.lock`); test major version upgrades before deploying; add a periodic dependency audit (e.g., `pip audit`, `dependabot`)
 
+**Experimental requirements files pull untested dependencies:**
+- Risk: `requirements-rl.in`, `requirements-experiments.in` introduce new packages (torch, gymnasium, stable-baselines3, cuda-bindings, etc.) not used in the main system; these have large supply-chain surface area
+- Files: `requirements-rl.txt`, `requirements-rl.in`, `requirements-experiments.txt` (implied but scoped out of incremental remap)
+- Current mitigation: Phase 9 experiments are isolated in branches/workflows; not shipped in production
+- Recommendations: Pin all experimental dependencies with hashes; use separate envs or containers for experiments; never run `uv pip sync` on these lockfiles against the main conda env
+
 ## Performance Bottlenecks
 
 **Solve endpoint cache may have race conditions:**
@@ -137,6 +174,12 @@
 - Files: `backtest/walk_forward.py` (entire module)
 - Cause: Design choice for data leakage safety (strict time-based splits), but no cross-validation caching
 - Improvement path: Implement incremental training or checkpoint cache; validate cache staleness against training data timestamps
+
+**E2E frontend build is a bottleneck (180s timeout):**
+- Problem: `e2e/playwright.config.ts` chains `npm run build && uvicorn ...` with a 180-second timeout; if the build is slow or fails, the entire test suite can't start
+- Files: `e2e/playwright.config.ts` (lines 62-67)
+- Cause: Build must complete before uvicorn boots, but test infrastructure waits for health check; if build stalls, full test timeout
+- Improvement path: Parallelize build and fixture-mode server boot (separate concerns); cache frontend dist/ across test runs if deterministic; add build progress logging to diagnose slowness
 
 ## Fragile Areas
 
@@ -176,6 +219,12 @@
 - Safe modification: Add a `captainsData.length > 0` guard or explicitly document why an empty captains export should still show table structure; add a regression test
 - Test coverage: No test exercises `captainsData = []` scenario; default mock used by tests that don't care about captains is `[]`, but no assertion on table visibility
 
+**E2E fixture mode assumes frozen API state:**
+- Files: `e2e/playwright.config.ts` (lines 51-53, 69, 85-87, 95-97), `api/main.py` (fixture mode mount logic)
+- Why fragile: Tests rely on frozen bootstrap/fixtures/web-data in `e2e/fixtures/v1/{normal,blank,dgw}/`. If fixture capture script breaks or FPL API schema changes, tests pass but validate wrong behavior
+- Safe modification: Version-pin fixture data; add a diff check on refresh; document what each fixture set models and why; add integration tests that validate fixture capture against a mock API
+- Test coverage: Fixtures are manually refreshed; no automated validation that captured fixtures match real API behavior
+
 ## Scaling Limits
 
 **Solve cache grows unbounded:**
@@ -193,6 +242,11 @@
 - Limit: Busy hour during deadline (last few hours before GW deadline) can see request queue back up
 - Scaling path: Pre-compute pools on a schedule; parallelize horizon pools with ThreadPoolExecutor; use a background job queue (Celery, RQ)
 
+**E2E test suite runs three parallel servers (normal/blank/dgw):**
+- Current capacity: Playwright boots 3 uvicorn processes on ports 8100/8101/8102; each consumes Python interpreter + shared conda env resources
+- Limit: On resource-constrained systems, boot time extends or tests timeout waiting for health checks
+- Scaling path: Make variant tests optional (E2E_VARIANTS=0); cache fixture-mode boots across suite runs; use a single multi-mounted server if fixture isolation allows
+
 ## Dependencies at Risk
 
 **LightGBM model serialization (joblib + pickle):**
@@ -209,6 +263,11 @@
 - Risk: `vaastav/Fantasy-Premier-League` repo on GitHub is community-maintained; schema can change or data can be retracted
 - Impact: Data ingestion fails silently if column names change; historical training data becomes unavailable
 - Migration plan: Version-pin the vaastav commit in data ingestion; snapshot raw CSVs locally once downloaded; maintain a secondary data source (e.g., FBref, Understat) as fallback
+
+**Experimental RL/torch dependencies (Phase 9-10):**
+- Risk: `requirements-rl.txt` / `requirements-experiments.txt` pull torch, gymnasium, stable-baselines3, cuda-bindings with large supply chains; these introduce GPU libraries with binary compatibility issues
+- Impact: Phase 9-10 experiments may fail to install on systems without CUDA/GPU support; wheel conflicts can poison the shared `python314` conda env
+- Migration plan: Isolate experiments in Docker containers or separate conda envs; pin all hashes; test wheel installations on CI before merging; never `uv pip sync` these into main env
 
 ## Missing Critical Features
 
@@ -254,6 +313,12 @@
 - Risk: Link-click behavior is inconsistent with the rest of the SPA; no regression test if someone "fixes" it incorrectly
 - Priority: Low-Medium — cosmetic but inconsistent
 
+**E2E fixture capture integrity:**
+- What's not tested: Whether captured fixtures remain in sync with real FPL API schema; no automated validation of fixture freshness
+- Files: `e2e/scripts/capture_fixtures.py`, `e2e/fixtures/v1/`
+- Risk: Fixtures become stale; tests pass but don't validate real behavior
+- Priority: Medium — high impact if fixture format diverges
+
 ---
 
-*Concerns audit: 2026-09-01*
+*Concerns audit: 2026-09-11*
