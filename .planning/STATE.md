@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 current_phase: 10
 current_phase_name: xP Experiment Follow-ups
 status: executing
-stopped_at: Completed 10-13-PLAN.md
-last_updated: "2026-09-11T05:55:28.775Z"
+stopped_at: "Completed quick-260911-7fy-01: fix test granularity-bracket writes gate"
+last_updated: "2026-09-11T09:57:52.141Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 10 execution started
-state_head: 6a4524a48f70ff4d433be026150ca84ac2a755bc
+state_head: 3099bf176ef1b9e9dcf131e1c693f3c877371b30
 progress:
   total_phases: 10
   completed_phases: 7
@@ -127,6 +127,7 @@ Progress: [███████░░░] 70% (52/55 plans complete)
 | Phase 10 P10 | 80min | 3 tasks | 12 files |
 | Phase 10-xp-experiment-follow-ups P11 | 55min | 3 tasks | 4 files |
 | Phase 10 P13 | 35min | 3 tasks | 3 files |
+| Phase quick-260911-7fy P01 | 21min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -274,6 +275,8 @@ Recent decisions affecting current work:
 - [Phase 10]: 10-11: same plan-text bug class as 10-10 recurred (verify command checked backtest.walk_forward.TEST_SEASONS instead of config.TEST_SEASONS) -- corrected per 10-10's own precedent, code assertions were already correct
 - [Phase 10]: [Phase 10] Phase 10 Plan 13: Both Colab sequence candidates (GRU, transformer) HOLD by a wide margin (Spearman -0.0789 and 0.0593 vs 0.3424 LightGBM baseline) -- D-12 bracket complete at 7/7 candidates gated, 0 advancing, no config.EXPERIMENTS bracket_* flag flipped
 - [Phase 10]: [Phase 10] Phase 10 Plan 13: tests/test_bracket.py::test_granularity_bracket_writes_gate_schema pollutes the live bracket_gate_mlp.json on every pytest run (missing a config.EXPERIMENTS_DIR tmp_path monkeypatch) -- restored manually 3x this session, logged to WINDOWS.md entry 6, not fixed in-scope
+- [Phase 10]: Restored bracket_gate_mlp.json by re-running run_granularity_bracket('mlp') for real rather than hand-writing the remembered numbers (T-7fy-02 halt-on-mismatch); re-run reproduced the plan 10-11 oracle exactly.
+- [Phase 10]: Captured the bracket_gate_lgbm.json baseline read in test_granularity_bracket_writes_gate_schema before monkeypatching config.EXPERIMENTS_DIR, since that baseline file only exists in the live directory.
 
 ### Pending Todos
 
@@ -312,6 +315,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-11T05:55:28.523Z
-Stopped at: Completed 10-13-PLAN.md
+Last session: 2026-09-11T09:57:51.915Z
+Stopped at: Completed quick-260911-7fy-01: fix test granularity-bracket writes gate
 Resume file: None
