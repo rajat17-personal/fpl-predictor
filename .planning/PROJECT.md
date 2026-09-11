@@ -47,7 +47,7 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 - Live deployment to Cloudflare Pages / Hetzner — hosting not yet purchased; CI produces a deployable image, deployment automation is the next milestone
 - Auth (Supabase JWT) and payment integration — blocked on user's gateway/legal decision; `require_key()` stub stays the swap point
 - Model/decision-quality improvements — meta-pattern now measured, not assumed: Phase 9 ran the six recommended experiments honestly and every one was rejected on its pre-declared bar (IMPROVEMENTS.md Phase F); further xP gains need better signal, not more machinery
-- FBref data integration — confirmed not acquirable (Phase 9: Cloudflare challenge survives real-Chrome UC-mode spikes); no new scraping infrastructure
+- FBref data integration — confirmed not acquirable (Phase 9: Cloudflare blocks automation; Phase 10: even manual browser export serves only 2 of 12 defensive columns — acquisition-format defect, evidentiary CSVs committed); no new scraping infrastructure
 - A/B testing / feature-flag infrastructure — needed for model rollout experiments, but post-launch concern
 
 ## Context
@@ -101,6 +101,11 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 | RL dependency stack dev-only and hash-locked (`requirements-rl.txt`), never in Dockerfile/CI (D-09) | torch + gymnasium + SB3 are heavyweight experiment-only deps; production image must not carry them | ✓ Good — Phase 9: isolation proven by grep+parser assertion and byte-identical Dockerfile/workflows |
 | Captain by mean xP retained over ceiling-EV quantile blend | Ceiling-EV capture gain (+1.5pt) fell below the pre-declared ≥+2pt bar; mechanical rule decided | ✓ Good — Phase 9: verdict recorded with numbers in IMPROVEMENTS.md |
 
+| Availability + injury features rejected on pre-declared criteria (Phase 10 Tier-1) | availability_flags moved neither leg (+0 pts, +0.0000 Spearman); transfermarkt_injury regressed −20 vs fresh 6-season control | ✓ Good — Phase 10: verdicts + evidence in IMPROVEMENTS.md Phase G; flags stay default-off, code merged |
+| LightGBM keeps the stage-2 regressor seat: model-class bracket closed 7/7 HOLD | Ridge/XGB/CatBoost/MLP/GRU/transformer all failed the D-15 gate margin (0.010) against LightGBM's 0.3900 Spearman | ✓ Good — Phase 10: bracket harness + external-prediction seam remain as permanent infrastructure |
+| News-sentiment declined on cost despite fired trigger (D-02) | 9–14 days of throttled GDELT fetching vs mlpremier's documented negative prior on this exact feature | ✓ Recorded — Phase 10: "declined on cost" (distinct from "not triggered") in IMPROVEMENTS.md |
+| Shared conda env may never be uv-pip-synced; parser deps hash-locked into requirements.in | uv pip sync stripped the env mid-phase (WINDOWS 4-5) and broke scraping three times (certifi/html5lib/bs4) | ✓ Good — Phase 10: lockfiles recompiled additively; both read_html parser legs now CI-gated |
+
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
@@ -119,4 +124,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-08 after Phase 9*
+*Last updated: 2026-09-11 after Phase 10*

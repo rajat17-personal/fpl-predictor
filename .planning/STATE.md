@@ -20,10 +20,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-08)
+See: .planning/PROJECT.md (updated 2026-09-11)
 
 **Core value:** The weekly recommendations (xP table, squad, captains, transfers) must keep flowing reliably — every change must leave the pipeline, API, and site at least as correct and more trustworthy than before.
-**Current focus:** Phase 10 — xP Experiment Follow-ups
+**Current focus:** Phase 7 — Parity Validation & Cutover
 
 ## Current Position
 
@@ -32,7 +32,7 @@ Plan: Not started
 Status: Ready to plan
 Last activity: 2026-09-11 — Phase 10 complete, transitioned to Phase 7
 
-Progress: [███████░░░] 70% (52/55 plans complete)
+Progress: [███████████████████░] 96% (68/71 plans complete)
 
 ## Performance Metrics
 
@@ -310,7 +310,8 @@ Recent decisions affecting current work:
 - **Time-critical, independent of this milestone:** the daily snapshot cron must run every day — price-model history cannot be backfilled (first snapshot 2026-08-31). Phase 6 closed the alerting loop: cron lines installed and the FPL_ALERT_WEBHOOK failure alert confirmed live (06-UAT.md, 2026-09-07) — a failed run is now noticed same-day. Phase 10 Plan 3 (2026-09-10) closed the remaining WSL-cron gap itself (D-08): only 2 of 11 possible days were actually captured because cron does not fire while the machine is off; `scripts/snapshot_catchup.sh` now runs `@reboot` and captures on first invocation of a missed day, with the gap count surfaced in `data/cron.log` on every daily run.
 - **Milestone invariant:** the vanilla site stays live and authoritative until CUT-01 completes. Phase 7 is calendar-gated on one full real gameweek cycle (deadline → live → finished).
 - Payment gateway / merchant-of-record choice still pending with the user — out of scope here, but PITCH-01's trademark disclaimer feeds the eventual gateway review.
-- **[Phase 4]:** Security enforcement is on but no 04-SECURITY.md exists — run `/gsd-secure-phase 4` to backfill the threat verification (03, 05, and now 09 also lack SECURITY.md; 06-SECURITY.md now exists).
+- **[Phase 4]:** Security enforcement is on but no 04-SECURITY.md exists — run `/gsd-secure-phase 4` to backfill the threat verification (03, 05, 09, and now 10 also lack SECURITY.md; 06-SECURITY.md now exists).
+- **[Phase 10] Code review CR-01 (advisory, flag-off):** `data/transfermarkt.py::attach` reads gw deadlines from the on-disk `player_gw.parquet` instead of the in-memory frame being built, so with `transfermarkt_injury` enabled the newest gameweek's injury features would silently read as "not injured". Harmless while the flag stays off (it was REJECTED); must be fixed before any future adoption — full detail in 10-REVIEW.md (also 4 warnings, 2 info; `/gsd-code-review 10 --fix` can apply them).
 
 ### Quick Tasks Completed
 
