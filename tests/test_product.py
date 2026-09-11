@@ -202,6 +202,35 @@ def test_export_contract_file_set_and_key_sets():
         assert set(rows[0].keys()) == expected_keys, (name, sorted(rows[0]))
 
 
+_PHASE10_FEATURE_PREFIXES = ('"av_', '"tm_', '"nw_', '"bracket_')
+
+
+def test_phase10_flags_default_off_leaves_export_contract_unchanged():
+    """Phase 10 closed with all nine flags (availability_flags,
+    transfermarkt_injury, news_sentiment [never registered -- declined on
+    cost], bracket_ridge/xgb/catboost/mlp/rnn/transformer) staying
+    default-off (see IMPROVEMENTS.md Phase G's results table -- every row
+    REJECTED/HOLD/DECLINED). The av_/tm_/nw_/bracket_ column families are
+    training-time features and a bracket-internal model choice; none of
+    them belongs in the product contract regardless of any flag's state.
+    Checks the REAL emitted web/data/*.json payloads (not a fixture build),
+    matching plan 09-10's own real-export-run precedent for this class of
+    regression test. A future phase that adopts one of these flags and
+    deliberately wires it into the export must update this assertion."""
+    import glob
+
+    payload_paths = sorted(glob.glob(str(config.ROOT / "web" / "data" / "*.json")))
+    assert payload_paths, "no web/data/*.json payloads found -- run python -m predict.export first"
+
+    bad = []
+    for path in payload_paths:
+        text = open(path).read()
+        for prefix in _PHASE10_FEATURE_PREFIXES:
+            if prefix in text:
+                bad.append((path, prefix))
+    assert not bad, f"training-time feature keys leaked into the product contract: {bad}"
+
+
 def test_no_adopted_experiment_flags_needed_product_wiring():
     """Phase 9 closed with every experiment flag default-off (see
     IMPROVEMENTS.md Phase F's results table -- all eight REJECTED/not
