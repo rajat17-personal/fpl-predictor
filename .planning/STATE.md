@@ -4,10 +4,10 @@ current_phase: 10
 current_phase_name: xP Experiment Follow-ups
 status: executing
 stopped_at: "Completed quick-260911-7fy-01: fix test granularity-bracket writes gate"
-last_updated: "2026-09-11T09:57:52.141Z"
+last_updated: "2026-09-11T09:58:21.195Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 10 execution started
-state_head: 3099bf176ef1b9e9dcf131e1c693f3c877371b30
+state_head: fe82fd48415735190e6864c73b8c68f5cb272098
 progress:
   total_phases: 10
   completed_phases: 7
@@ -304,6 +304,7 @@ Recent decisions affecting current work:
 | 260909-5vx | Re-measure understat/fotmob accuracy per position and on covered rows only (Phase F addendum) | 2026-09-09 | 41b08fb | — | [260909-5vx-re-measure-understat-fotmob-accuracy-per](./quick/260909-5vx-re-measure-understat-fotmob-accuracy-per/) |
 | 260909-dga | High-replica capt_ceiling re-run — rejection confirmed via paired gameweek CIs (Phase F addendum) | 2026-09-09 | 4eeabcd | — | [260909-dga-high-replica-25x-capt-ceiling-adoption-r](./quick/260909-dga-high-replica-25x-capt-ceiling-adoption-r/) |
 | 260909-elx | ep_next feature experiment — both flags rejected (lag: misses bar; now: provenance-tainted) | 2026-09-09 | d48432e | Verified | [260909-elx-experiment-feed-lagged-ep-next-xp-fpl-av](./quick/260909-elx-experiment-feed-lagged-ep-next-xp-fpl-av/) |
+| 260911-7fy | Fix test_granularity_bracket_writes_gate_schema polluting live bracket_gate_mlp.json (missing tmp_path monkeypatch) | 2026-09-11 | fe82fd4 | — | [260911-7fy-fix-test-granularity-bracket-writes-gate](./quick/260911-7fy-fix-test-granularity-bracket-writes-gate/) |
 
 ## Deferred Items
 
