@@ -1500,7 +1500,7 @@ anything against them (T-10-01-05).
 |------|-----------|----------|---------|---------|
 | availability_flags | D-09 dual criterion: 2025-26 model+chips +25, pooled played-only Spearman +0.03 over 0.383 | 2025-26 model+chips 2172->2172 (+0, need +25); pooled Spearman 0.3832->0.3832 (+0.0000, need +0.03) | REJECTED (dual criterion, neither leg met) | off |
 | transfermarkt_injury | model+chips contribution measured via the harness | 6-season model+chips 2262->2242 (-20, need >=2280) | REJECTED | off |
-| news_sentiment | D-02 conditional build; if built, model+chips contribution measured via the harness | pending | pending | off |
+| news_sentiment | D-02 conditional build; if built, model+chips contribution measured via the harness | D-02 trigger fired (0.3874 < 0.500) but declined on cost (~9-14 day projected build, see D-02 declined-on-cost entry) | DECLINED ON COST (not "not triggered" -- trigger fired, build never run) | off |
 | bracket_ridge | D-15 cheap gate: val played-only Spearman >= LightGBM + 0.010 | pending | pending | off |
 | bracket_xgb | D-15 cheap gate: val played-only Spearman >= LightGBM + 0.010 | pending | pending | off |
 | bracket_catboost | D-15 cheap gate: val played-only Spearman >= LightGBM + 0.010 | pending | pending | off |
@@ -1630,6 +1630,58 @@ table's own closing discipline.
   baselines in that paper's own reported comparison. Plan 10-12 should treat
   this as the governing prior on how much tuning budget the sentiment
   experiment deserves once built, not assume a positive result is likely.
+
+### D-02 news-sentiment: declined on cost, NOT not-triggered (plan 10-12)
+
+- **This is a distinct outcome from "not triggered."** The D-02 trigger
+  above **did fire** — 0.3874 < 0.500 on the locked threshold, measured
+  against `data/processed/experiments/benchmark_tier1.json`'s pooled
+  played-only `spearman_xp_med` (seasons 2021-22, 2022-23, n=17,488). A
+  "not triggered" record would mean the measured value was >= 0.500 and the
+  experiment was mechanically never authorised. That is not what happened
+  here: the experiment **was authorised** by the measurement, and a human
+  chose not to spend the build cost anyway. The permanent record must keep
+  these two cases distinguishable, because a future revisit needs to know
+  whether the experiment was ruled out by measurement or simply never run.
+- **Verbatim decision:** "DECLINE" — a Task 1 blocking-human checkpoint
+  presented the figures below and asked for BUILD / NOT TRIGGERED / DECLINE;
+  the human answered "DECLINE".
+- **Projected build cost, quoted at decision time** (`_GDELT_MIN_INTERVAL_S
+  = 5.0`, the locked per-request GDELT throttle, computed live from
+  `features.parquet`'s distinct `(season, gw, player_code)` windows, not
+  assumed):
+  - At the full `config.SEASONS` scope (2016-17..2026-27, the "full
+    authorised scope" `data/transfermarkt.py`'s own docstring precedent
+    would apply to `data/news.py::build()`'s default): **244,425** windows
+    → **1,222,125 s ≈ 339.5 hours ≈ 14.1 days** of continuous GDELT
+    fetching, before any Guardian pass or retry/backoff overhead.
+  - At the narrower 6-season measurement scope (2020-21..2025-26, the only
+    seasons the eventual `wf_news_base6`/`wf_news_on6` walk-forward runs
+    would actually consume): **156,075** windows → **780,375 s ≈ 216.8
+    hours ≈ 9.0 days**.
+  - Either bound is an order of magnitude finer-grained than plan 10-07's
+    Transfermarkt backfill (2,623 players, one query per player's whole
+    career), because news windows are queried per player **per gameweek**.
+- **Governing negative prior weighed in the decision.** `danielfrees/mlpremier`
+  (arXiv 2405.02412) — the paper the source todo cites to mine — tested this
+  exact feature (Guardian news-sentiment) and found no strong predictive
+  signal, underperforming both its own CNN and its Ridge/LightGBM baselines.
+- **Structural caveat weighed in the decision.** The two scoreable benchmark
+  seasons (2021-22, 2022-23) carry **zero `availability_flags` coverage** —
+  the entire +0.0042 movement from the fresh base (0.3832) to the combined
+  Tier-1 figure (0.3874) is attributable to `transfermarkt_injury` alone.
+  This means the fired trigger measures whether the ranking gap is still
+  open, not evidence that a news-sentiment feature specifically would close
+  it — a further reason the projected 9-14 day cost was judged not worth
+  spending against an already-weak prior.
+- **Outcome:** `news_sentiment` stays **declined on cost**. No `data/news.py`
+  was written, `config.NEWS_COLS` was not added, and no measurement was run.
+  `config.EXPERIMENTS` carries no `news_sentiment` key change (Task 2 of
+  10-10 registered the six `bracket_*` keys only; `news_sentiment` was never
+  a Tier-1-style pre-registered flag in `config.EXPERIMENTS` to begin with —
+  its whole record lives in this ledger entry). A future revisit that wants
+  to build this experiment starts fresh from this entry's cost estimate, not
+  from a "ruled out" verdict.
 
 ### Data provenance and access risk (Phase 10)
 
