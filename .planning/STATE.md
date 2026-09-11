@@ -295,13 +295,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-5 pending (captured 2026-09-09, Phase 9 follow-up experiments):
-
-- ep_next + availability flags as model features (ranking-gap lead)
-- Per-position / covered-rows re-measurement of understat & fotmob
-- Manual FBref CSV snapshot + crosswalk join
-- High-replica capt_ceiling re-run (Phase F addendum)
-- RL reward-shaping notes for any future revisit
+- 2026-09-11 — Ensemble blend of LightGBM + Ridge + XGBoost stage-2 predictions (models, minor)
 
 ### Blockers/Concerns
 
