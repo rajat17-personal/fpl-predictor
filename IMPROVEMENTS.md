@@ -1729,6 +1729,125 @@ any bracket candidate.
 - **Structural caveat weighed in the decision:** the two benchmark-scoreable seasons (2021-22, 2022-23) carry **zero `availability_flags` coverage** — the entire +0.0042 movement from the fresh base (0.3832) to the fired Tier-1 figure (0.3874) is attributable to `transfermarkt_injury` alone, meaning the fired number does not specifically evidence that a news-sentiment feature would help.
 - **`news_sentiment` was never a pre-registered `config.EXPERIMENTS` flag** (unlike the six `bracket_*` flags, which were registered by plan 10-10 regardless of gate outcome) — its whole record lives in this ledger entry and the D-02 trigger-evaluation entry above, and a future revisit starts fresh from this entry's cost estimate rather than from a "ruled out" verdict.
 
+### fbref_v2: manual snapshot — acquisition decision and outcome (plan 10-15)
+
+This entry extends, and does not replace, Phase 9's own
+`### fbref_v2: real Chrome spike — access still blocked, no new infrastructure
+built (plan 09-09)` entry above — that entry's `not acquirable` verdict remains
+a true record of what Phase 9 measured (automated Cloudflare-gated access).
+This plan investigated the D-04 dead-tail manual-acquisition path instead,
+which does not depend on clearing Cloudflare at all (a human passes the
+challenge interactively), and found a **third, distinct failure mode**.
+
+- **Verbatim Task 1 decision: "A" — Go, all ten seasons.** Presented with the
+  confirmed-dead automated-access evidence (three real Chrome UC-mode
+  attempts, 5-6 minutes each, all hung inside the reconnect call while a
+  plain driver confirmed the Cloudflare `Just a moment...` challenge still
+  serves; `fbrapi.com` probed 2026-09-09 and found half-down, TLS chain
+  fails verification with no HTTP response even ignoring TLS; COVERAGE.md
+  opted out of re-probing `fbrapi.com` on the grounds that manual acquisition
+  makes it moot), the measured FotMob +1/season prior for the same per-match
+  defensive-action signal family (rejected in Phase 9, well inside the
+  harness's ~50-point noise band), and the time-remaining fact that plans
+  10-01 through 10-14 (13 of 14 measured; 10-08 spanned a session restart and
+  was not timed) consumed ~484 minutes (~8.1 hours) with no hard total-phase
+  time budget ever declared, the developer chose to do all ten manual
+  downloads.
+- **Acquisition succeeded.** All ten `fbref_<season>_defense.csv` files
+  (2016-17..2025-26, 5,454 total player-season rows, 496 KB) were downloaded
+  via FBref's own Share & Export -> Get table as CSV, passing the Cloudflare
+  challenge interactively each time — full provenance in
+  `data/external/fbref/README.md`.
+- **Acquisition-format defect found during Task 2's read-first investigation,
+  distinct from both prior FBref failure modes on record** (the 2026-08-22
+  value-blanking finding in Phase E, and Phase 9's access-layer-never-clears
+  finding above): across all ten files, only `TklW` (tackles won) and `Int`
+  (interceptions) are populated. Every other declared column — critically
+  `Tkl+Int`, `Blocks`, and `Clr`, the exact three source columns
+  `config.FBREF_COLS`'s `fb_tkl_int_90`/`fb_blocks_90`/`fb_clr_90` are defined
+  against — is **100% empty in every row of all 5,454 player-seasons**,
+  including the current 2025-26 season and including known heavy tacklers
+  (Idrissa Gueye 2016-17: `TklW=103, Int=77` populated, `Tkl`/`Blocks`/`Clr`/
+  `Tkl+Int` blank; N'Golo Kanté 2016-17: same pattern) — ruling out sparse
+  real missingness.
+- **Root cause confirmed, not assumed, before deciding.** The initial
+  hypothesis (an export-widget artifact) was tested and ruled out: the
+  developer captured a live browser screenshot of
+  `fbref.com/en/comps/9/2025-2026/defense/2025-2026-Premier-League-Stats#all_stats_defense`
+  showing the same columns blank on the live page itself, then re-tested in
+  an incognito window with extensions disabled and reported, verbatim,
+  **"stil blank."** Conclusion: FBref is not currently serving these
+  columns' data to logged-out visitors at all — a site-side content change,
+  not an access block, export-tool limitation, or caching artifact this
+  project's tooling could work around. No re-export fixes it.
+- **Verbatim human decision on the three-way finding: "C" — drop the join,
+  record as an acquisition-format defect.** Explicitly distinct from a
+  declined-on-cost outcome (the shape `news_sentiment` above uses): the
+  developer did complete all ten downloads per the "A" decision; the
+  acquisition effort succeeded; the *source's currently-served data* is what
+  is deficient, discovered only after the acquisition, not weighed against
+  it beforehand.
+- **No adoption number was measured — none was ever attempted.** No
+  `load_manual_snapshot`, no reader/join code, no `tests/test_leakage.py`
+  addition. `data/fbref.py`, `config.FBREF_COLS`, and
+  `features/engineer.py`'s existing FBref wiring are byte-identical to
+  before this plan. `config.EXPERIMENTS["fbref_v2"]` stays `False` (already
+  the default).
+- **The ten CSVs and `data/external/fbref/README.md` are committed and
+  retained** (not deleted) as evidence of both the acquisition effort and the
+  defect, per this project's "never dropped silently" ledger discipline — a
+  small permanent record for any future revisit that might check FBref's
+  column-serving status again (e.g. after a site change, or via authenticated
+  access) before re-attempting the same manual acquisition.
+
+### RL reward shaping: potential-based only, recorded for any future revisit (plan 10-15)
+
+Notes-only, per D-04 — no training ran, and neither `optimize/rl_env.py` nor
+`optimize/rl_train.py` changed (byte-identical before/after this plan). This
+entry is a correction of the developer's own stated instinct about shaping
+terms (borrowed from a referenced FPL-RL project), recorded now so a future
+revisit does not repeat a design already reasoned through and rejected.
+
+1. **Week-average baseline: skip.** A week-average baseline term is
+   action-independent — by construction it cannot change which action is
+   optimal — so adding it would be redundant machinery, not a fix. PPO's own
+   learned value function already performs exactly this variance-reduction
+   role internally; a hand-added baseline duplicates work the algorithm
+   already does.
+2. **Team value: potential-based only, never a raw additive bonus.** The
+   referenced project's raw additive term (`+0.05 × delta_value`) biases the
+   objective toward price-chasing — accumulating squad value for its own
+   sake rather than for the points it eventually buys — and is part of why
+   that project's reported 2,918 was optimistic. If shaping is ever wanted,
+   the correct form is **potential-based shaping**:
+   `reward += gamma * Phi(s') - Phi(s)`, with `Phi` a small weight times team
+   value. This provably preserves the optimal policy (Ng, Harada and Russell,
+   1999) while still giving the agent intermediate signal between sparse
+   scoring events. Net realised points keep weight 1 regardless. The
+   code location this would touch: `optimize/rl_env.py`'s reward function,
+   around lines 247-259 — its current pure form (`reward = gross -
+   config.TRANSFER_HIT * r["hits"]`, or the chip-mode equivalent) was proven
+   equal to `run_season`'s own season total to within **1e-6** (Phase 9's
+   anti-Pitfall-4 test); any shaping addition must preserve that identity
+   under `Phi=0`.
+3. **The binding constraint was training budget, not reward design.**
+   Recorded compute curve: v1 rejected at 5-14k timesteps inside a 30-minute
+   box (Phase 9, far too few for a 40-action space); v2 at 4x that budget
+   still rejected, with a dose-response reading suggesting more budget would
+   help but not confirming how much; v3's 9-hour single-season overnight run
+   beat `chips_v2` on 2025-26 but still lost to the shipped heuristic by 97
+   points — the relationship between training time and policy quality was
+   **log-linear** across all three runs. Any future re-run needs a much
+   larger time-box **declared before training, per D-16** (never chosen
+   retroactively to justify a result), and the log-linear curve above is the
+   number to project against when declaring it.
+
+**Adoption rule that does not change:** judgment stays on pure realised
+points through the honest walk-forward harness, never on the shaped reward
+itself. A shaped reward is a training aid for the optimizer to climb faster;
+scoring a policy by its shaped reward would be scoring the aid rather than
+the actual result.
+
 ### Data provenance and access risk (Phase 10)
 
 | source | access status | committed? | license/ToS posture | evidence |
