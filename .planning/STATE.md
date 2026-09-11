@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 10
 current_phase_name: xP Experiment Follow-ups
 status: executing
-stopped_at: "Completed quick-260911-7fy-01: fix test granularity-bracket writes gate"
-last_updated: "2026-09-11T10:50:54.603Z"
+stopped_at: Completed 10-08-PLAN.md
+last_updated: "2026-09-11T11:55:20.831Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 10 execution started
-state_head: b56b7286712d1e2bbc95c81a73b84650eb4fbe75
+state_head: cbee00414287fcda30c66be7731ac3a66c5d10ae
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 71
-  completed_plans: 63
+  completed_plans: 64
   percent: 70
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 ## Current Position
 
 Phase: 10 (xP Experiment Follow-ups) — EXECUTING
-Plan: 12 of 16
+Plan: 13 of 16
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 10 execution started
 
@@ -128,6 +128,7 @@ Progress: [███████░░░] 70% (52/55 plans complete)
 | Phase 10-xp-experiment-follow-ups P11 | 55min | 3 tasks | 4 files |
 | Phase 10 P13 | 35min | 3 tasks | 3 files |
 | Phase quick-260911-7fy P01 | 21min | 3 tasks | 5 files |
+| Phase 10 P08 | N/A (spanned session restart) | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -277,6 +278,8 @@ Recent decisions affecting current work:
 - [Phase 10]: [Phase 10] Phase 10 Plan 13: tests/test_bracket.py::test_granularity_bracket_writes_gate_schema pollutes the live bracket_gate_mlp.json on every pytest run (missing a config.EXPERIMENTS_DIR tmp_path monkeypatch) -- restored manually 3x this session, logged to WINDOWS.md entry 6, not fixed in-scope
 - [Phase 10]: Restored bracket_gate_mlp.json by re-running run_granularity_bracket('mlp') for real rather than hand-writing the remembered numbers (T-7fy-02 halt-on-mismatch); re-run reproduced the plan 10-11 oracle exactly.
 - [Phase 10]: Captured the bracket_gate_lgbm.json baseline read in test_granularity_bracket_writes_gate_schema before monkeypatching config.EXPERIMENTS_DIR, since that baseline file only exists in the live directory.
+- [Phase 10]: [Phase 10] Phase 10 Plan 08: availability_flags REJECTED (D-09 dual criterion, neither leg met: 2025-26 model+chips +0 vs +25 bar, pooled Spearman +0.0000 vs +0.03 bar); transfermarkt_injury REJECTED (6-season model+chips 2262->2242, -20 vs >=2280 bar, a regression against its own fresh control); both flags stay default-off, code stays merged (D-08)
+- [Phase 10]: [Phase 10] Phase 10 Plan 08: D-02 news-sentiment trigger FIRED (measured post-Tier-1 pooled played-only spearman_xp_med 0.3874 < locked 0.500 threshold) -- plan 10-12 is required to build the news-sentiment experiment; the benchmark's two scoreable seasons (2021-22, 2022-23) carry zero availability_flags coverage, so the +0.0042 movement from base is attributable entirely to transfermarkt_injury
 
 ### Pending Todos
 
@@ -317,6 +320,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-11T09:57:51.915Z
-Stopped at: Completed quick-260911-7fy-01: fix test granularity-bracket writes gate
+Last session: 2026-09-11T11:55:20.615Z
+Stopped at: Completed 10-08-PLAN.md
 Resume file: None
