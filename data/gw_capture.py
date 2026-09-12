@@ -16,12 +16,14 @@ skip-if-exists guard (the pattern data/ingest.py applies to frozen past
 seasons) is exactly how a copy cached before the season started would stay
 authoritative forever.
 
-xP resolution (config.MERGED_GW_COLUMNS's "xP" -> "xp_fpl") is not implemented
-in this plan -- every captured row emits `xP` as a missing value until a later
-plan wires it from data/snapshot.py's daily archive. This is a real,
-documented data gap for the earliest gameweeks (no pre-deadline snapshot
-exists for GW1/GW2 -- the earliest snapshot is 2026-08-31), never a value
-invented to fill the column.
+xP resolution (config.MERGED_GW_COLUMNS's "xP" -> "xp_fpl") reads
+data/snapshot.py's daily archive via `resolve_xp_for_gw`: for the current
+season, gameweeks whose deadline predates the first daily snapshot
+(2026-08-31) have no expected-points figure and never will -- the column is
+missing-valued for GW1/GW2 by design, a permanent data gap, not a bug a
+future join fix would close. A future promotion of this season into the
+training seasons must read that gap as real, not as evidence of a broken
+join.
 
 Run:
   python -m data.gw_capture                          # capture every finished GW
@@ -42,6 +44,7 @@ import pandas as pd
 import requests
 
 import config
+import data.snapshot as snapshot_mod
 from ops.notify import report
 
 _JOB = "gw_capture"
@@ -256,7 +259,81 @@ def sweep_histories(ids: list[int], *, sleep: float = _SLEEP) -> dict[int, list[
     return histories
 
 
-def build_gw_frame(histories: dict[int, list[dict]], boot: dict, gw: int) -> pd.DataFrame:
+def _to_utc_date(ts):
+    """Coerce an ISO timestamp (or Timestamp) to its UTC calendar date."""
+    t = pd.Timestamp(ts)
+    t = t.tz_localize("UTC") if t.tzinfo is None else t.tz_convert("UTC")
+    return t.date()
+
+
+def _select_xp_snapshot(deadline, snaps: pd.DataFrame):
+    """Pick the single latest snapshot dated on or before `deadline`'s UTC
+    calendar date, and that snapshot's own recorded next gameweek.
+
+    Returns `(date, rows, recorded_next_gw)`, or `(None, None, None)` when no
+    snapshot qualifies (empty archive, or nothing dated early enough).
+    """
+    if snaps is None or snaps.empty:
+        return None, None, None
+    deadline_date = _to_utc_date(deadline)
+    snap_dates = pd.to_datetime(snaps["date"]).dt.date
+    candidates = snaps[snap_dates <= deadline_date]
+    if candidates.empty:
+        return None, None, None
+    candidate_dates = snap_dates[candidates.index]
+    latest_date = candidate_dates.max()
+    latest_rows = candidates[candidate_dates == latest_date]
+    recorded_next_gw = latest_rows["next_gw"].iloc[0]
+    return latest_date, latest_rows, recorded_next_gw
+
+
+def resolve_xp_for_gw(gw: int, deadline, snaps: pd.DataFrame) -> dict[int, float]:
+    """Resolve `xP` for gameweek `gw` from a preloaded daily-snapshot frame,
+    returning a mapping from element id to expected-points value.
+
+    Selects the single latest snapshot dated on or before the UTC calendar
+    date of `deadline` (the gameweek's own deadline timestamp). With none
+    qualifying, returns an empty mapping -- the caller writes missing values
+    and the run still succeeds.
+
+    Branches on that snapshot's own recorded next gameweek `S`, never on its
+    date alone: `S == gw` means `gw` was still upcoming at capture time and
+    its figure lives in the next-gameweek projection column (`ep_next`);
+    `S == gw + 1` means `gw` was the event in progress at capture time and
+    its figure lives in the current-gameweek projection column (`ep_this`);
+    anything else means the snapshot is too far from `gw` to carry its
+    expectation, and the result is an empty mapping. There is no fallback to
+    the other column, no scan of an earlier snapshot, and no interpolation --
+    these three outcomes are the whole function.
+
+    A player captured in the gameweek but absent from the chosen snapshot
+    resolves to missing via a plain dict lookup miss at the call site, while
+    every other player in the same mapping keeps its own value.
+    """
+    latest_date, latest_rows, recorded_next_gw = _select_xp_snapshot(deadline, snaps)
+    if latest_rows is None:
+        print(f"[gw_capture] GW{gw} xP: no snapshot dated on or before the deadline -- missing for all players")
+        return {}
+
+    if recorded_next_gw == gw:
+        col = "ep_next"
+    elif recorded_next_gw == gw + 1:
+        col = "ep_this"
+    else:
+        print(f"[gw_capture] GW{gw} xP: snapshot {latest_date} recorded next_gw={recorded_next_gw} "
+              f"-- too far from GW{gw}, missing for all players")
+        return {}
+
+    mapping = {int(pid): val for pid, val in zip(latest_rows["player_id"], latest_rows[col])}
+    resolved = sum(1 for v in mapping.values() if pd.notna(v))
+    frac = (resolved / len(mapping)) if mapping else 0.0
+    print(f"[gw_capture] GW{gw} xP: snapshot {latest_date} column {col} -- "
+          f"{frac:.0%} resolved ({resolved}/{len(mapping)})")
+    return mapping
+
+
+def build_gw_frame(histories: dict[int, list[dict]], boot: dict, gw: int,
+                    xp_map: dict[int, float] | None = None) -> pd.DataFrame:
     """Pure transform: histories + bootstrap -> one GW's rows in the output schema.
 
     Keeps only rows whose `round` equals `gw`. Every history key is copied
@@ -264,8 +341,13 @@ def build_gw_frame(histories: dict[int, list[dict]], boot: dict, gw: int) -> pd.
     full club name, which is the key data/odds.py's join and build_table.py's
     odds merge both expect (never `short_name`, which build_table.py's own
     watchlist-facing sibling data/snapshot.py uses for a different consumer).
-    `xP` is emitted as a missing value -- resolved by a later plan.
+    `xP` is resolved from `xp_map` (`resolve_xp_for_gw`'s output) by element
+    id; a player absent from `xp_map` -- because the mapping is empty (no
+    qualifying snapshot) or because that player's row was absent from the
+    chosen snapshot -- gets a missing value, never a value invented or
+    carried over from another player or gameweek.
     """
+    xp_map = xp_map or {}
     elements = {el["id"]: el for el in boot["elements"]}
     teams = {t["id"]: t["name"] for t in boot["teams"]}
     rows = []
@@ -281,7 +363,7 @@ def build_gw_frame(histories: dict[int, list[dict]], boot: dict, gw: int) -> pd.
             row["name"] = f"{el.get('first_name', '')} {el.get('second_name', '')}"
             row["team"] = teams.get(el.get("team"))
             row["position"] = _POS.get(el.get("element_type"))
-            row["xP"] = pd.NA
+            row["xP"] = xp_map.get(pid, pd.NA)
             rows.append(row)
     df = pd.DataFrame(rows)
     return df.reindex(columns=MERGED_GW_HEADER)
@@ -320,6 +402,13 @@ def write_merged(season: str | None = None) -> pd.DataFrame:
     return merged
 
 
+def _event_deadline(boot: dict, gw: int) -> str | None:
+    for e in boot["events"]:
+        if e.get("id") == gw:
+            return e.get("deadline_time")
+    return None
+
+
 def capture(*, gws: list[int] | None = None, force: bool = False,
             retries: int = 3, backoff: float = 2.0) -> dict[int, int]:
     """Fetch bootstrap + fixtures, refresh the two mutable current-season
@@ -340,8 +429,11 @@ def capture(*, gws: list[int] | None = None, force: bool = False,
     if to_fetch:
         ids = [el["id"] for el in boot["elements"]]
         histories = sweep_histories(ids)
+        snaps = snapshot_mod.load_snapshots()
         for gw in to_fetch:
-            frame = build_gw_frame(histories, boot, gw)
+            deadline = _event_deadline(boot, gw)
+            xp_map = resolve_xp_for_gw(gw, deadline, snaps) if deadline else {}
+            frame = build_gw_frame(histories, boot, gw, xp_map)
             write_csv_atomic(frame, ledger_dir / f"gw{gw}.csv")
 
     summary: dict[int, int] = {}

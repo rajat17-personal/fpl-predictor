@@ -5,8 +5,9 @@ capture path -- FPL API to build_table -- on one finished gameweek. Task 2
 extends it with the gates that lock the four schema conventions (club-name,
 player-name, position, completion) plus the layout and atomicity properties.
 
-Plan 08-02 Task 1 extends this file further: the players_raw.csv /
-fixtures.csv refresh and the payload field guard.
+Plan 08-02 extends this file further: Task 1 adds the players_raw.csv /
+fixtures.csv refresh and the payload field guard; Task 2 adds every branch of
+the xP resolution rule.
 """
 from __future__ import annotations
 
@@ -28,10 +29,12 @@ _FIXTURES_URL = f"{config.FPL_API}/fixtures/"
 @pytest.fixture(autouse=True)
 def _isolate_raw_dir(tmp_path, monkeypatch):
     """Every test in this module must never touch the real (irreplaceable)
-    data/raw/2026-27/ tree, must never make a real HTTP call, and must never
-    leak an alert into the real alerts file -- mirrors tests/test_cron.py's
-    shared bootstrap-fixture and alert-log isolation idiom."""
+    data/raw/2026-27/ tree or data/snapshots/ archive, must never make a real
+    HTTP call, and must never leak an alert into the real alerts file --
+    mirrors tests/test_cron.py's shared bootstrap-fixture and alert-log
+    isolation idiom."""
     monkeypatch.setattr(config, "RAW_DIR", tmp_path / "raw")
+    monkeypatch.setattr(gw_capture.snapshot_mod, "SNAP_DIR", tmp_path / "snapshots")
     monkeypatch.setattr(gw_capture.time, "sleep", lambda *_a, **_k: None)
     monkeypatch.setenv("FPL_ALERT_LOG", str(tmp_path / "alerts.jsonl"))
     monkeypatch.delenv("FPL_ALERT_WEBHOOK", raising=False)
@@ -380,3 +383,116 @@ def test_history_row_missing_required_key_raises_naming_it():
 
     with pytest.raises(ValueError, match="bps"):
         gw_capture.capture(gws=[1])
+
+
+# ============================================================= 08-02 Task 2
+# xP resolution from the daily snapshot archive
+
+
+def test_resolve_xp_reads_next_gw_column_when_snapshot_next_gw_equals_target():
+    """Behavior 1: S == target -> next-gameweek projection."""
+    snaps = pd.DataFrame({
+        "player_id": [1, 2], "date": ["2026-08-31", "2026-08-31"],
+        "next_gw": [3, 3], "ep_this": [1.0, 2.0], "ep_next": [3.0, 4.0],
+    })
+    result = gw_capture.resolve_xp_for_gw(3, "2026-09-04T17:30:00Z", snaps)
+    assert result == {1: 3.0, 2: 4.0}
+
+
+def test_resolve_xp_reads_current_gw_column_when_snapshot_next_gw_equals_target_plus_one():
+    """Behavior 2: S == target + 1 -> current-gameweek projection (the
+    deadline-day-after-deadline case)."""
+    snaps = pd.DataFrame({
+        "player_id": [1], "date": ["2026-09-04"],
+        "next_gw": [4], "ep_this": [5.0], "ep_next": [6.0],
+    })
+    result = gw_capture.resolve_xp_for_gw(3, "2026-09-04T17:30:00Z", snaps)
+    assert result == {1: 5.0}
+
+
+def test_resolve_xp_missing_when_recorded_next_gw_is_two_or_more_beyond_target():
+    """Behavior 3: S neither target nor target+1 (here target+2) -> missing
+    for every player even though the snapshot's date qualifies -- proves the
+    rule reads the recorded next gameweek, not only the date."""
+    snaps = pd.DataFrame({
+        "player_id": [1], "date": ["2026-08-31"],
+        "next_gw": [5], "ep_this": [1.0], "ep_next": [2.0],
+    })
+    result = gw_capture.resolve_xp_for_gw(3, "2026-09-04T17:30:00Z", snaps)
+    assert result == {}
+
+
+def test_resolve_xp_missing_when_no_snapshot_predates_deadline():
+    """Behavior 4: no snapshot dated on or before the deadline -> missing for
+    every player, and the function does not raise."""
+    snaps = pd.DataFrame({
+        "player_id": [1], "date": ["2026-09-10"],
+        "next_gw": [4], "ep_this": [1.0], "ep_next": [2.0],
+    })
+    result = gw_capture.resolve_xp_for_gw(3, "2026-09-04T17:30:00Z", snaps)
+    assert result == {}
+
+
+def test_resolve_xp_uses_the_later_of_two_qualifying_snapshots():
+    """Behavior 5: two qualifying snapshot dates -> the later-dated one is read."""
+    snaps = pd.DataFrame({
+        "player_id": [1, 1], "date": ["2026-08-24", "2026-08-31"],
+        "next_gw": [2, 3], "ep_this": [9.0, 9.0], "ep_next": [1.0, 3.0],
+    })
+    result = gw_capture.resolve_xp_for_gw(3, "2026-09-04T17:30:00Z", snaps)
+    assert result == {1: 3.0}
+
+
+def test_resolve_xp_player_absent_from_snapshot_is_missing_others_keep_theirs():
+    """Behavior 6: a player captured in the gameweek but absent from the
+    chosen snapshot is missing from the mapping while other players keep
+    their own resolved value."""
+    snaps = pd.DataFrame({
+        "player_id": [1], "date": ["2026-08-31"],
+        "next_gw": [3], "ep_this": [1.0], "ep_next": [4.5],
+    })
+    result = gw_capture.resolve_xp_for_gw(3, "2026-09-04T17:30:00Z", snaps)
+    assert result == {1: 4.5}
+    assert 2 not in result
+
+
+def test_resolve_xp_returns_missing_not_raise_on_empty_archive():
+    """Behavior 7: an empty snapshot archive resolves to missing values
+    rather than raising."""
+    snaps = pd.DataFrame()
+    result = gw_capture.resolve_xp_for_gw(1, "2026-08-21T17:30:00Z", snaps)
+    assert result == {}
+
+
+def test_build_gw_frame_wires_xp_map_onto_matching_rows():
+    """Wiring sanity check: build_gw_frame's xP column reflects xp_map by
+    element id, and an element absent from xp_map is missing-valued."""
+    boot = _boot_with_finished_events(n_events=1)
+    p1, p2 = boot["elements"][0]["id"], boot["elements"][1]["id"]
+    histories = {p1: [_history_row(p1, 1)], p2: [_history_row(p2, 1)]}
+    xp_map = {p1: 4.5}
+
+    frame = gw_capture.build_gw_frame(histories, boot, 1, xp_map)
+
+    row1 = frame[frame["element"] == p1].iloc[0]
+    row2 = frame[frame["element"] == p2].iloc[0]
+    assert row1["xP"] == 4.5
+    assert pd.isna(row2["xP"])
+
+
+def test_resolution_line_names_snapshot_date_and_column_and_reports_fraction(capsys):
+    snaps = pd.DataFrame({
+        "player_id": [1, 2], "date": ["2026-08-31", "2026-08-31"],
+        "next_gw": [3, 3], "ep_this": [1.0, 1.0], "ep_next": [4.0, pd.NA],
+    })
+
+    gw_capture.resolve_xp_for_gw(3, "2026-09-04T17:30:00Z", snaps)
+
+    out = capsys.readouterr().out
+    assert "2026-08-31" in out
+    assert "ep_next" in out
+    assert "GW3" in out
+
+
+def test_module_docstring_states_the_permanent_xp_gap():
+    assert "predates the first daily snapshot" in gw_capture.__doc__
