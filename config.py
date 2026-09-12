@@ -309,7 +309,11 @@ def resolve_experiments(spec: str | None = None) -> dict[str, bool]:
     `spec` is a comma-separated list of flag names (whitespace around commas is
     tolerated). `None` falls back to the `FPL_EXPERIMENTS` environment variable
     (also unset -> every flag stays at its `EXPERIMENTS` default, i.e. off). The
-    token "none" forces every flag off; the token "all" forces every flag on.
+    token "none" forces every flag off; the token "all" forces every flag on --
+    but EITHER must be the sole token: combining "none"/"all" with any other
+    flag name raises `ValueError` rather than silently dropping the other
+    token(s) (WR-02, 10-REVIEW.md -- `FPL_EXPERIMENTS=none,capt_ceiling` used
+    to return every flag off with no warning that `capt_ceiling` was ignored).
     Any other unrecognised token raises `ValueError` naming the bad token and
     listing the valid keys. The module-level `EXPERIMENTS` dict is never mutated
     -- callers always get back a fresh copy.
@@ -321,10 +325,11 @@ def resolve_experiments(spec: str | None = None) -> dict[str, bool]:
     tokens = [t for t in tokens if t]
     if not tokens:
         return result
-    if "none" in tokens:
-        return {k: False for k in result}
-    if "all" in tokens:
-        return {k: True for k in result}
+    if "none" in tokens or "all" in tokens:
+        if len(tokens) > 1:
+            raise ValueError(
+                f"'none'/'all' cannot be combined with other flags: {tokens}")
+        return {k: (tokens[0] == "all") for k in result}
     for t in tokens:
         if t not in result:
             raise ValueError(f"unknown experiment flag '{t}' -- valid keys: {sorted(result)}")
