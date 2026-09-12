@@ -307,6 +307,8 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 - 2026-09-11 — Ensemble blend of LightGBM + Ridge + XGBoost stage-2 predictions (models, minor)
+- 2026-09-12 — Chip-aware GW plan — chips as MILP decision variables with reservation values (models, minor)
+- 2026-09-12 — Squad page — show optimal Free Hit and Wildcard teams of the week (ui, minor)
 
 ### Blockers/Concerns
 
