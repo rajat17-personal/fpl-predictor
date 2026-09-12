@@ -328,11 +328,28 @@ These hold across every phase, not just one:
 **Goal:** Remove vaastav/Fantasy-Premier-League as a single point of failure for training data. A new `data/gw_capture.py` reconstructs vaastav-schema per-GW rows (`gw{N}.csv`, `merged_gw.csv`, refreshed `players_raw.csv`/`fixtures.csv`) directly from the official FPL API into `data/raw/2026-27/`, runs from `scripts/daily.sh`, and backfills the already-finished GWs before season rollover makes them unrecoverable (element-summary only retains the current season). vaastav is demoted to past-season backfill; `build_table`/`id_map` consume the captured rows unchanged. Research: `.planning/research/DATA-SOURCE-RESILIENCE.md`.
 **Requirements**: TBD
 **Depends on:** Phase 7
-**Plans:** 0 plans
+**Plans:** 5 plans (5 waves)
 
 Plans:
+**Wave 1**
 
-- [ ] TBD (run /gsd-plan-phase 8 to break down)
+- [ ] 08-01-PLAN.md — Capture tracer: one finished gameweek end to end from the FPL API into the flat season path, read back by build_table's unmodified loader, plus the four schema-convention gates
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 08-02-PLAN.md — Mutable current-season file refreshes, payload field guards, snapshot-backed xP resolution, per-gameweek ledger, rate-limited sweep, freshness alert
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 08-03-PLAN.md — The real backfill: capture every finished gameweek live, cross-check gameweek 1 against vaastav's published copy, rebuild the canonical table
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 08-04-PLAN.md — data/ingest.py current-season guard (vaastav demoted in code) plus the operator runbook
+
+**Wave 5** *(blocked on Wave 4 completion — gated on Phase 7 CUT-01 lifting the cron-script freeze)*
+
+- [ ] 08-05-PLAN.md — The single frozen-file edit: the daily cron capture step and its ordering regression test
 
 ### Phase 9: xP Model & Optimizer Improvement Experiments
 
