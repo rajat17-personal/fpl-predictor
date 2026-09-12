@@ -1,18 +1,18 @@
 ---
 gsd_state_version: 1.0
-current_phase: 08
-current_phase_name: Self-Hosted Gameweek Data Capture
-status: executing
-stopped_at: Halted 08-05-PLAN.md at Task 1 (defer -- Phase 7 freeze still holds)
-last_updated: "2026-09-12T08:28:40.901Z"
+current_phase: 7
+current_phase_name: Parity Validation & Cutover
+status: planning
+stopped_at: Phase 10 complete, ready to plan Phase 7
+last_updated: "2026-09-12T10:11:33.909Z"
 last_activity: 2026-09-12
-last_activity_desc: Phase 08 execution started
-state_head: dfbfcd76b25bb12938eac80f5f1904eadb51a20c
+last_activity_desc: Phase 10 complete, transitioned to Phase 7
+state_head: e3152b3fba4ca1cda65e8ebf37d88eb8a06bc22b
 progress:
   total_phases: 10
   completed_phases: 8
   total_plans: 76
-  completed_plans: 72
+  completed_plans: 73
   percent: 80
 ---
 
@@ -20,19 +20,19 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-11)
+See: .planning/PROJECT.md (updated 2026-09-12)
 
 **Core value:** The weekly recommendations (xP table, squad, captains, transfers) must keep flowing reliably — every change must leave the pipeline, API, and site at least as correct and more trustworthy than before.
-**Current focus:** Phase 08 — Self-Hosted Gameweek Data Capture
+**Current focus:** Phase 7 — Parity Validation & Cutover (Phase 8's 08-05 cron wiring stays deferred pending CUT-01; a concurrent session holds the phase-08 milestone claim)
 
 ## Current Position
 
-Phase: 08 (Self-Hosted Gameweek Data Capture) — EXECUTING
-Plan: 5 of 5
-Status: Plan 08-05 halted at Task 1 (developer answered `defer` — Phase 7 freeze on scripts/daily.sh still holds; see 08-05-SUMMARY.md). Re-run 08-05 once Phase 7's CUT-01 lands.
-Last activity: 2026-09-12 — Phase 08 execution started
+Phase: 7 — Parity Validation & Cutover
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-09-12 — Phase 10 complete, transitioned to Phase 7
 
-Progress: [████████░░] 80% (68/71 plans complete)
+Progress: [███████████████████░] 73/76 plans (96%)
 
 ## Performance Metrics
 
@@ -153,6 +153,7 @@ Progress: [████████░░] 80% (68/71 plans complete)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 10 close, 2026-09-12]: Phase verified end-to-end — UAT 63/63 (59 auto-covered + 4 human checkpoints), all 5 code-review findings fixed post-summary (commits 2f27a7a..11e7e6b: stale gw_deadlines read, injured-unknown NaN contract, experiment-flag combination errors, scoreboard raise_for_status), 94-threat security audit verified with threats_open: 0 (10-SECURITY.md).
 - Roadmap: React (Vite) rebuild, full 8-page parity, not incremental vanilla enhancement
 - Roadmap: API tests come before Playwright — E2E on an untested API inverts the pyramid
 - Roadmap: CI ends at a published Docker image, not a live deploy (hosting not purchased)
@@ -314,8 +315,9 @@ Recent decisions affecting current work:
 - **Time-critical, independent of this milestone:** the daily snapshot cron must run every day — price-model history cannot be backfilled (first snapshot 2026-08-31). Phase 6 closed the alerting loop: cron lines installed and the FPL_ALERT_WEBHOOK failure alert confirmed live (06-UAT.md, 2026-09-07) — a failed run is now noticed same-day. Phase 10 Plan 3 (2026-09-10) closed the remaining WSL-cron gap itself (D-08): only 2 of 11 possible days were actually captured because cron does not fire while the machine is off; `scripts/snapshot_catchup.sh` now runs `@reboot` and captures on first invocation of a missed day, with the gap count surfaced in `data/cron.log` on every daily run.
 - **Milestone invariant:** the vanilla site stays live and authoritative until CUT-01 completes. Phase 7 is calendar-gated on one full real gameweek cycle (deadline → live → finished).
 - Payment gateway / merchant-of-record choice still pending with the user — out of scope here, but PITCH-01's trademark disclaimer feeds the eventual gateway review.
-- **[Phase 4]:** Security enforcement is on but no 04-SECURITY.md exists — run `/gsd-secure-phase 4` to backfill the threat verification (03, 05, 09, and now 10 also lack SECURITY.md; 06-SECURITY.md now exists).
-- **[Phase 10] Code review CR-01 (advisory, flag-off):** `data/transfermarkt.py::attach` reads gw deadlines from the on-disk `player_gw.parquet` instead of the in-memory frame being built, so with `transfermarkt_injury` enabled the newest gameweek's injury features would silently read as "not injured". Harmless while the flag stays off (it was REJECTED); must be fixed before any future adoption — full detail in 10-REVIEW.md (also 4 warnings, 2 info; `/gsd-code-review 10 --fix` can apply them).
+- **[Phase 4]:** Security enforcement is on but no 04-SECURITY.md exists — run `/gsd-secure-phase 4` to backfill the threat verification (03, 05, and 09 also lack SECURITY.md; 06- and 10-SECURITY.md now exist).
+- **[Phase 8]:** 08-05 (cron wiring) halted at Task 1 — developer answered `defer`; Phase 7's freeze on scripts/daily.sh still holds. Re-run 08-05 once CUT-01 lands. A concurrent session holds the phase-08 milestone claim (#3311 lock warning seen 2026-09-12).
+- **[Phase 10] Security audit carried-forward flags (10-SECURITY.md):** (a) the Colab bundle exports test-season ground truth (`registry.py` writes `y=`/`minutes=` for all split seasons) — register before any future external-trainer handoff; (b) reviving the FBref manual join inherits three unmitigated high-severity threats (T-10-15-01/02/03 closed by vector absence only); (c) T-10-13-06 open non-blocking — Colab unit consumption never recorded against D-13's 200-unit stop.
 - [Phase 8] data/odds.py's cached data/raw/odds/2026-27.csv is football-data.co.uk's own pre-season HTTP 300 error page (the 2026-27 odds CSV doesn't exist on their server yet), and the module's cache-if-exists behavior will keep serving it forever unless something re-fetches once the real file is published -- out of 08-03's file scope, diagnosed not fixed, recorded in 08-BACKFILL-EVIDENCE.md
 
 ### Quick Tasks Completed
@@ -338,6 +340,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-12T08:28:40.612Z
-Stopped at: Halted 08-05-PLAN.md at Task 1 (defer -- Phase 7 freeze still holds)
+Last session: 2026-09-12T10:15:00Z
+Stopped at: Phase 10 complete (UAT + security verified), ready to plan Phase 7
 Resume file: None

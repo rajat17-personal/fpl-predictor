@@ -37,6 +37,7 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 - ✓ Reliability fixes: all bare file handles routed through ops.jsonio (self-tested repo-wide gate), atomic writes everywhere, cron per-step accounting with zero shell suppression, snapshot retry/backoff, pydantic validation of FPL payloads, bounded LRU+TTL solve cache with pool-version invalidation and the TOCTOU race closed via atomic snapshots — Phase 6
 - ✓ Observability: structured JSON logging with X-Request-ID correlation, distinct liveness/readiness endpoints, never-raising ops.notify alerting spine — cron + webhook confirmed live in UAT — Phase 6
 - ✓ Experiment framework + honest measurement of the xP/optimizer frontier: flag registry (`config.EXPERIMENTS`), leakage-tested enrichment joins (Understat, FotMob, Dixon-Coles team strength), external benchmark vs theFPLkiwi, Wildcard's isolated value measured (+14.2±9.0), RL-for-strategy time-boxed and beaten by the solver — all 8 experiments REJECTED on the pre-declared ≥2,280 bar (final combined 2262 = baseline); code merged default-off, IMPROVEMENTS.md Phase F ledger complete, product surface untouched — Phase 9
+- ✓ Phase 9 follow-up sweep under the same honest harness: as-of-deadline availability family + Transfermarkt injury backfill (both rejected on the dual criterion), 7-candidate model-class bracket (all HOLD, LightGBM keeps the seat), external-prediction/Colab ingestion seam, anacron-style snapshot catch-up cron, top-100 consensus + fplreview scoreboard benchmarks; 18-flag registry all default-off, product JSON contract regression-locked, IMPROVEMENTS.md Phase G ledger closed — plus post-review hardening (stale gw_deadlines read fixed, injured-unknown NaN contract enforced, experiment-flag combination errors loud) and a 94-threat security audit at 0 blocking-open — Phase 10
 
 ### Active
 
@@ -100,7 +101,6 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 | Pre-declared mechanical adoption bar (≥2,280 pts, D-05/D-07) with all experiment code merged behind default-off flags (D-08) | Experiments must be judged by the honest harness before any product change; rejected work stays inspectable, never silently dropped | ✓ Good — Phase 9: 8/8 experiments rejected on the bar, zero product wiring needed, export contract locked by regression test |
 | RL dependency stack dev-only and hash-locked (`requirements-rl.txt`), never in Dockerfile/CI (D-09) | torch + gymnasium + SB3 are heavyweight experiment-only deps; production image must not carry them | ✓ Good — Phase 9: isolation proven by grep+parser assertion and byte-identical Dockerfile/workflows |
 | Captain by mean xP retained over ceiling-EV quantile blend | Ceiling-EV capture gain (+1.5pt) fell below the pre-declared ≥+2pt bar; mechanical rule decided | ✓ Good — Phase 9: verdict recorded with numbers in IMPROVEMENTS.md |
-
 | Availability + injury features rejected on pre-declared criteria (Phase 10 Tier-1) | availability_flags moved neither leg (+0 pts, +0.0000 Spearman); transfermarkt_injury regressed −20 vs fresh 6-season control | ✓ Good — Phase 10: verdicts + evidence in IMPROVEMENTS.md Phase G; flags stay default-off, code merged |
 | LightGBM keeps the stage-2 regressor seat: model-class bracket closed 7/7 HOLD | Ridge/XGB/CatBoost/MLP/GRU/transformer all failed the D-15 gate margin (0.010) against LightGBM's 0.3900 Spearman | ✓ Good — Phase 10: bracket harness + external-prediction seam remain as permanent infrastructure |
 | News-sentiment declined on cost despite fired trigger (D-02) | 9–14 days of throttled GDELT fetching vs mlpremier's documented negative prior on this exact feature | ✓ Recorded — Phase 10: "declined on cost" (distinct from "not triggered") in IMPROVEMENTS.md |
@@ -124,4 +124,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-11 after Phase 10*
+*Last updated: 2026-09-12 after Phase 10 (transition: UAT 63/63, code-review fixes applied, security verified)*
