@@ -204,6 +204,13 @@ re-comparison, not just the fix.
 | Team (pitch renderer, manual pass G-07-2) | The suggested-out player in a best-XI swap carried no visible marking (opacity-50 only) while the incoming player got a green dashed outline — user asked for a matching red dashed outline on the outgoing card, "mirrors the existing green-dashed idiom" | Fixed forward — `diff="out"` now gets the same dashed-outline idiom as `GhostCard`, in the `bad` (red) token instead of `accent` (green) | `a2839a8` | pre-deadline (full 374/374 frontend suite green; live Playwright screenshot of the O'Reilly → Virgil swap confirms the red/green dashed pair) |
 | Team / sitewide nav (manual pass G-07-3) | The GW deadline pill and theme toggle wrapped onto a second header row below the nav tabs at desktop width (~1280px) — a real layout defect, not viewport-specific: natural row content measured ~1289px against the 68rem/1088px inner cap, which never grows past that regardless of viewport | Fixed forward — tightened header spacing (18px section gaps → 4-8px, nav-link `px-3`→`px-1.5`) and re-split `GwBanner`'s two lines (line 1 `GW{gw} · {absolute deadline}`, line 2 `{countdown} · {freshness}`, nothing dropped); `PILL_CLASS`'s `px-3 py-1.5` substring left untouched since `extract.mjs`'s React banner selector matches on it | `86aba31`, `6a39d64` | pre-deadline (full 374/374 frontend suite green, 42/42 e2e suite green after updating `smoke.spec.ts`'s frozen banner-text constants; live Playwright measurement confirms one-line header at 1280px, 83px tall vs. 145px wrapped, in both themes; mobile 375px unaffected) |
 
+**Mid-gameweek stage: 0 defects found.** Task 2 re-ran the full eight-page scripted diff
+(`node e2e/parity/parity-diff.mjs --all`, 2026-09-12) against a fresh dual boot — `TOTAL: 8
+pages, 34 fields compared, 11 explained, 0 defects`, exit 0 — plus `npm --prefix frontend run
+build`/`test` (374/374) and `npm --prefix e2e run test` (42/42) all green. No React code changed
+in this task; no new `PARITY-DEVIATIONS.md` row was needed. Stated explicitly per D-14 rather
+than left silently blank.
+
 ## Cutover readiness
 
 Read by the D-15 human gate before the flip is ever staged. Every figure here must be
