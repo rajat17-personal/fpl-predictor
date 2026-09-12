@@ -84,19 +84,95 @@ defect row in "Defects found and how they were closed" below with a fixing commi
 
 ### Mid-gameweek
 
-**Run:** _(not yet run)_ | GW _ | generated_utc: _ | command: _(paste the exact `parity-diff`
-invocation that produced this stage's fragment)_
+**Same validation gameweek as stage one (D-13 check).** Pre-deadline run header fixed **GW4**;
+this run's export (`web/data/meta.json`) also names **gw: 4** — confirmed by the precondition
+check below before anything was recorded. No later pass in this cycle may be run against a
+different gameweek.
+
+**Precondition check (run before booting anything):**
+```
+/home/sraja/miniconda3/envs/python314/bin/python -c "import json,os,datetime as dt; m=json.load(open('web/data/meta.json')); d=dt.datetime.fromisoformat(m['deadline_utc'].replace('Z','+00:00')); now=dt.datetime.now(dt.timezone.utc); sb=os.path.exists('web/data/scoreboard.json'); print('gw',m['gw'],'deadline_passed',d<now,'scoreboard_file',sb)"
+-> gw 4 deadline_passed True scoreboard_file True
+```
+`web/data/scoreboard.json` exists but its only entry is `{"gw": 3, ...}` — GW4 has not been
+scored yet. **Observed data state: deadline passed, scoreboard not yet run for GW4 — the
+gameweek is in flight (matches live or settling), not finished.**
+
+**Run:** 2026-09-12T13:15:38.357Z | GW4 | generated_utc: 2026-09-12T10:35:47+00:00 | command:
+`node e2e/parity/parity-diff.mjs --all --stage mid-gameweek --out .planning/phases/07-parity-validation-cutover/PARITY-REPORT.md --vanilla-origin http://127.0.0.1:8010 --react-origin http://127.0.0.1:8011`
+(override ports — port 8000 is held by a pre-existing, unrelated vanilla `uvicorn` process, PID
+209850, same convention 07-01/07-02/07-03 already documented and left untouched)
+
+Before this run, the live `web/data` working tree was committed as a baseline snapshot
+(`chore(07-04): land mid-gameweek GW4 weekly export snapshot`, `0756b34`) so the
+`git diff --quiet -- scripts/daily.sh scripts/weekly.sh web/data` acceptance check has something
+clean to assert against — the files themselves were untouched by this task, only landed.
+
+**Ledger entry 4 exercised for the first time.** Every page's `banner` delta now carries both
+the freshness line (ledger #3, present since pre-deadline) *and* the deadline-passed wording
+difference (ledger #4: react renders `GW4 deadline passed`, vanilla renders `· passed`) —
+visible in the raw tool output, e.g. `vanilla=(GW4 deadline Sat Sep 12 0830 AM passed)
+react=(GW4 deadline passedgenerated 2h ago)`. `extract.mjs`'s `deltaDetailCell()` cites only the
+first declared ledger number per field (`declared[0]`, always `#3` for this field, per
+`ledger.mjs`), so the table's "Delta detail" column below reads `ledger #3` even where entry #4
+also explains the same delta — both numbers are declared on the `banner` field's
+`knownDeviations: [3, 4]` list, so no *unlisted* delta exists here; the tool's citation format is
+simply single-number-per-field, not a defect. No delta was found anywhere else on the banner, the
+league/leaders page, or the Rate-my-team (squad) page beyond what pre-deadline already recorded.
 
 | Page | Verdict | Delta detail | Cron-green citation |
 | --- | --- | --- | --- |
-| xP table | | | |
-| Rate my team | | | |
-| Fixture ticker | | | |
-| Price watch | | | |
-| League table & leaders | | | |
-| Scoreboard | | | |
-| Differentials | | | |
-| Methodology | | | |
+| xP table | 5 fields compared, 1 explained, 0 defects | ledger #3 (banner delta also covered by #4 — see note above) | See "Cron-green citation" note below the table (shared across all eight rows). |
+| Rate my team | 3 fields compared, 3 explained, 0 defects | ledger #3 (banner, also #4), #9 | See note below. |
+| Fixture ticker | 4 fields compared, 1 explained, 0 defects | ledger #3 (also #4) | See note below. |
+| Price watch | 5 fields compared, 1 explained, 0 defects | ledger #3 (also #4) | See note below. |
+| League table & leaders | 4 fields compared, 1 explained, 0 defects | ledger #3 (also #4) | See note below. |
+| Scoreboard | 5 fields compared, 1 explained, 0 defects | ledger #3 (also #4) | See note below. |
+| Differentials | 4 fields compared, 1 explained, 0 defects | ledger #3 (also #4) | See note below. |
+| Methodology | 4 fields compared, 2 explained, 0 defects | ledger #3 (also #4), #10 | See note below. |
+
+**TOTAL (from the tool's own summary line): 8 pages, 34 fields compared, 11 explained, 0
+defects, exit 0.** No page was carried forward from the pre-deadline stage under D-14's single
+exception (that stage's own table shows 0 remaining defects after its Task 2/Task 3 closures),
+so there is nothing to close here.
+
+**Cron-green citation (D-16, shared across all eight rows above — same evidence covers every
+page since the comparison ran once for all of them):**
+
+1. **`data/cron.log`** exists on this host. Since the pre-deadline pass (2026-09-08), it shows
+   two full `[daily]` runs, every step `OK`: `2026-09-11T06:30:05Z` (`data.snapshot OK`,
+   `data.snapshot-gap-report OK`, `models.price-train OK`, `models.price OK`,
+   `predict.scoreboard OK` — `scored GWs [3]`) and `2026-09-12T06:30:06Z` (same five steps `OK`,
+   `predict.scoreboard` — `scored GWs none`, consistent with GW4 not yet finished). No
+   `[weekly]` lines appear in this window because no Friday fell between 2026-09-08 and this run
+   (2026-09-12) — GW4's weekly export already landed pre-deadline (`ac489ca`); a fresh weekly
+   run isn't due until GW5's cycle, outside this stage's scope.
+2. **`data/alerts.jsonl`** does not exist on this host as of 2026-09-12 (file absent — no
+   failure records to cite either way, consistent with both daily runs reporting every step OK).
+3. **`web/data` git history** since the pre-deadline pass's `ac489ca`: `6bdfbb9` (2026-09-08,
+   Phase 9 export-contract lock test, ran `python -m predict.export` end to end and refreshed
+   captains/meta/squad/xp_table for GW4), `f715aab` (2026-09-11, Phase 10 export-contract lock
+   test, same refresh), and this stage's own baseline `0756b34` (2026-09-12, the mid-gameweek
+   snapshot landed immediately before this run) — confirming the export kept moving throughout
+   the window this stage covers.
+
+**Observation, not a defect of this stage (out of scope to fix — cron lines are read-only for
+the whole phase, T-07-04-05):** `crontab -l` on this host currently lists only the
+`30 2 * * * .../daily.sh` and `@reboot .../snapshot_catchup.sh` lines. The
+`0 8 * * fri .../weekly.sh` line documented as required setup in `06-USER-SETUP.md`/
+`06-05-SUMMARY.md` is absent. This has not affected GW4's cycle — its one required weekly
+export already landed pre-deadline via a manual `python -m predict.export` run (`ac489ca`),
+and no further weekly run is due until GW5 — but it is worth the user reinstalling that line
+before GW5's Friday export is due. Recorded for visibility, not auto-installed (this plan's
+threat model forbids touching cron lines).
+
+**Manual eyeball pass (D-05, `PARITY-CHECKLIST.md` Part 1) — deferred to end-of-phase UAT.**
+`workflow.human_verify_mode` is `end-of-phase` (`.planning/config.json`); this task's own
+`<verify>` block's `<human-check>` item is an automated-task human-check, not a
+`type="checkpoint:*"` gate, so per the standard checkpoint protocol it is harvested into the
+end-of-phase UAT pass rather than pausing here. (D-08's same-session interactive comparison is
+not re-required at this stage — `PARITY-CHECKLIST.md` Part 2 calls for it once per cycle, and it
+was already completed and recorded in the pre-deadline stage above.)
 
 ### Post-finish
 
@@ -133,11 +209,11 @@ re-comparison, not just the fix.
 Read by the D-15 human gate before the flip is ever staged. Every figure here must be
 computed from the stage tables and the defects table above — never estimated.
 
-- Pages compared: pre-deadline **8**, mid-gameweek **0**, post-finish **0** (8 expected per stage)
-- Total explained deltas (cite ledger #s): **11** — the final scripted re-run (`node e2e/parity/parity-diff.mjs --all`, 2026-09-08) reports `TOTAL: 8 pages, 34 fields compared, 11 explained, 0 defects`, all cited to ledger #3 (banner, 8 occurrences), #9 (heading/formHelper, 2 occurrences) and #10 (creditLine, 1 occurrence)
-- Total defects found: **5** — 2 scripted (Task 1: Rate my team `heading`/`formHelper`, Methodology `creditLine`, both closed via new ledger rows in Task 2) + 3 manual (Task 3: pitch stat-text contrast G-07-1, missing outgoing outline G-07-2, nav-row desktop wrap G-07-3, all closed fix-forward in React code)
-- Total defects closed (see "Defects found and how they were closed" above): **5**
-- **Remaining unexplained deltas: `0` — reads zero; the pre-deadline stage is clean.**
+- Pages compared: pre-deadline **8**, mid-gameweek **8**, post-finish **0** (8 expected per stage)
+- Total explained deltas (cite ledger #s): pre-deadline **11**; mid-gameweek **11** — `node e2e/parity/parity-diff.mjs --all --stage mid-gameweek`, 2026-09-12, reports `TOTAL: 8 pages, 34 fields compared, 11 explained, 0 defects`, all cited to ledger #3 (banner, 8 occurrences — every one of which is now also explained by #4, the deadline-passed-copy entry this stage first exercises), #9 (heading/formHelper, 2 occurrences) and #10 (creditLine, 1 occurrence)
+- Total defects found: pre-deadline **5** (2 scripted + 3 manual, all closed — see table above); mid-gameweek **0**
+- Total defects closed: pre-deadline **5**; mid-gameweek **0 found, 0 to close**
+- **Remaining unexplained deltas: `0` after both stages run so far — pre-deadline and mid-gameweek are both clean. Post-finish remains to be run once GW4's scoreboard has scored.**
 
 ## Appending an entry
 
