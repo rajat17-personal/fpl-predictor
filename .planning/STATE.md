@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 08
 current_phase_name: Self-Hosted Gameweek Data Capture
 status: executing
-stopped_at: Completed 08-03-PLAN.md
-last_updated: "2026-09-12T07:24:42.606Z"
+stopped_at: Completed 08-04-PLAN.md
+last_updated: "2026-09-12T07:54:18.008Z"
 last_activity: 2026-09-12
 last_activity_desc: Phase 08 execution started
-state_head: ec408d988519be9642cd3d0521e81d8ee8ea23ac
+state_head: 75191005a1ff52c4e7967ba004ab95a4a9826e44
 progress:
   total_phases: 10
   completed_phases: 8
   total_plans: 76
-  completed_plans: 71
+  completed_plans: 72
   percent: 80
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-11)
 ## Current Position
 
 Phase: 08 (Self-Hosted Gameweek Data Capture) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-09-12 — Phase 08 execution started
 
@@ -137,6 +137,7 @@ Progress: [████████░░] 80% (68/71 plans complete)
 | Phase 08 P01 | 45min | 2 tasks | 4 files |
 | Phase 08 P02 | 35min | 3 tasks | 2 files |
 | Phase 08 P03 | 53min | 3 tasks | 5 files |
+| Phase 08 P04 | 28min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -298,6 +299,8 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-02: xP resolution branches on the chosen snapshot's own recorded next_gw (never date alone) -- S==target reads ep_next, S==target+1 reads ep_this, otherwise/no-qualifying-snapshot resolves missing; players_raw.csv/fixtures.csv rewritten unconditionally every run; CaptureSummary (dict subclass) surfaces missing_gws/failures without breaking 08-01's summary==dict equality
 - [Phase 08]: 08-03: team resolved from the row's own fixture (team_h/team_a), never the player's current bootstrap club -- found by the live GW1 cross-check (17/610 rows), fixed and re-captured with --force — A since-transferred player's historical fixtures were silently retro-dated onto their new club; the published GW1 oracle caught it, the fix is verified down to zero disagreeing columns
 - [Phase 08]: 08-03: team_strength.build_matches exempts config.CURRENT_SEASON from its systemic-reconstruction-failure guard (a genuinely broken past season still raises) — player_gw.parquet carries a legitimately in-progress season for the first time in this phase; the guard was never designed to see one
+- [Phase 08]: 08-04: fetch_vaastav_season now guards the current season's three files inside the function itself, holding under --force, and gains a cross_check=True escape hatch writing to a .vaastav-crosscheck filename — Closes the ownership boundary so no caller path (CLI or direct) can overwrite data.gw_capture's captured files, and formalizes the ad hoc cross-check 08-03 hand-rolled
+- [Phase 08]: 08-04: a past season whose vaastav files come back absent now prints a season-level [ingest] WARNING naming the vanished files, above the existing per-file MISS line — A source silently dropping a season is the failure this phase was created in response to; it must be visible the day it happens, not at the next retrain
 
 ### Pending Todos
 
@@ -334,6 +337,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-12T07:24:28.813Z
-Stopped at: Completed 08-03-PLAN.md
+Last session: 2026-09-12T07:54:00.668Z
+Stopped at: Completed 08-04-PLAN.md
 Resume file: None
