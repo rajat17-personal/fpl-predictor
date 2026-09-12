@@ -92,6 +92,44 @@ def test_team_strength_ratings_reproducible_from_prior_matches():
                                recomputed.loc[common, "defence"].to_numpy(), atol=1e-4)
 
 
+def _make_fixture_rows(season, fixture_id, gw, team_a=1, team_b=2, score_a=1, score_b=0):
+    """Two rows (home + away) for one synthetic fixture -- the minimal shape
+    `team_strength.build_matches` needs (a fixture's two sides reconstructed
+    from the two distinct `opponent_team_id` values within its group)."""
+    ts = pd.Timestamp(f"2020-01-{1 + (fixture_id % 27):02d}", tz="UTC")
+    return [
+        {"season": season, "fixture_id": fixture_id, "gw": gw, "kickoff_time": ts,
+         "opponent_team_id": team_b, "was_home": True,
+         "team_h_score": score_a, "team_a_score": score_b},
+        {"season": season, "fixture_id": fixture_id, "gw": gw, "kickoff_time": ts,
+         "opponent_team_id": team_a, "was_home": False,
+         "team_h_score": score_a, "team_a_score": score_b},
+    ]
+
+
+def test_build_matches_tolerates_a_partial_current_season_but_not_a_partial_past_one():
+    """Regression (Phase 8 plan 08-03 Task 3): player_gw.parquet now
+    legitimately carries the in-progress current season for the first time
+    (Phase 8's own capture). build_matches must not raise its
+    systemic-reconstruction-failure alarm for a season that is simply not
+    finished yet, while still raising it for a genuinely broken PAST
+    (long-since-complete) season showing the exact same low fixture count."""
+    rows = []
+    for fid in range(1, 6):        # 5 fixtures -- far below MIN_FIXTURES_PER_SEASON
+        rows += _make_fixture_rows(config.CURRENT_SEASON, fid, gw=1)
+    for fid in range(101, 106):    # identical shortfall, but a PAST season
+        rows += _make_fixture_rows("2019-20", fid, gw=1)
+    df = pd.DataFrame(rows)
+
+    current_only = df[df["season"] == config.CURRENT_SEASON]
+    matches = team_strength.build_matches(current_only)
+    assert set(matches["season"]) == {config.CURRENT_SEASON}
+    assert len(matches) == 5
+
+    with pytest.raises(AssertionError, match="systemic"):
+        team_strength.build_matches(df[df["season"] == "2019-20"])
+
+
 @pytest.mark.skipif(not (FEATURES.exists() and UNDERSTAT.exists()),
                     reason="run `python -m data.understat` then rebuild the pipeline first")
 def test_understat_features_are_rolled_not_raw(feat):

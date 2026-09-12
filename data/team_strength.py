@@ -103,7 +103,13 @@ def build_matches(player_gw: pd.DataFrame) -> pd.DataFrame:
     matches["away_goals"] = matches.pop("team_a_score").astype(int)
 
     counts = matches.groupby("season").size()
-    systemic = counts[counts < MIN_FIXTURES_PER_SEASON]
+    # The current season is genuinely, legitimately partial mid-season (Phase
+    # 8: player_gw.parquet gained real current-season rows for the first
+    # time here) -- a low fixture count for it is expected, not a
+    # reconstruction failure, and must not trip the same alarm a COMPLETED
+    # past season failing this count would raise.
+    in_progress = counts.index == config.CURRENT_SEASON
+    systemic = counts[(counts < MIN_FIXTURES_PER_SEASON) & ~in_progress]
     if len(systemic):
         raise AssertionError(
             f"season(s) with far fewer than 380 fixtures recovered -- a systemic "
@@ -113,6 +119,11 @@ def build_matches(player_gw: pd.DataFrame) -> pd.DataFrame:
     if len(short):
         print(f"  [team_strength] season(s) short of the full 380 fixtures "
               f"(known one-off data gaps): {short.to_dict()}")
+    current_partial = counts[(counts < MIN_FIXTURES_PER_SEASON) & in_progress]
+    if len(current_partial):
+        print(f"  [team_strength] {config.CURRENT_SEASON}: "
+              f"{int(current_partial.iloc[0])} fixtures reconstructed so far "
+              f"(season in progress, not a reconstruction failure)")
     return matches.reset_index(drop=True)
 
 
