@@ -26,6 +26,7 @@ def fake_boot(n_per_pos=(3, 7, 7, 5)) -> dict:
             code += 1
             elements.append({
                 "id": code - 900, "code": code, "web_name": f"P{code}",
+                "first_name": f"First{code}", "second_name": f"Last{code}",
                 "team": (code % 10) + 1, "element_type": etype, "status": "a",
                 "chance_of_playing_next_round": None,
                 "now_cost": 40 + (code % 25), "cost_change_event": 0,
