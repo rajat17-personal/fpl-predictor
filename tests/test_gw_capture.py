@@ -12,6 +12,7 @@ and the freshness alert.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 
 import pandas as pd
@@ -21,6 +22,7 @@ import responses
 import config
 import data.build_table as build_table
 import data.gw_capture as gw_capture
+import data.ingest as ingest
 from test_api import fake_boot
 
 _BOOT_URL = f"{config.FPL_API}/bootstrap-static/"
@@ -648,3 +650,114 @@ def test_fully_captured_season_produces_no_alert_and_zero_exit(_isolate_raw_dir)
 
 def test_capture_docstring_states_plain_run_is_the_backfill():
     assert "no separate backfill flag" in gw_capture.capture.__doc__
+
+
+# ============================================================= 08-04 Task 1
+# data.ingest.fetch_vaastav_season's current-season guard
+
+
+def _write_bytes(path, data: bytes = b"captured content, do not touch") -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+
+
+def _sha(path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+@responses.activate
+def test_current_season_call_issues_zero_http_requests_with_or_without_force(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "ROOT", tmp_path)  # so _download's own relative_to(ROOT) print holds
+    season_dir = config.RAW_DIR / config.CURRENT_SEASON
+    for name in ("merged_gw.csv", "fixtures.csv", "players_raw.csv"):
+        _write_bytes(season_dir / name)
+
+    result_plain = ingest.fetch_vaastav_season(config.CURRENT_SEASON)
+    result_forced = ingest.fetch_vaastav_season(config.CURRENT_SEASON, force=True)
+
+    assert len(responses.calls) == 0
+    assert set(result_plain) == {"merged_gw", "fixtures", "players_raw"}
+    assert set(result_forced) == {"merged_gw", "fixtures", "players_raw"}
+
+
+def test_current_season_files_byte_identical_after_guarded_call(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "ROOT", tmp_path)
+    season_dir = config.RAW_DIR / config.CURRENT_SEASON
+    paths = {name: season_dir / name
+             for name in ("merged_gw.csv", "fixtures.csv", "players_raw.csv")}
+    for path in paths.values():
+        _write_bytes(path)
+    before = {name: _sha(path) for name, path in paths.items()}
+
+    ingest.fetch_vaastav_season(config.CURRENT_SEASON)
+    ingest.fetch_vaastav_season(config.CURRENT_SEASON, force=True)
+
+    after = {name: _sha(path) for name, path in paths.items()}
+    assert after == before
+
+
+@responses.activate
+def test_past_season_call_still_downloads_all_three(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "ROOT", tmp_path)
+    season = "2016-17"
+    responses.add(responses.GET, f"{config.VAASTAV_RAW}/{season}/gws/merged_gw.csv",
+                   body="a,b\n1,2\n", status=200)
+    responses.add(responses.GET, f"{config.VAASTAV_RAW}/{season}/fixtures.csv",
+                   body="a,b\n1,2\n", status=200)
+    responses.add(responses.GET, f"{config.VAASTAV_RAW}/{season}/players_raw.csv",
+                   body="a,b\n1,2\n", status=200)
+
+    result = ingest.fetch_vaastav_season(season)
+
+    assert len(responses.calls) == 3
+    assert set(result) == {"merged_gw", "fixtures", "players_raw"}
+    for filename in ("merged_gw.csv", "fixtures.csv", "players_raw.csv"):
+        assert (config.RAW_DIR / season / filename).exists()
+
+
+@responses.activate
+def test_cross_check_escape_hatch_writes_distinguishable_filename_leaves_captured_untouched(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "ROOT", tmp_path)
+    season_dir = config.RAW_DIR / config.CURRENT_SEASON
+    captured = season_dir / "merged_gw.csv"
+    _write_bytes(captured, b"captured by data.gw_capture")
+    captured_hash = _sha(captured)
+
+    for suffix in ("gws/merged_gw.csv", "fixtures.csv", "players_raw.csv"):
+        responses.add(responses.GET, f"{config.VAASTAV_RAW}/{config.CURRENT_SEASON}/{suffix}",
+                       body="published,copy\n1,2\n", status=200)
+
+    result = ingest.fetch_vaastav_season(config.CURRENT_SEASON, cross_check=True)
+
+    crosscheck_path = season_dir / "merged_gw.vaastav-crosscheck.csv"
+    assert crosscheck_path.exists()
+    assert crosscheck_path != captured
+    assert captured.exists()
+    assert _sha(captured) == captured_hash
+    assert set(result) == {"merged_gw", "fixtures", "players_raw"}
+
+
+@responses.activate
+def test_past_season_absent_files_produce_warning_naming_the_season(capsys):
+    season = "2016-17"
+    for suffix in ("gws/merged_gw.csv", "fixtures.csv", "players_raw.csv"):
+        responses.add(responses.GET, f"{config.VAASTAV_RAW}/{season}/{suffix}", status=404)
+
+    ingest.fetch_vaastav_season(season)
+
+    out = capsys.readouterr().out
+    assert "WARNING" in out
+    assert season in out
+    assert "merged_gw.csv" in out
+
+
+def test_fetch_vaastav_season_signature_begins_with_season_and_force():
+    import inspect
+    params = list(inspect.signature(ingest.fetch_vaastav_season).parameters)
+    assert params[0] == "season"
+    assert params[1] == "force"
+
+
+def test_ingest_module_docstring_states_the_ownership_split():
+    assert "data.gw_capture" in ingest.__doc__
+    assert "vaastav" in ingest.__doc__.lower()

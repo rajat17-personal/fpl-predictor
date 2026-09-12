@@ -1,12 +1,28 @@
 """Phase 1 ingestion: download raw data and cache it locally.
 
 Sources (all free):
-  - vaastav/Fantasy-Premier-League  -> historical per-GW CSVs (training set)
-  - Official FPL API                -> live players/teams/fixtures (inference)
+  - Official FPL API                -> the CURRENT season's per-player per-gameweek
+    rows, captured by `data.gw_capture` (NOT this module -- see below), plus live
+    players/teams/fixtures for inference (`fetch_fpl_live`, unchanged by Phase 8).
+  - vaastav/Fantasy-Premier-League  -> the PAST seasons' merged_gw.csv, fixtures.csv
+    and players_raw.csv (the training set), cached here and never re-fetched for
+    the current season.
+
+`fetch_vaastav_season` declines to download `config.CURRENT_SEASON`'s three files
+under any flag, including `--force`: vaastav's own copy of the current season
+stalled at a single published gameweek (confirmed 2026-09-08,
+.planning/research/DATA-SOURCE-RESILIENCE.md), so `data.gw_capture` now owns
+those three on-disk paths outright, and the re-download flag's whole effect on
+the current season would be to replace a full multi-gameweek capture with the
+one gameweek the stalled source still serves. Pass `cross_check=True` to fetch
+the published current-season copy anyway, written to a distinguishable filename
+alongside the captured one -- never over it -- for verifying the capture
+module's own schema mapping against an independent source (the check Phase 8
+plan 08-03 hand-rolled outside the repository).
 
 Run:
   python -m data.ingest              # download configured seasons + live API
-  python -m data.ingest --force      # re-download even if cached
+  python -m data.ingest --force      # re-download cached PAST seasons (current season still skipped)
 """
 from __future__ import annotations
 
@@ -49,27 +65,66 @@ def _download(url: str, dest: Path, *, force: bool = False, binary: bool = False
 
 
 # --- vaastav historical -----------------------------------------------------
-def fetch_vaastav_season(season: str, *, force: bool = False) -> dict[str, Path | None]:
-    """Download merged_gw.csv + fixtures.csv for one season."""
+def _crosscheck_path(dest: Path) -> Path:
+    """The distinguishable filename `fetch_vaastav_season`'s `cross_check`
+    escape hatch writes to -- same directory as the captured file, never the
+    captured file's own path."""
+    return dest.with_name(f"{dest.stem}.vaastav-crosscheck{dest.suffix}")
+
+
+def fetch_vaastav_season(season: str, *, force: bool = False,
+                          cross_check: bool = False) -> dict[str, Path | None | str]:
+    """Download merged_gw.csv + fixtures.csv + players_raw.csv for one season.
+
+    `config.CURRENT_SEASON` is owned by `data.gw_capture`, not this function:
+    every download for that season is skipped here, regardless of `force` --
+    see the module docstring for why. The returned dict keeps the same three
+    keys callers already rely on (`main`'s loop, in particular); the skipped
+    season's values record the skip rather than a downloaded path.
+
+    Pass `cross_check=True` to fetch the published current-season copy
+    anyway, written to a `.vaastav-crosscheck`-suffixed filename in the same
+    season directory rather than the path `data.gw_capture` owns. Has no
+    effect for a past season, which is always fetched to its normal path.
+    """
     print(f"[vaastav] {season}")
-    out: dict[str, Path | None] = {}
-    out["merged_gw"] = _download(
-        f"{config.VAASTAV_RAW}/{season}/gws/merged_gw.csv",
-        config.RAW_DIR / season / "merged_gw.csv",
-        force=force,
-    )
-    out["fixtures"] = _download(
-        f"{config.VAASTAV_RAW}/{season}/fixtures.csv",
-        config.RAW_DIR / season / "fixtures.csv",
-        force=force,
-    )
-    # players_raw.csv carries both season-local `id` and the stable global `code`,
-    # giving us the (season, element) -> code mapping used across seasons + live.
-    out["players_raw"] = _download(
-        f"{config.VAASTAV_RAW}/{season}/players_raw.csv",
-        config.RAW_DIR / season / "players_raw.csv",
-        force=force,
-    )
+    is_current = season == config.CURRENT_SEASON
+
+    dests = {
+        "merged_gw": config.RAW_DIR / season / "merged_gw.csv",
+        "fixtures": config.RAW_DIR / season / "fixtures.csv",
+        # players_raw.csv carries both season-local `id` and the stable global
+        # `code`, giving us the (season, element) -> code mapping used across
+        # seasons + live.
+        "players_raw": config.RAW_DIR / season / "players_raw.csv",
+    }
+    urls = {
+        "merged_gw": f"{config.VAASTAV_RAW}/{season}/gws/merged_gw.csv",
+        "fixtures": f"{config.VAASTAV_RAW}/{season}/fixtures.csv",
+        "players_raw": f"{config.VAASTAV_RAW}/{season}/players_raw.csv",
+    }
+
+    if is_current and not cross_check:
+        out: dict[str, Path | None | str] = {}
+        for key, dest in dests.items():
+            print(f"  SKIP     {dest.relative_to(config.ROOT)} -- {season} is the current "
+                  "season, owned by data.gw_capture (vaastav's own copy stalled at one gameweek)")
+            out[key] = f"skipped: {season} owned by data.gw_capture"
+        return out
+
+    out = {}
+    for key, dest in dests.items():
+        target = _crosscheck_path(dest) if (is_current and cross_check) else dest
+        out[key] = _download(urls[key], target, force=force)
+
+    if not is_current:
+        missing = [key for key in dests if out[key] is None]
+        if missing:
+            names = ", ".join(dests[key].name for key in missing)
+            print(f"[ingest] WARNING season {season}: {len(missing)} file(s) came back absent "
+                  f"from vaastav -- {names}. A previously-served past season has vanished; "
+                  "check whether the upstream repo still publishes it.")
+
     return out
 
 
