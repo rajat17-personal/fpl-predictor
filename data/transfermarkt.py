@@ -650,7 +650,13 @@ def attach(full: pd.DataFrame) -> pd.DataFrame:
     before = len(full)
     from data.availability import gw_deadlines
 
-    deadlines = gw_deadlines()[["season", "gw", "deadline_ts"]].drop_duplicates(
+    # Thread `full` through as `raw=` rather than letting `gw_deadlines()`
+    # read `player_gw.parquet` from disk: `attach()` is called mid-build by
+    # `data/build_table.py::build()` on the in-memory frame that WILL BECOME
+    # the next `player_gw.parquet`, so reading the on-disk file here would
+    # silently return the *previous* run's deadlines -- missing an entry for
+    # every (season, gw) the current run just ingested (CR-01, 10-REVIEW.md).
+    deadlines = gw_deadlines(raw=full)[["season", "gw", "deadline_ts"]].drop_duplicates(
         subset=["season", "gw"])
 
     out = full.copy()

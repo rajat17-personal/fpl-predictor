@@ -127,11 +127,21 @@ def _require_columns(df: pd.DataFrame, cols: list[str], what: str) -> None:
         raise ValueError(f"{what}: missing required column(s) {missing}")
 
 
-def gw_deadlines() -> pd.DataFrame:
+def gw_deadlines(raw: pd.DataFrame | None = None) -> pd.DataFrame:
     """One row per (season, gw): `deadline_ts = min(kickoff_time) - 90min`
     and `kickoff_max = max(kickoff_time)` (the second boundary
     `resolve_as_of` requires). Derived offline from
-    `data/processed/player_gw.parquet` -- no network.
+    `data/processed/player_gw.parquet` -- no network -- unless `raw` is
+    supplied.
+
+    `raw`, when given, must be a `player_gw`-shaped frame carrying at least
+    `["season", "gw", "kickoff_time"]` and is used INSTEAD of reading
+    `player_gw.parquet` from disk. This exists so a caller assembling a new
+    `player_gw` frame in memory (`data/build_table.py::build()`, still
+    mid-construction) can compute deadlines against the frame it is actually
+    building -- reading the on-disk file here would silently return the
+    *previous* run's deadlines, missing every (season, gw) the current run
+    just ingested (CR-01, 10-REVIEW.md).
 
     Postponement caveat: if a gameweek's first fixture is postponed,
     `min(kickoff_time)` moves later and the derived `deadline_ts` becomes
@@ -139,8 +149,11 @@ def gw_deadlines() -> pd.DataFrame:
     why `resolve_as_of` ALSO requires the source row to predate every
     kickoff in that gameweek (`kickoff_max`), not just the derived deadline.
     """
-    raw = pd.read_parquet(config.PROCESSED_DIR / "player_gw.parquet",
-                          columns=["season", "gw", "kickoff_time"])
+    if raw is None:
+        raw = pd.read_parquet(config.PROCESSED_DIR / "player_gw.parquet",
+                              columns=["season", "gw", "kickoff_time"])
+    else:
+        raw = raw[["season", "gw", "kickoff_time"]]
     raw = raw.dropna(subset=["kickoff_time"])
     g = raw.groupby(["season", "gw"], sort=False)["kickoff_time"]
     out = g.agg(kickoff_min="min", kickoff_max="max").reset_index()
