@@ -126,8 +126,9 @@ def running_summary(entries: list[dict]) -> dict:
 
 def update(*, force: bool = False) -> list[int]:
     """Score every finished GW that has a frozen prediction file. Returns new GWs."""
-    boot = requests.get(f"{config.FPL_API}/bootstrap-static/",
-                        headers=_HEADERS, timeout=30).json()
+    r = requests.get(f"{config.FPL_API}/bootstrap-static/", headers=_HEADERS, timeout=30)
+    r.raise_for_status()
+    boot = r.json()
     finished = {e["id"] for e in boot["events"] if e["finished"]}
     board_remedy = "delete web/data/scoreboard.json to rebuild it from web/data/history/"
     board = (read_json(SCOREBOARD, what="accuracy scoreboard", remedy=board_remedy)
