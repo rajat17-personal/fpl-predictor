@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 08
 current_phase_name: Self-Hosted Gameweek Data Capture
 status: executing
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-09-12T05:51:48.599Z"
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-09-12T06:29:20.952Z"
 last_activity: 2026-09-12
 last_activity_desc: Phase 08 execution started
-state_head: fdfb41b348a6466bacbb204c385bc4c99d00bf22
+state_head: 462ca26888835575f34d82e91fcd4315f9c30809
 progress:
   total_phases: 10
   completed_phases: 8
   total_plans: 76
-  completed_plans: 69
+  completed_plans: 70
   percent: 80
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-11)
 ## Current Position
 
 Phase: 08 (Self-Hosted Gameweek Data Capture) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-09-12 — Phase 08 execution started
 
@@ -135,6 +135,7 @@ Progress: [████████░░] 80% (68/71 plans complete)
 | Phase 10 P15 | spanned checkpoints | 3 tasks | 12 files |
 | Phase 10 P16 | 55min | 3 tasks | 6 files |
 | Phase 08 P01 | 45min | 2 tasks | 4 files |
+| Phase 08 P02 | 35min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -293,6 +294,7 @@ Recent decisions affecting current work:
 - [Phase 10]: Phase 10 Plan 15: RL reward-shaping notes recorded (potential-based-only correction, Ng/Harada/Russell 1999, log-linear compute curve, D-16 declare-before-training rule) -- notes-only per D-04, no training ran, optimize/rl_env.py and rl_train.py byte-identical
 - [Phase 10]: Phase 10 Plan 16: D-11 split-verdict combined run measured model+chips=2262 (empty full-coverage winner set, all nine Phase 10 flags REJECTED/HOLD/DECLINED) -- bit-for-bit identical to Phase 9's own close and Phase 10's own open, 18 short of the >=2,280 bar; config.py is a genuine byte-identical no-op, tests/test_experiments.py untouched
 - [Phase 10]: Phase 10 Plan 16: product surface proven unchanged via a real python -m predict.export run + new tests/test_product.py regression (test_phase10_flags_default_off_leaves_export_contract_unchanged); IMPROVEMENTS.md's D-01 through D-21 decisions audit and all eight resolves_phase:10 todos closed with recorded outcomes -- Phase 10 fully closed
+- [Phase 08]: 08-02: xP resolution branches on the chosen snapshot's own recorded next_gw (never date alone) -- S==target reads ep_next, S==target+1 reads ep_this, otherwise/no-qualifying-snapshot resolves missing; players_raw.csv/fixtures.csv rewritten unconditionally every run; CaptureSummary (dict subclass) surfaces missing_gws/failures without breaking 08-01's summary==dict equality
 
 ### Pending Todos
 
@@ -328,6 +330,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-12T05:51:48.321Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-09-12T06:29:20.659Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None

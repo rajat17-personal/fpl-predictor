@@ -328,7 +328,7 @@ These hold across every phase, not just one:
 **Goal:** Remove vaastav/Fantasy-Premier-League as a single point of failure for training data. A new `data/gw_capture.py` reconstructs vaastav-schema per-GW rows (`gw{N}.csv`, `merged_gw.csv`, refreshed `players_raw.csv`/`fixtures.csv`) directly from the official FPL API into `data/raw/2026-27/`, runs from `scripts/daily.sh`, and backfills the already-finished GWs before season rollover makes them unrecoverable (element-summary only retains the current season). vaastav is demoted to past-season backfill; `build_table`/`id_map` consume the captured rows unchanged. Research: `.planning/research/DATA-SOURCE-RESILIENCE.md`.
 **Requirements**: TBD
 **Depends on:** Phase 7
-**Plans:** 1/5 plans executed (5 waves)
+**Plans:** 2/5 plans executed (5 waves)
 
 Plans:
 **Wave 1**
@@ -337,7 +337,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 08-02-PLAN.md — Mutable current-season file refreshes, payload field guards, snapshot-backed xP resolution, per-gameweek ledger, rate-limited sweep, freshness alert
+- [x] 08-02-PLAN.md — Mutable current-season file refreshes, payload field guards, snapshot-backed xP resolution, per-gameweek ledger, rate-limited sweep, freshness alert
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
