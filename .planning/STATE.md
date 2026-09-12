@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 08
 current_phase_name: Self-Hosted Gameweek Data Capture
 status: executing
-stopped_at: Completed 08-02-PLAN.md
-last_updated: "2026-09-12T06:29:20.952Z"
+stopped_at: Completed 08-03-PLAN.md
+last_updated: "2026-09-12T07:24:42.606Z"
 last_activity: 2026-09-12
 last_activity_desc: Phase 08 execution started
-state_head: 462ca26888835575f34d82e91fcd4315f9c30809
+state_head: ec408d988519be9642cd3d0521e81d8ee8ea23ac
 progress:
   total_phases: 10
   completed_phases: 8
   total_plans: 76
-  completed_plans: 70
+  completed_plans: 71
   percent: 80
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-11)
 ## Current Position
 
 Phase: 08 (Self-Hosted Gameweek Data Capture) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-09-12 — Phase 08 execution started
 
@@ -136,6 +136,7 @@ Progress: [████████░░] 80% (68/71 plans complete)
 | Phase 10 P16 | 55min | 3 tasks | 6 files |
 | Phase 08 P01 | 45min | 2 tasks | 4 files |
 | Phase 08 P02 | 35min | 3 tasks | 2 files |
+| Phase 08 P03 | 53min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -295,6 +296,8 @@ Recent decisions affecting current work:
 - [Phase 10]: Phase 10 Plan 16: D-11 split-verdict combined run measured model+chips=2262 (empty full-coverage winner set, all nine Phase 10 flags REJECTED/HOLD/DECLINED) -- bit-for-bit identical to Phase 9's own close and Phase 10's own open, 18 short of the >=2,280 bar; config.py is a genuine byte-identical no-op, tests/test_experiments.py untouched
 - [Phase 10]: Phase 10 Plan 16: product surface proven unchanged via a real python -m predict.export run + new tests/test_product.py regression (test_phase10_flags_default_off_leaves_export_contract_unchanged); IMPROVEMENTS.md's D-01 through D-21 decisions audit and all eight resolves_phase:10 todos closed with recorded outcomes -- Phase 10 fully closed
 - [Phase 08]: 08-02: xP resolution branches on the chosen snapshot's own recorded next_gw (never date alone) -- S==target reads ep_next, S==target+1 reads ep_this, otherwise/no-qualifying-snapshot resolves missing; players_raw.csv/fixtures.csv rewritten unconditionally every run; CaptureSummary (dict subclass) surfaces missing_gws/failures without breaking 08-01's summary==dict equality
+- [Phase 08]: 08-03: team resolved from the row's own fixture (team_h/team_a), never the player's current bootstrap club -- found by the live GW1 cross-check (17/610 rows), fixed and re-captured with --force — A since-transferred player's historical fixtures were silently retro-dated onto their new club; the published GW1 oracle caught it, the fix is verified down to zero disagreeing columns
+- [Phase 08]: 08-03: team_strength.build_matches exempts config.CURRENT_SEASON from its systemic-reconstruction-failure guard (a genuinely broken past season still raises) — player_gw.parquet carries a legitimately in-progress season for the first time in this phase; the guard was never designed to see one
 
 ### Pending Todos
 
@@ -309,6 +312,7 @@ Recent decisions affecting current work:
 - Payment gateway / merchant-of-record choice still pending with the user — out of scope here, but PITCH-01's trademark disclaimer feeds the eventual gateway review.
 - **[Phase 4]:** Security enforcement is on but no 04-SECURITY.md exists — run `/gsd-secure-phase 4` to backfill the threat verification (03, 05, 09, and now 10 also lack SECURITY.md; 06-SECURITY.md now exists).
 - **[Phase 10] Code review CR-01 (advisory, flag-off):** `data/transfermarkt.py::attach` reads gw deadlines from the on-disk `player_gw.parquet` instead of the in-memory frame being built, so with `transfermarkt_injury` enabled the newest gameweek's injury features would silently read as "not injured". Harmless while the flag stays off (it was REJECTED); must be fixed before any future adoption — full detail in 10-REVIEW.md (also 4 warnings, 2 info; `/gsd-code-review 10 --fix` can apply them).
+- [Phase 8] data/odds.py's cached data/raw/odds/2026-27.csv is football-data.co.uk's own pre-season HTTP 300 error page (the 2026-27 odds CSV doesn't exist on their server yet), and the module's cache-if-exists behavior will keep serving it forever unless something re-fetches once the real file is published -- out of 08-03's file scope, diagnosed not fixed, recorded in 08-BACKFILL-EVIDENCE.md
 
 ### Quick Tasks Completed
 
@@ -330,6 +334,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-12T06:29:20.659Z
-Stopped at: Completed 08-02-PLAN.md
+Last session: 2026-09-12T07:24:28.813Z
+Stopped at: Completed 08-03-PLAN.md
 Resume file: None
