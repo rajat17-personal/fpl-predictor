@@ -107,3 +107,49 @@ def test_reward_matches_run_season_hold_policy():
 
     assert abs(total - expected_total) < 1e-6, (
         f"env cumulative reward {total} != run_season total {expected_total}")
+
+
+# --- optimize/rl_train.py::train_seasons_for (plan 09-07 D2) -----------
+
+def test_train_seasons_for_returns_only_prior_test_seasons():
+    """Plan 09-07 D2: train_seasons_for(T) returns only TEST_SEASONS members
+    strictly before T. Matches TEST_SEASONS' own first-class position in the
+    harness: team-attribution data is only populated from 2020-21 onward,
+    so no usable squad pool exists for seasons before that."""
+    pytest.importorskip("sb3_contrib", minversion=None)
+    from optimize.rl_train import train_seasons_for, TEST_SEASONS
+
+    result = train_seasons_for("2025-26")
+    # Should be all test seasons except the latest
+    expected = TEST_SEASONS[:-1]
+    assert result == expected
+    # Verify they are strictly less than the test season
+    for s in result:
+        assert s < "2025-26"
+
+
+def test_train_seasons_for_raises_for_earliest_test_season():
+    """Plan 09-07 D2: train_seasons_for('2020-21') raises ValueError because
+    there is no earlier TEST_SEASONS member to train on. The 2020-21 season is
+    the first test season (where team data becomes available), so it has no
+    prior usable training season."""
+    pytest.importorskip("sb3_contrib", minversion=None)
+    from optimize.rl_train import train_seasons_for
+
+    with pytest.raises(ValueError) as exc:
+        train_seasons_for("2020-21")
+    msg = str(exc.value)
+    assert "2020-21" in msg
+    assert "no earlier" in msg.lower()
+
+
+def test_train_seasons_for_raises_for_non_test_season():
+    """Plan 09-07 D2: train_seasons_for(T) raises ValueError when T is not
+    a valid TEST_SEASONS member, even if T is in DATA_SEASONS."""
+    pytest.importorskip("sb3_contrib", minversion=None)
+    from optimize.rl_train import train_seasons_for
+
+    with pytest.raises(ValueError) as exc:
+        train_seasons_for("2016-17")
+    msg = str(exc.value)
+    assert "2016-17" in msg

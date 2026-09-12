@@ -343,3 +343,20 @@ def test_transfermarkt_injury_features_are_raw_context_not_rolled(feat):
              if c.startswith("tm_") and any(
                  c.endswith(sfx) for sfx in ("_r3", "_r5", "_r10", "_rall"))]
     assert not rolled, f"injury columns must never be rolled: found {rolled}"
+
+
+def test_fixture_ctx_no_ts_columns():
+    """Plan 09-05 D3: FIXTURE_CTX must carry no ts_* columns.
+
+    The decision-time horizon graft re-derives team-strength ratings from the
+    decision gameweek's own snapshot (ratings_as_of(g)), never from the future
+    gameweek's own (leaky). Only the OPPONENT IDENTITY carries forward; the
+    ratings themselves are re-derived. This guard prevents an accidental
+    ts_*column from being frozen into a future row, which would leak future
+    team-strength knowledge into a current-gameweek decision."""
+    from backtest.walk_forward import FIXTURE_CTX
+
+    ts_cols_found = [c for c in FIXTURE_CTX if c.startswith("ts_")]
+    assert not ts_cols_found, (
+        f"FIXTURE_CTX must not carry ts_* columns (leakage risk); found: {ts_cols_found}"
+    )

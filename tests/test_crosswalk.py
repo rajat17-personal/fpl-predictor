@@ -57,3 +57,53 @@ def test_merge_against_crosswalk_preserves_row_count(crosswalk_parquet):
     synthetic = pd.DataFrame({"player_code": codes, "x": range(len(codes))})
     merged = synthetic.merge(crosswalk.load_crosswalk(), on="player_code", how="left")
     assert len(merged) == len(synthetic)
+
+
+# --- data/external/kiwi/ (plan 09-02 D1) --
+
+def test_kiwi_id_dictionary_exists():
+    """Plan 09-02 D1: committed snapshot files must exist."""
+    from pathlib import Path
+    id_dict = Path(__file__).parent.parent / "data" / "external" / "kiwi" / "ID_Dictionary.csv"
+    assert id_dict.exists(), f"Kiwi ID_Dictionary.csv not found at {id_dict}"
+
+
+def test_kiwi_projection_csvs_exist():
+    """Plan 09-02 D1: all three seasons' projection CSVs must be present."""
+    from pathlib import Path
+    kiwi_dir = Path(__file__).parent.parent / "data" / "external" / "kiwi"
+    for season in ["2021-22", "2022-23", "2023-24"]:
+        path = kiwi_dir / f"kiwi_projections_{season}.csv"
+        assert path.exists(), f"Kiwi projections CSV not found: {path}"
+
+
+def test_kiwi_projections_have_exactly_8_tidy_columns():
+    """Plan 09-02 D1: each projection CSV must have exactly the 8 tidy columns
+    declared in data/external/README.md: season, gw, fpl_id, name, pos, team,
+    price, proj_pts."""
+    from pathlib import Path
+    expected_cols = {"season", "gw", "fpl_id", "name", "pos", "team", "price", "proj_pts"}
+    kiwi_dir = Path(__file__).parent.parent / "data" / "external" / "kiwi"
+
+    for season in ["2021-22", "2022-23", "2023-24"]:
+        path = kiwi_dir / f"kiwi_projections_{season}.csv"
+        df = pd.read_csv(path)
+        assert set(df.columns) == expected_cols, (
+            f"{season}: columns {set(df.columns)} != expected {expected_cols}"
+        )
+
+
+def test_kiwi_projections_no_fpl_id_zero_placeholder():
+    """Plan 09-02 D1: no row with fpl_id==0 should survive reduction.
+    fpl_id==0 rows are theFPLkiwi's own placeholders for not-yet-signed players."""
+    from pathlib import Path
+    kiwi_dir = Path(__file__).parent.parent / "data" / "external" / "kiwi"
+
+    for season in ["2021-22", "2022-23", "2023-24"]:
+        path = kiwi_dir / f"kiwi_projections_{season}.csv"
+        df = pd.read_csv(path)
+        zero_rows = df[df["fpl_id"] == 0]
+        assert len(zero_rows) == 0, (
+            f"{season}: found {len(zero_rows)} rows with fpl_id==0 "
+            "(should have been dropped during reduction)"
+        )

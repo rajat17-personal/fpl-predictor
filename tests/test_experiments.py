@@ -632,3 +632,95 @@ def test_stage2_ridge_def_component_path_swaps_only_residual_regressor(_bracket_
     assert isinstance(component.cs_clf, LGBMClassifier)
     assert isinstance(component.resid_reg, Pipeline)
     assert m["reg_best"]["cs_tag"] is None  # Ridge has no best_iteration_
+
+
+# --- backtest/walk_forward.py::apply_experiment_feature_gating (plan 09-09 D3) --
+
+def test_feature_gating_drops_fm_family_when_off():
+    """Plan 09-09 D3: fm_* columns drop when fotmob flag is off."""
+    df = pd.DataFrame({
+        "fm_tackles": [1.0], "fm_interceptions": [0.5], "fm_duels_won": [2.0],
+        "minutes_r5": [90.0],
+    })
+    out = apply_experiment_feature_gating(df, {"fotmob": False})
+    assert not any(c.startswith("fm_") for c in out.columns)
+    assert "minutes_r5" in out.columns
+
+
+def test_feature_gating_keeps_fm_family_when_on():
+    """Plan 09-09 D3: fm_* columns survive when fotmob flag is on."""
+    df = pd.DataFrame({
+        "fm_tackles": [1.0], "fm_interceptions": [0.5], "fm_duels_won": [2.0]
+    })
+    out = apply_experiment_feature_gating(df, {"fotmob": True})
+    assert "fm_tackles" in out.columns
+    assert "fm_interceptions" in out.columns
+    assert "fm_duels_won" in out.columns
+
+
+# --- data/understat.py::attach (plan 09-08 D1 kill-switch no-op) --------
+
+def test_understat_kill_switch_no_op_when_disabled(monkeypatch):
+    """Plan 09-08 D1: UNDERSTAT_ENABLED=False makes attach() return input unchanged."""
+    import data.understat
+    monkeypatch.setattr(data.understat, "UNDERSTAT_ENABLED", False)
+
+    df = pd.DataFrame({
+        "player_id": [1, 2],
+        "season": ["2021-22", "2021-22"],
+        "us_npxg": [1.0, 2.0],
+    })
+    result = data.understat.attach(df)
+
+    # Should return input unchanged: same columns, same rows
+    assert list(result.columns) == list(df.columns)
+    assert len(result) == len(df)
+    assert result.equals(df)
+
+
+# --- data/fotmob.py::attach (plan 09-09 D1 kill-switch no-op) --------
+
+def test_fotmob_kill_switch_no_op_when_disabled(monkeypatch):
+    """Plan 09-09 D1: FOTMOB_ENABLED=False makes attach() return input unchanged."""
+    import data.fotmob
+    monkeypatch.setattr(data.fotmob, "FOTMOB_ENABLED", False)
+
+    df = pd.DataFrame({
+        "player_id": [1, 2],
+        "season": ["2021-22", "2021-22"],
+        "fm_tackles": [1.0, 2.0],
+    })
+    result = data.fotmob.attach(df)
+
+    # Should return input unchanged: same columns, same rows
+    assert list(result.columns) == list(df.columns)
+    assert len(result) == len(df)
+    assert result.equals(df)
+
+
+# --- scripts/experiment_run.sh (plan 09-01 D4) --
+
+def test_experiment_run_sh_syntax_valid():
+    """Plan 09-01 D4: bash -n scripts/experiment_run.sh exits 0 (syntax valid)."""
+    import subprocess
+    result = subprocess.run(
+        ["bash", "-n", "scripts/experiment_run.sh"],
+        cwd=config.ROOT,
+        capture_output=True
+    )
+    assert result.returncode == 0, f"bash syntax check failed: {result.stderr.decode()}"
+
+
+def test_experiment_run_sh_requires_tag_argument():
+    """Plan 09-01 D4: running with no argument exits non-zero with usage message."""
+    import subprocess
+    result = subprocess.run(
+        ["bash", "scripts/experiment_run.sh"],
+        cwd=config.ROOT,
+        capture_output=True,
+        timeout=5
+    )
+    assert result.returncode != 0
+    stderr = result.stderr.decode()
+    assert "usage" in stderr.lower()
+    assert "tag" in stderr.lower()
