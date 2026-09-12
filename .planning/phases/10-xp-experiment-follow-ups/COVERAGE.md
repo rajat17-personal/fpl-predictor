@@ -81,7 +81,7 @@ possible pre-scraped substitute), GDELT DOC 2.0 + Guardian Open Platform
 
 | capability | decision | reason |
 |---|---|---|
-| manual free-model projection table export (human download → `data/external/fplreview/`) | INTEGRATE | the Tier-3 diagnostic benchmark (plan 10-02) |
+| manual free-model projection export → `data/external/fplreview/` | INTEGRATE | human download only; the Tier-3 diagnostic benchmark (plan 10-02) |
 | automated projection fetch / scrape | OPT-OUT | explicitly out of scope — confirmed HTTP 403 to automated access (RESEARCH Pitfall 5) and their ToS blocks ingestion; manual capture only |
 | redistribution of captured projections | OPT-OUT | explicitly out of scope — ToS forbids it; committed CSVs stay local-diagnostic and are never republished or fed to a model |
 | fplreview paid tiers / API | OPT-OUT | explicitly out of scope — no new spend |
