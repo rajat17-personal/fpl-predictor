@@ -7,6 +7,7 @@ player-name, position, completion) plus the layout and atomicity properties.
 """
 from __future__ import annotations
 
+import pandas as pd
 import pytest
 import responses
 
@@ -93,3 +94,126 @@ def test_end_to_end_capture_reads_back_through_build_table():
     for col in ("gw", "player_id", "team", "position", "total_points", "fixture_id"):
         assert col in df.columns
     assert (df["gw"] == 1).all()
+
+
+# --------------------------------------------------------- schema convention gates
+
+
+@responses.activate
+def test_team_column_uses_full_club_name_never_short_code():
+    """Task 2 gate 1: `team` is drawn only from teams[].name, never short_name."""
+    boot = _boot_with_finished_events(n_events=1)
+    _register_bootstrap(boot)
+    histories = {el["id"]: [_history_row(el["id"], 1)] for el in boot["elements"]}
+    _register_histories(boot, histories)
+
+    gw_capture.capture(gws=[1])
+
+    merged = pd.read_csv(config.RAW_DIR / config.CURRENT_SEASON / "merged_gw.csv")
+    club_names = {t["name"] for t in boot["teams"]}
+    short_codes = {t["short_name"] for t in boot["teams"]}
+    captured_teams = set(merged["team"].dropna())
+    assert captured_teams <= club_names
+    assert captured_teams & short_codes == set()
+
+
+@responses.activate
+def test_name_is_first_name_space_second_name_not_web_name():
+    """Task 2 gate 2: `name` is first_name + ' ' + second_name, never web_name."""
+    boot = _boot_with_finished_events(n_events=1)
+    target = boot["elements"][0]
+    target["first_name"] = "David"
+    target["second_name"] = "Raya Martín"
+    target["web_name"] = "Raya"
+    _register_bootstrap(boot)
+    histories = {el["id"]: [_history_row(el["id"], 1)] for el in boot["elements"]}
+    _register_histories(boot, histories)
+
+    gw_capture.capture(gws=[1])
+
+    merged = pd.read_csv(config.RAW_DIR / config.CURRENT_SEASON / "merged_gw.csv")
+    row = merged[merged["element"] == target["id"]]
+    assert row["name"].iloc[0] == "David Raya Martín"
+
+
+@responses.activate
+def test_position_labels_gk_def_mid_fwd_never_gkp():
+    """Task 2 gate 3: emitted position labels are GK/DEF/MID/FWD, never GKP."""
+    boot = _boot_with_finished_events(n_events=1)
+    _register_bootstrap(boot)
+    histories = {el["id"]: [_history_row(el["id"], 1)] for el in boot["elements"]}
+    _register_histories(boot, histories)
+
+    gw_capture.capture(gws=[1])
+
+    merged = pd.read_csv(config.RAW_DIR / config.CURRENT_SEASON / "merged_gw.csv")
+    captured_positions = set(merged["position"].dropna())
+    assert captured_positions == {"GK", "DEF", "MID", "FWD"}
+    assert "GKP" not in captured_positions
+
+
+@responses.activate
+def test_round_not_finished_and_data_checked_excluded_from_merged():
+    """Task 2 gate 4a: a round present in histories but absent from the
+    finished-and-data-checked set produces no rows in merged_gw.csv."""
+    boot = _boot_with_finished_events(n_events=3)  # GW1-3 finished + data-checked
+    _register_bootstrap(boot)
+    histories = {el["id"]: [_history_row(el["id"], r) for r in (1, 2, 3, 4)]
+                 for el in boot["elements"]}
+    _register_histories(boot, histories)
+
+    gw_capture.capture()  # no explicit gws -> resolved via finished_gws(boot)
+
+    merged = pd.read_csv(config.RAW_DIR / config.CURRENT_SEASON / "merged_gw.csv")
+    assert set(merged["round"]) == {1, 2, 3}
+    assert 4 not in set(merged["round"])
+
+
+def test_finished_gws_excludes_finished_but_not_data_checked():
+    """Task 2 gate 4b: an event reporting finished with data_checked still
+    false must not appear in finished_gws's result."""
+    boot = fake_boot()
+    boot["events"] = [
+        {"id": 1, "finished": True, "data_checked": True, "is_next": False,
+         "deadline_time": "2026-08-15T17:30:00Z"},
+        {"id": 2, "finished": True, "data_checked": True, "is_next": False,
+         "deadline_time": "2026-08-22T17:30:00Z"},
+        {"id": 3, "finished": True, "data_checked": False, "is_next": True,
+         "deadline_time": "2026-08-29T17:30:00Z"},
+    ]
+
+    assert gw_capture.finished_gws(boot) == [1, 2]
+
+
+@responses.activate
+def test_ledger_files_live_under_gws_child_not_merged_file():
+    """Task 2 gate 5: the ledger file for each captured GW exists under the
+    `gws` child directory of the season directory, and merged_gw.csv does not."""
+    boot = _boot_with_finished_events(n_events=1)
+    _register_bootstrap(boot)
+    histories = {el["id"]: [_history_row(el["id"], 1)] for el in boot["elements"]}
+    _register_histories(boot, histories)
+
+    gw_capture.capture(gws=[1])
+
+    ledger_dir = config.RAW_DIR / config.CURRENT_SEASON / "gws"
+    assert (ledger_dir / "gw1.csv").exists()
+    assert not (ledger_dir / "merged_gw.csv").exists()
+
+
+def test_write_csv_atomic_leaves_no_partial_file_on_failure(tmp_path, monkeypatch):
+    """Task 2 gate 6: when the CSV writer raises partway, no file exists at
+    the destination path and no temp file is left beside it."""
+    df = pd.DataFrame({"a": [1, 2]})
+    out = tmp_path / "out.csv"
+
+    def _raise(*_args, **_kwargs):
+        raise RuntimeError("disk full")
+
+    monkeypatch.setattr(pd.DataFrame, "to_csv", _raise)
+
+    with pytest.raises(RuntimeError):
+        gw_capture.write_csv_atomic(df, out)
+
+    assert not out.exists()
+    assert list(tmp_path.glob("*.tmp")) == []
