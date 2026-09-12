@@ -118,3 +118,24 @@ pytest 329 passed / 1 skipped (full run now ~5m41s — the phase-4-era "~3s quic
 the Test Infrastructure table predates the added model/backtest tests), Vitest 374/374.
 04-VERIFICATION.md: status `passed`, all 5 truths VERIFIED, both gaps closed.
 Requirements E2E-01..E2E-05: all COVERED. `nyquist_compliant: true` unchanged.
+
+## Validation Audit 2026-09-12
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+Re-audit; no changes to Phase 4 surfaces since the 2026-09-11 audit (intervening commits only
+added phase-5/phase-10 tests elsewhere). All 8 plan→requirement mappings re-checked against PLAN
+frontmatter, all mapped test files present, and every mapped automated command re-run green this
+session:
+
+- `pytest tests/test_fixture_mode.py` — 10/10 passed
+- `python e2e/scripts/capture_fixtures.py --verify` — OK (gw=3, 6 pool files, no upstream URLs)
+- Vitest `Pitch.test.tsx` + `RateDiff.test.tsx` — 34/34 passed
+- Full Playwright E2E suite — 42/42 passed across all 3 projects (the shell-geometry D-07 test
+  flagged as flaky on 2026-09-03 passed in this full-suite run)
+
+Requirements E2E-01..E2E-05: all COVERED. `nyquist_compliant: true` unchanged.
