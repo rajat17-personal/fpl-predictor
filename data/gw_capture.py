@@ -9,6 +9,13 @@ merged_gw schema and at vaastav's own flat on-disk paths, so
 data/build_table.py and data/id_map.py consume the captured rows with zero
 code changes.
 
+Every run also refreshes the two mutable current-season files -- players_raw.csv
+and fixtures.csv -- unconditionally: prices, injury status, difficulty
+re-ratings and newly-played fixtures change continuously, and a
+skip-if-exists guard (the pattern data/ingest.py applies to frozen past
+seasons) is exactly how a copy cached before the season started would stay
+authoritative forever.
+
 xP resolution (config.MERGED_GW_COLUMNS's "xP" -> "xp_fpl") is not implemented
 in this plan -- every captured row emits `xP` as a missing value until a later
 plan wires it from data/snapshot.py's daily archive. This is a real,
@@ -60,6 +67,15 @@ _HISTORY_KEYS = [
     "defensive_contribution",
 ]
 
+# The six identity keys data/id_map.py's `_from_players_raw` reads (id, code,
+# web_name, first_name, second_name, element_type) plus `team`, the seventh
+# field build_gw_frame joins the club name from. A payload missing any of
+# these must stop the run before a written players_raw.csv silently drops the
+# identity columns id_map.py's primary read path depends on.
+_ELEMENT_IDENTITY_KEYS = ["id", "code", "web_name", "first_name", "second_name",
+                          "element_type", "team"]
+_TEAM_IDENTITY_KEYS = ["id", "name"]
+
 # The ordered, complete output column set -- vaastav's real 46-column
 # merged_gw.csv schema. Every left-hand key of config.MERGED_GW_COLUMNS must
 # be a member of this set; asserted at import time so a dropped upstream
@@ -93,6 +109,28 @@ def finished_gws(boot: dict) -> list[int]:
         e["id"] for e in boot["events"]
         if e.get("finished") and e.get("data_checked")
     )
+
+
+def _require_fields(payload_rows: list[dict], required: list[str], what: str) -> None:
+    """Raise `ValueError` naming any of `required` missing from
+    `payload_rows`'s first row, after alerting -- the payload-shape sibling
+    of `data/availability.py`'s `_require_columns`, adapted from a DataFrame
+    column check to a list of raw API payload dicts.
+
+    Checked against the first row only: the FPL payload's schema is uniform
+    across every row of a given endpoint response, so the first row's key set
+    is representative, and checking only it avoids an O(n) scan across a
+    656-player element-summary sweep. An upstream field vanishing must stop
+    the run -- the alternative is a column of missing values a future
+    retrain treats as real.
+    """
+    if not payload_rows:
+        return
+    missing = [f for f in required if f not in payload_rows[0]]
+    if missing:
+        message = f"{what}: missing required field(s) {missing}"
+        report(_JOB, "schema", message)
+        raise ValueError(message)
 
 
 def _fetch_bootstrap(*, retries: int, backoff: float) -> dict:
@@ -129,11 +167,77 @@ def _fetch_bootstrap(*, retries: int, backoff: float) -> dict:
     raise last_exc if last_exc is not None else RuntimeError("bootstrap-static fetch failed")
 
 
+def _fetch_fixtures(*, retries: int, backoff: float) -> list[dict]:
+    """GET fixtures/ with the same bounded retry/backoff/report shape as
+    `_fetch_bootstrap` -- the same retryable status set, the same immediate
+    raise on a non-retryable 4xx, the same `report` before the final re-raise.
+    """
+    last_exc: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            r = requests.get(f"{config.FPL_API}/fixtures/", headers=_HEADERS, timeout=30)
+            if r.status_code in _RETRYABLE_STATUS:
+                raise requests.HTTPError(f"{r.status_code} {r.reason}", response=r)
+            r.raise_for_status()
+            return r.json()
+        except requests.RequestException as exc:
+            last_exc = exc
+            is_last = attempt == retries
+            reason = str(exc)
+            if is_last:
+                report(_JOB, "fetch", f"fixtures fetch failed after {attempt} attempt(s): {reason}")
+                raise
+            status = getattr(getattr(exc, "response", None), "status_code", None)
+            if status is not None and status not in _RETRYABLE_STATUS and 400 <= status < 500:
+                report(_JOB, "fetch", f"fixtures fetch failed (non-retryable {status}): {reason}")
+                raise
+            sleep_s = backoff ** (attempt - 1) + random.random()
+            print(f"[gw_capture] attempt {attempt}/{retries} failed ({reason}) -- retrying in {sleep_s:.1f}s")
+            time.sleep(sleep_s)
+    raise last_exc if last_exc is not None else RuntimeError("fixtures fetch failed")
+
+
+def write_players_raw(boot: dict, season: str | None = None) -> None:
+    """Write the bootstrap's full element list to the season directory's
+    `players_raw.csv`, with columns sorted so the header order matches the
+    published file's own alphabetical ordering.
+
+    Writes the full element field set, not a selected subset:
+    `data/id_map.py` reads with its own column selection so the extra fields
+    cost nothing, while a narrowed file would silently drop the set-piece
+    order columns `build_table.py`'s set-piece merge depends on. Called
+    unconditionally on every run -- this file changes continuously (prices,
+    injury news, difficulty re-ratings), and a guard that skips because the
+    file already exists is how the copy now on disk stays frozen at its
+    pre-season state.
+    """
+    df = pd.DataFrame(boot["elements"])
+    df = df.reindex(columns=sorted(df.columns))
+    write_csv_atomic(df, season_dir(season) / "players_raw.csv")
+
+
+def write_fixtures(fixtures: list[dict], season: str | None = None) -> None:
+    """Write the fixtures/ payload to the season directory's `fixtures.csv`,
+    keeping the payload's own field names so `build_table._join_fixture_difficulty`'s
+    expected columns (`id`, `team_h_difficulty`, `team_a_difficulty`) arrive
+    unchanged. Called unconditionally on every run, like `write_players_raw`.
+    """
+    df = pd.DataFrame(fixtures)
+    write_csv_atomic(df, season_dir(season) / "fixtures.csv")
+
+
 def fetch_history(pid: int) -> list[dict]:
-    """GET element-summary/{pid}/ and return its `history` list."""
+    """GET element-summary/{pid}/ and return its `history` list.
+
+    Guards the payload shape before returning: a history row missing one of
+    the 41 sourced keys raises naming it, because that field vanishing
+    upstream is how a future retrain silently trusts an all-NaN column.
+    """
     r = requests.get(f"{config.FPL_API}/element-summary/{pid}/", headers=_HEADERS, timeout=20)
     r.raise_for_status()
-    return r.json().get("history", [])
+    hist = r.json().get("history", [])
+    _require_fields(hist, _HISTORY_KEYS, "element-summary history")
+    return hist
 
 
 def sweep_histories(ids: list[int], *, sleep: float = _SLEEP) -> dict[int, list[dict]]:
@@ -218,9 +322,17 @@ def write_merged(season: str | None = None) -> pd.DataFrame:
 
 def capture(*, gws: list[int] | None = None, force: bool = False,
             retries: int = 3, backoff: float = 2.0) -> dict[int, int]:
-    """Fetch bootstrap, resolve target GWs, sweep, write per-GW ledgers,
-    regenerate merged_gw.csv, and return a {gw: row_count} summary."""
+    """Fetch bootstrap + fixtures, refresh the two mutable current-season
+    files, resolve target GWs, sweep, write per-GW ledgers, regenerate
+    merged_gw.csv, and return a {gw: row_count} summary."""
     boot = _fetch_bootstrap(retries=retries, backoff=backoff)
+    _require_fields(boot["elements"], _ELEMENT_IDENTITY_KEYS, "bootstrap elements")
+    _require_fields(boot["teams"], _TEAM_IDENTITY_KEYS, "bootstrap team entries")
+    write_players_raw(boot)
+
+    fixtures = _fetch_fixtures(retries=retries, backoff=backoff)
+    write_fixtures(fixtures)
+
     targets = gws if gws is not None else finished_gws(boot)
     ledger_dir = _ledger_dir()
 
