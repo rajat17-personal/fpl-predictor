@@ -25,11 +25,17 @@ future join fix would close. A future promotion of this season into the
 training seasons must read that gap as real, not as evidence of a broken
 join.
 
+A plain run backfills every finished-and-data-checked gameweek that has no
+ledger file yet -- there is no separate backfill flag to remember. A finished
+gameweek left uncaptured is reported through `ops.notify.report` and makes
+`main()` return non-zero, so a stalled capture is never silent.
+
 Run:
-  python -m data.gw_capture                          # capture every finished GW
+  python -m data.gw_capture                          # capture every finished GW missing a ledger
   python -m data.gw_capture --gw 3 4                  # capture specific GWs only
-  python -m data.gw_capture --force                   # re-sweep already-captured GWs
-  python -m data.gw_capture --retries 5 --backoff 3    # tune outage tolerance
+  python -m data.gw_capture --force                   # re-sweep every finished GW regardless of ledger
+  python -m data.gw_capture --retries 5 --backoff 3   # tune outage tolerance
+  python -m data.gw_capture --sleep 0.2               # tune the element-summary sweep's request pacing
 """
 from __future__ import annotations
 
@@ -89,6 +95,29 @@ assert set(config.MERGED_GW_COLUMNS) <= set(MERGED_GW_HEADER), (
     "MERGED_GW_HEADER is missing a config.MERGED_GW_COLUMNS source key: "
     f"{sorted(set(config.MERGED_GW_COLUMNS) - set(MERGED_GW_HEADER))}"
 )
+
+
+class CaptureSummary(dict):
+    """`capture()`'s return value: a `{gw: row_count}` mapping -- 08-01's own
+    contract, preserved exactly for dict equality (`summary == {1: n}`) --
+    plus two extra attributes set after every run:
+
+    - `missing_gws`: `check_freshness`'s result, so `main()` can decide the
+      exit code from the SAME already-fetched bootstrap payload rather than
+      spending a second bootstrap-static request just to re-derive it (which
+      would break the "a quiet day costs two requests" budget).
+    - `failures`: the element-summary sweep's per-player failure count, so a
+      sweep that quietly lost players is visible even though the ledger file
+      it wrote looks complete.
+
+    Dict equality compares contents only and ignores these extra attributes,
+    so 08-01's own assertions (`summary == {1: len(boot["elements"])}`) stay
+    intact against this subclass.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.missing_gws: list[int] = []
+        self.failures: int = 0
 
 
 def season_dir(season: str | None = None) -> Path:
@@ -243,20 +272,25 @@ def fetch_history(pid: int) -> list[dict]:
     return hist
 
 
-def sweep_histories(ids: list[int], *, sleep: float = _SLEEP) -> dict[int, list[dict]]:
+def sweep_histories(ids: list[int], *, sleep: float = _SLEEP) -> tuple[dict[int, list[dict]], int]:
     """Per-player element-summary sweep: one player's transport failure warns
-    and continues rather than aborting the whole sweep (per data/live_history.py)."""
+    and continues rather than aborting the whole sweep (per
+    data/live_history.py). Returns `(histories, failure_count)` so the
+    caller can surface a partial sweep in the run summary rather than let a
+    "complete-looking" ledger file hide it."""
     histories: dict[int, list[dict]] = {}
+    failures = 0
     for i, pid in enumerate(ids):
         try:
             histories[pid] = fetch_history(pid)
         except requests.RequestException as exc:
             print(f"  [warn] element {pid}: {exc}")
+            failures += 1
             continue
         if i % 100 == 0:
             print(f"  fetched {i}/{len(ids)} players")
         time.sleep(sleep)
-    return histories
+    return histories, failures
 
 
 def _to_utc_date(ts):
@@ -306,9 +340,11 @@ def resolve_xp_for_gw(gw: int, deadline, snaps: pd.DataFrame) -> dict[int, float
     the other column, no scan of an earlier snapshot, and no interpolation --
     these three outcomes are the whole function.
 
-    A player captured in the gameweek but absent from the chosen snapshot
-    resolves to missing via a plain dict lookup miss at the call site, while
-    every other player in the same mapping keeps its own value.
+    A player present in the snapshot's chosen date but absent from the
+    target gameweek's own captured rows is harmless (the caller never looks
+    it up); a player captured in the gameweek but absent from the chosen
+    snapshot resolves to missing via a plain dict lookup miss at the call
+    site, while every other player in the same mapping keeps its own value.
     """
     latest_date, latest_rows, recorded_next_gw = _select_xp_snapshot(deadline, snaps)
     if latest_rows is None:
@@ -388,6 +424,26 @@ def _ledger_dir(season: str | None = None) -> Path:
     return season_dir(season) / "gws"
 
 
+def captured_gws(season: str | None = None) -> set[int]:
+    """Gameweek numbers that already have a ledger file under the season
+    directory's `gws` child, parsed from `gw<n>.csv` filenames."""
+    ledger_dir = _ledger_dir(season)
+    if not ledger_dir.exists():
+        return set()
+    return {int(p.stem[len("gw"):]) for p in ledger_dir.glob("gw*.csv")}
+
+
+def check_freshness(boot: dict, season: str | None = None) -> list[int]:
+    """Sorted finished-and-data-checked gameweeks that have no ledger file.
+
+    Called at the end of every run: this is the check whose absence let the
+    previous (vaastav) source stall unnoticed for two gameweeks -- nothing
+    told anyone. A non-empty result means a finished gameweek was never
+    captured.
+    """
+    return sorted(set(finished_gws(boot)) - captured_gws(season))
+
+
 def write_merged(season: str | None = None) -> pd.DataFrame:
     """Concatenate every `gws/gw*.csv` ledger file (in GW order) and write the
     result to the flat merged_gw.csv path. Regenerating from the ledger rather
@@ -410,10 +466,24 @@ def _event_deadline(boot: dict, gw: int) -> str | None:
 
 
 def capture(*, gws: list[int] | None = None, force: bool = False,
-            retries: int = 3, backoff: float = 2.0) -> dict[int, int]:
+            retries: int = 3, backoff: float = 2.0,
+            sleep: float = _SLEEP) -> "CaptureSummary":
     """Fetch bootstrap + fixtures, refresh the two mutable current-season
     files, resolve target GWs, sweep, write per-GW ledgers, regenerate
-    merged_gw.csv, and return a {gw: row_count} summary."""
+    merged_gw.csv, alert on a freshness gap, and return a {gw: row_count}
+    summary (plus the `missing_gws`/`failures` side-channel attributes; see
+    `CaptureSummary`).
+
+    Target-GW resolution: an explicit `gws` list always wins and is swept in
+    full. Otherwise `--force` re-sweeps every finished-and-data-checked
+    gameweek regardless of ledger presence. Otherwise (the default, plain
+    run) the target set is exactly the finished-and-data-checked gameweeks
+    with no ledger file yet -- so a first plain run IS the backfill the
+    roadmap asks for, with no separate backfill flag to remember, and a
+    quiet re-run (nothing new finished) resolves to an empty target set and
+    skips the element-summary sweep entirely, costing only the two mutable
+    file refreshes below.
+    """
     boot = _fetch_bootstrap(retries=retries, backoff=backoff)
     _require_fields(boot["elements"], _ELEMENT_IDENTITY_KEYS, "bootstrap elements")
     _require_fields(boot["teams"], _TEAM_IDENTITY_KEYS, "bootstrap team entries")
@@ -422,42 +492,68 @@ def capture(*, gws: list[int] | None = None, force: bool = False,
     fixtures = _fetch_fixtures(retries=retries, backoff=backoff)
     write_fixtures(fixtures)
 
-    targets = gws if gws is not None else finished_gws(boot)
-    ledger_dir = _ledger_dir()
+    finished = finished_gws(boot)
+    if gws is not None:
+        targets = list(gws)
+    elif force:
+        targets = finished
+    else:
+        already = captured_gws()
+        targets = [gw for gw in finished if gw not in already]
 
-    to_fetch = [gw for gw in targets if force or not (ledger_dir / f"gw{gw}.csv").exists()]
-    if to_fetch:
+    ledger_dir = _ledger_dir()
+    failures = 0
+    if targets:
         ids = [el["id"] for el in boot["elements"]]
-        histories = sweep_histories(ids)
+        histories, failures = sweep_histories(ids, sleep=sleep)
         snaps = snapshot_mod.load_snapshots()
-        for gw in to_fetch:
+        for gw in targets:
             deadline = _event_deadline(boot, gw)
             xp_map = resolve_xp_for_gw(gw, deadline, snaps) if deadline else {}
             frame = build_gw_frame(histories, boot, gw, xp_map)
             write_csv_atomic(frame, ledger_dir / f"gw{gw}.csv")
+        if failures:
+            print(f"[gw_capture] sweep completed with {failures} player fetch failure(s)")
 
-    summary: dict[int, int] = {}
-    for gw in targets:
+    report_gws = finished if gws is None else targets
+    summary = CaptureSummary()
+    for gw in report_gws:
         ledger_path = ledger_dir / f"gw{gw}.csv"
         summary[gw] = len(pd.read_csv(ledger_path)) if ledger_path.exists() else 0
+    summary.failures = failures
 
     write_merged()
+
+    missing = check_freshness(boot)
+    summary.missing_gws = missing
+    if missing:
+        report(_JOB, "freshness", f"finished, data-checked gameweek(s) with no captured ledger: {missing}")
+
     return summary
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--force", action="store_true", help="re-sweep already-captured GWs")
+    ap.add_argument("--force", action="store_true", help="re-sweep every finished GW regardless of ledger")
     ap.add_argument("--gw", type=int, nargs="+", default=None,
-                     help="capture only these gameweeks (default: every finished+data-checked GW)")
+                     help="capture only these gameweeks (default: every finished+data-checked GW with no ledger file)")
     ap.add_argument("--retries", type=int, default=3,
                      help="max fetch attempts before giving up (default: 3)")
     ap.add_argument("--backoff", type=float, default=2.0,
                      help="exponential backoff base in seconds (default: 2.0)")
+    ap.add_argument("--sleep", type=float, default=_SLEEP,
+                     help=f"delay between element-summary requests in seconds (default: {_SLEEP})")
     args = ap.parse_args(argv)
-    summary = capture(gws=args.gw, force=args.force, retries=args.retries, backoff=args.backoff)
+    summary = capture(gws=args.gw, force=args.force, retries=args.retries,
+                       backoff=args.backoff, sleep=args.sleep)
     for gw, n in sorted(summary.items()):
         print(f"[gw_capture] GW{gw}: {n} rows")
+    if summary.failures:
+        print(f"[gw_capture] {summary.failures} player fetch failure(s) this run")
+    if summary.missing_gws:
+        print(f"[gw_capture] ALERT: finished gameweek(s) with no captured ledger: {summary.missing_gws}",
+              file=sys.stderr)
+        return 1
     return 0
 
 

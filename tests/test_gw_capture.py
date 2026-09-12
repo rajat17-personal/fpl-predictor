@@ -7,7 +7,8 @@ player-name, position, completion) plus the layout and atomicity properties.
 
 Plan 08-02 extends this file further: Task 1 adds the players_raw.csv /
 fixtures.csv refresh and the payload field guard; Task 2 adds every branch of
-the xP resolution rule.
+the xP resolution rule; Task 3 adds the ledger, the rate-limited full sweep,
+and the freshness alert.
 """
 from __future__ import annotations
 
@@ -496,3 +497,116 @@ def test_resolution_line_names_snapshot_date_and_column_and_reports_fraction(cap
 
 def test_module_docstring_states_the_permanent_xp_gap():
     assert "predates the first daily snapshot" in gw_capture.__doc__
+
+
+# ============================================================= 08-02 Task 3
+# per-gameweek ledger, rate-limited full sweep, freshness alert
+
+
+@responses.activate
+def test_rerun_with_full_ledger_issues_zero_element_summary_requests():
+    boot = _boot_with_finished_events(n_events=1)
+    _register_bootstrap(boot)
+    _register_fixtures()
+    histories = {el["id"]: [_history_row(el["id"], 1)] for el in boot["elements"]}
+    _register_histories(boot, histories)
+
+    gw_capture.capture(gws=[1])
+    responses.calls.reset()
+
+    gw_capture.capture()
+
+    elem_summary_calls = [c for c in responses.calls if "/element-summary/" in c.request.url]
+    assert elem_summary_calls == []
+    bootstrap_calls = [c for c in responses.calls if c.request.url == _BOOT_URL]
+    fixtures_calls = [c for c in responses.calls if c.request.url == _FIXTURES_URL]
+    assert len(bootstrap_calls) == 1
+    assert len(fixtures_calls) == 1
+
+
+@responses.activate
+def test_force_flag_resweeps_despite_populated_ledger():
+    boot = _boot_with_finished_events(n_events=1)
+    _register_bootstrap(boot)
+    _register_fixtures()
+    histories = {el["id"]: [_history_row(el["id"], 1)] for el in boot["elements"]}
+    _register_histories(boot, histories)
+
+    gw_capture.capture(gws=[1])
+    responses.calls.reset()
+
+    gw_capture.capture(force=True)
+
+    elem_summary_calls = [c for c in responses.calls if "/element-summary/" in c.request.url]
+    assert len(elem_summary_calls) == len(boot["elements"])
+
+
+@responses.activate
+def test_explicit_gw_list_writes_exactly_one_ledger_file():
+    boot = _boot_with_finished_events(n_events=2)
+    _register_bootstrap(boot)
+    _register_fixtures()
+    histories = {el["id"]: [_history_row(el["id"], 1), _history_row(el["id"], 2)]
+                 for el in boot["elements"]}
+    _register_histories(boot, histories)
+
+    gw_capture.capture(gws=[1])
+
+    ledger_dir = config.RAW_DIR / config.CURRENT_SEASON / "gws"
+    assert sorted(p.name for p in ledger_dir.glob("gw*.csv")) == ["gw1.csv"]
+
+
+@responses.activate
+def test_one_player_failure_leaves_others_written_and_reports_failure_count():
+    boot = _boot_with_finished_events(n_events=1)
+    _register_bootstrap(boot)
+    _register_fixtures()
+    bad_id = boot["elements"][0]["id"]
+    histories = {el["id"]: [_history_row(el["id"], 1)] for el in boot["elements"]}
+    _register_histories(boot, histories)
+    responses.replace(responses.GET, _elem_summary_url(bad_id), status=500)
+
+    summary = gw_capture.capture(gws=[1])
+
+    merged = pd.read_csv(config.RAW_DIR / config.CURRENT_SEASON / "merged_gw.csv")
+    assert bad_id not in set(merged["element"])
+    assert len(merged) == len(boot["elements"]) - 1
+    assert summary.failures == 1
+
+
+@responses.activate
+def test_finished_gw_with_no_ledger_alerts_once_and_main_returns_nonzero(_isolate_raw_dir):
+    tmp_path = _isolate_raw_dir
+    boot = _boot_with_finished_events(n_events=2)
+    _register_bootstrap(boot)
+    _register_fixtures()
+    histories = {el["id"]: [_history_row(el["id"], 1)] for el in boot["elements"]}
+    _register_histories(boot, histories)
+
+    rc = gw_capture.main(["--gw", "1"])
+
+    assert rc == 1
+    alerts = _read_alerts(tmp_path)
+    freshness_alerts = [a for a in alerts if a["step"] == "freshness"]
+    assert len(freshness_alerts) == 1
+    assert freshness_alerts[0]["job"] == "gw_capture"
+
+
+@responses.activate
+def test_fully_captured_season_produces_no_alert_and_zero_exit(_isolate_raw_dir):
+    tmp_path = _isolate_raw_dir
+    boot = _boot_with_finished_events(n_events=1)
+    _register_bootstrap(boot)
+    _register_fixtures()
+    histories = {el["id"]: [_history_row(el["id"], 1)] for el in boot["elements"]}
+    _register_histories(boot, histories)
+
+    rc = gw_capture.main([])
+
+    assert rc == 0
+    alerts = _read_alerts(tmp_path)
+    assert [a for a in alerts if a["step"] == "freshness"] == []
+
+
+def test_capture_docstring_states_plain_run_is_the_backfill():
+    assert "no separate backfill flag" in gw_capture.capture.__doc__
