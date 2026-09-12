@@ -1,18 +1,18 @@
 ---
 gsd_state_version: 1.0
-current_phase: 7
+current_phase: 07
 current_phase_name: Parity Validation & Cutover
-status: planning
-stopped_at: Phase 10 complete, ready to plan Phase 7
-last_updated: "2026-09-12T10:11:33.909Z"
+status: executing
+stopped_at: Completed 07-04-PLAN.md
+last_updated: "2026-09-12T13:24:11.950Z"
 last_activity: 2026-09-12
-last_activity_desc: Phase 10 complete, transitioned to Phase 7
-state_head: e3152b3fba4ca1cda65e8ebf37d88eb8a06bc22b
+last_activity_desc: Phase 07 execution started
+state_head: 63727000e274bdc6f910c8323e0d03b801f9989d
 progress:
   total_phases: 10
   completed_phases: 8
   total_plans: 76
-  completed_plans: 73
+  completed_plans: 74
   percent: 80
 ---
 
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-12)
 
 **Core value:** The weekly recommendations (xP table, squad, captains, transfers) must keep flowing reliably — every change must leave the pipeline, API, and site at least as correct and more trustworthy than before.
-**Current focus:** Phase 7 — Parity Validation & Cutover (Phase 8's 08-05 cron wiring stays deferred pending CUT-01; a concurrent session holds the phase-08 milestone claim)
+**Current focus:** Phase 07 — Parity Validation & Cutover
 
 ## Current Position
 
-Phase: 7 — Parity Validation & Cutover
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-09-12 — Phase 10 complete, transitioned to Phase 7
+Phase: 07 (Parity Validation & Cutover) — EXECUTING
+Plan: 2 of 6
+Status: Ready to execute
+Last activity: 2026-09-12 — Phase 07 execution started
 
-Progress: [███████████████████░] 73/76 plans (96%)
+Progress: [███████████████████░] 73/76 plans ([████████░░] 80%)
 
 ## Performance Metrics
 
@@ -138,6 +138,7 @@ Progress: [███████████████████░] 73/76 p
 | Phase 08 P02 | 35min | 3 tasks | 2 files |
 | Phase 08 P03 | 53min | 3 tasks | 5 files |
 | Phase 08 P04 | 28min | 2 tasks | 3 files |
+| Phase 07 P04 | 18 min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -303,6 +304,8 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-04: fetch_vaastav_season now guards the current season's three files inside the function itself, holding under --force, and gains a cross_check=True escape hatch writing to a .vaastav-crosscheck filename — Closes the ownership boundary so no caller path (CLI or direct) can overwrite data.gw_capture's captured files, and formalizes the ad hoc cross-check 08-03 hand-rolled
 - [Phase 08]: 08-04: a past season whose vaastav files come back absent now prints a season-level [ingest] WARNING naming the vanished files, above the existing per-file MISS line — A source silently dropping a season is the failure this phase was created in response to; it must be visible the day it happens, not at the next retrain
 - [Phase 08]: Phase 08 Plan 05: developer answered defer to the Phase 7 freeze gate -- scripts/daily.sh stays untouched; the plan is halted, not complete, until Phase 7's CUT-01 cutover lands
+- [Phase 07]: [Phase 07]: [Phase 07-04]: Committed the live web/data snapshot as a standalone baseline chore commit before running the mid-gameweek diff, mirroring 07-03's ac489ca precedent, so the pipeline-untouched acceptance check had a clean tree to assert against. — Cron/manual predict.export runs leave web/data modified on disk without committing; without a baseline commit the task's own git diff --quiet check on scripts/daily.sh/weekly.sh/web/data would fail on pre-existing dirt the task itself did not create.
+- [Phase 07]: [Phase 07]: [Phase 07-04]: Recorded, but did not fix, that the local crontab is missing the documented weekly.sh line (only daily.sh + @reboot present). — T-07-04-05 makes cron lines read-only for the whole of Phase 7; GW4's own weekly export already landed pre-deadline via a manual run so no cycle evidence is missing -- flagged for the user to install before GW5's Friday export.
 
 ### Pending Todos
 
@@ -342,6 +345,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-12T10:15:00Z
-Stopped at: Phase 10 complete (UAT + security verified), ready to plan Phase 7
+Last session: 2026-09-12T13:24:11.647Z
+Stopped at: Completed 07-04-PLAN.md
 Resume file: None

@@ -149,3 +149,14 @@ None - plan executed exactly as written. (The one non-trivial judgment call — 
 ---
 *Phase: 07-parity-validation-cutover*
 *Completed: 2026-09-12*
+
+## Self-Check: PASSED
+
+- FOUND: commit `0756b34` (baseline snapshot)
+- FOUND: commit `0e77936` (Task 1)
+- FOUND: commit `a5efd7d` (Task 2)
+- FOUND: commit `6372700` (this SUMMARY)
+- FOUND: `.planning/phases/07-parity-validation-cutover/PARITY-REPORT.md`
+- FOUND: `.planning/phases/07-parity-validation-cutover/07-04-SUMMARY.md`
+- FOUND: `web/data/history/gw4.json`
+- FOUND: `web/data/scoreboard.json`
