@@ -168,7 +168,15 @@ def test_every_source_row_predates_its_gw_deadline():
     EVERY distinct `source` value present in a resolved run, every resolved
     row's `snapshot_ts` must be strictly before BOTH that gameweek's
     `deadline_ts` and its `kickoff_max` -- so a newly registered provider
-    cannot bypass the rule."""
+    cannot bypass the rule.
+
+    NOTE (WR-01, 10-REVIEW.md): as `kickoff_max` is currently derived
+    (`gw_deadlines()`'s docstring), `deadline_ts < kickoff_max` always
+    holds, so the second assertion below is implied by the first and cannot
+    by itself prove the `kickoff_max` guard is doing independent work --
+    it would pass identically whether that guard were live or dead code.
+    Kept as a regression check on both quantities' relative ordering, not as
+    proof of postponement protection."""
     deadlines = availability.gw_deadlines()
     snaps = availability.load_sources()
     if snaps.empty:

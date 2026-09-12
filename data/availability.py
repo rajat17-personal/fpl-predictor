@@ -40,14 +40,30 @@ enrichment shape:
 
 Leakage rule (`resolve_as_of`): a source row is eligible for gameweek g only
 if `snapshot_ts` is STRICTLY BEFORE both `deadline_ts` (derived,
-`min(kickoff_time) - 90min`) AND every kickoff in g (`kickoff_max`). The
-second condition exists because a postponed first fixture pushes
-`min(kickoff_time)` -- and therefore `deadline_ts` -- later, making the
-derived deadline permissive; requiring predates-every-kickoff-too closes that
-hole regardless of `deadline_ts`'s own accuracy. Never falls forward to a
-later snapshot: a (season, gw, player_code) with no qualifying row is simply
-absent from the resolved output (D-10) -- `attach`'s left merge turns that
-absence into NaN, never a raise, never a stale carry-forward.
+`min(kickoff_time) - 90min`) AND every kickoff in g (`kickoff_max`).
+
+CORRECTNESS NOTE (WR-01, 10-REVIEW.md): as currently derived, the second
+(`kickoff_max`) condition is mathematically implied by the first and can
+never additionally exclude a row on its own -- `deadline_ts = kickoff_min -
+90min` and `kickoff_min <= kickoff_max` always hold (same source column,
+same groupby), so `deadline_ts < kickoff_max` unconditionally, and
+`min(deadline_ts, kickoff_max)` in `resolve_as_of` always resolves to
+`deadline_ts`. It was written to guard against a postponed first fixture
+pushing `min(kickoff_time)` -- and therefore `deadline_ts` -- later than the
+real FPL deadline would have been, but that guard would require an
+INDEPENDENT second bound (e.g. the originally-scheduled kickoff before any
+postponement), which is not derivable from `player_gw.parquet`'s own
+`kickoff_time` column once it has been updated to the postponed time. The
+comparison is kept here as harmless, no-cost defensive redundancy (and
+because `kickoff_max` is threaded through to `resolved["deadline_ts"]`'s
+callers for other reasons) -- it is NOT, today, a functioning mitigation for
+the postponement scenario, and `tests/test_availability.py`'s
+`test_every_source_row_predates_its_gw_deadline` cannot distinguish "the
+guard works" from "the guard is dead code" for the same mathematical reason.
+Never falls forward to a later snapshot: a (season, gw, player_code) with no
+qualifying row is simply absent from the resolved output (D-10) --
+`attach`'s left merge turns that absence into NaN, never a raise, never a
+stale carry-forward.
 
 `encode_availability` (plan 10-04) is a pure derivation on top of
 `resolve_as_of`'s output -- status one-hot, chance%, news recency, and the
@@ -143,11 +159,15 @@ def gw_deadlines(raw: pd.DataFrame | None = None) -> pd.DataFrame:
     *previous* run's deadlines, missing every (season, gw) the current run
     just ingested (CR-01, 10-REVIEW.md).
 
-    Postponement caveat: if a gameweek's first fixture is postponed,
+    Postponement caveat (see WR-01 correctness note in this module's own
+    docstring above): if a gameweek's first fixture is postponed,
     `min(kickoff_time)` moves later and the derived `deadline_ts` becomes
-    permissive (later than the real FPL deadline would have been) -- this is
-    why `resolve_as_of` ALSO requires the source row to predate every
-    kickoff in that gameweek (`kickoff_max`), not just the derived deadline.
+    permissive (later than the real FPL deadline would have been).
+    `resolve_as_of` ALSO compares the source row against `kickoff_max`, but
+    since `kickoff_max` is derived from the SAME `kickoff_time` column via
+    the same groupby, `deadline_ts < kickoff_max` always holds regardless of
+    postponement -- this comparison is not, as coded, an independent
+    mitigation for the postponement scenario it was intended to guard.
     """
     if raw is None:
         raw = pd.read_parquet(config.PROCESSED_DIR / "player_gw.parquet",
@@ -279,14 +299,22 @@ def load_sources() -> pd.DataFrame:
 def resolve_as_of(snaps: pd.DataFrame, deadlines: pd.DataFrame) -> pd.DataFrame:
     """For each (season, gw, player_code), select the source row with the
     maximum `snapshot_ts` satisfying BOTH `snapshot_ts < deadline_ts` AND
-    `snapshot_ts < kickoff_max` (== `min(kickoff_time)` over that gameweek --
-    the postponement guard). No qualifying row means that player-gameweek is
-    simply absent from the output (D-10) -- never a raise, never a forward
-    fill to a later snapshot.
+    `snapshot_ts < kickoff_max` (== `max(kickoff_time)` over that gameweek).
+    No qualifying row means that player-gameweek is simply absent from the
+    output (D-10) -- never a raise, never a forward fill to a later
+    snapshot.
+
+    The `kickoff_max` comparison was intended as an independent postponement
+    guard, but as derived (see the module docstring's WR-01 correctness
+    note, and `gw_deadlines`'s own docstring) it is currently implied by the
+    `deadline_ts` comparison and never binds on its own -- kept as harmless
+    defensive redundancy, not a functioning mitigation.
 
     Asserted for EVERY registered `source` value by
     `tests/test_availability.py::test_every_source_row_predates_its_gw_deadline`,
-    so a newly registered provider cannot bypass this rule (T-10-01-02).
+    so a newly registered provider cannot bypass this rule (T-10-01-02) --
+    though note that assertion cannot, for the same reason, distinguish this
+    guard actually binding from it being a no-op.
     """
     _require_columns(snaps, ["season", "player_code", "snapshot_ts", "status",
                              "chance_of_playing_next_round", "source"],
@@ -306,7 +334,10 @@ def resolve_as_of(snaps: pd.DataFrame, deadlines: pd.DataFrame) -> pd.DataFrame:
             continue
         for _, row in dl.iterrows():
             # BOTH conditions at once: snapshot_ts must predate the derived
-            # deadline AND predate every kickoff that gameweek (min of the two).
+            # deadline AND predate every kickoff that gameweek (min of the
+            # two). In practice `deadline_ts` always wins this min() -- see
+            # the WR-01 correctness note above -- so `kickoff_max` is
+            # currently a no-op here, not an independent bound.
             cutoff = min(row["deadline_ts"], row["kickoff_max"])
             elig = s[s["snapshot_ts"] < cutoff]
             if elig.empty:
