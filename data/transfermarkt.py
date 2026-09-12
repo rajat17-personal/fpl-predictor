@@ -623,8 +623,13 @@ def attach(full: pd.DataFrame) -> pd.DataFrame:
     one place). No-op if the kill switch is off, or if neither the id map
     nor the spell table exist -- optional enrichment must never break the
     pipeline. Preserves `full`'s row count exactly (`AssertionError`
-    otherwise) and prints a coverage line naming both the id-resolved
-    fraction and the active-spell rate among resolved rows.
+    otherwise) and prints a coverage line naming both the id+deadline-
+    resolved fraction and the active-spell rate among resolved rows. A
+    covered row whose (season, gw) has no resolvable `deadline_ts` is left
+    `NaN` rather than defaulted to the "not injured" `0.0` baseline (WR-04,
+    10-REVIEW.md) -- the module's "genuinely unknown -> NaN" contract
+    applies to id coverage AND deadline resolvability, not id coverage
+    alone.
 
     NOT YET WIRED into `data/build_table.py`'s pipeline rebuild -- that
     lands in **plan 10-08 Task 1**, which owns that file (this plan's own
@@ -669,7 +674,14 @@ def attach(full: pd.DataFrame) -> pd.DataFrame:
             f"transfermarkt injury join changed row count {before} -> {len(merged_dl)}")
     deadline_ts = _to_naive_utc(merged_dl["deadline_ts"]).to_numpy()
 
-    covered_mask = out["player_code"].astype("Int64").isin(covered).to_numpy()
+    # Gate the "not injured" baseline on a RESOLVABLE deadline_ts, not merely
+    # on player-id coverage (WR-04, 10-REVIEW.md): a covered row whose
+    # (season, gw) has no deadline (e.g. a gameweek with no parseable
+    # kickoff_time anywhere -- including CR-01's now-fixed staleness window,
+    # kept here as defense in depth) must stay NaN ("genuinely unknown"),
+    # never a confident 0.0 that could paper over a genuinely injured player.
+    covered_mask = (out["player_code"].astype("Int64").isin(covered).to_numpy()
+                    & ~pd.isna(deadline_ts))
     out.loc[covered_mask, "tm_injured"] = 0.0
     out.loc[covered_mask, "tm_days_out_so_far"] = 0.0
     out.loc[covered_mask, "tm_spells_prior_365d"] = 0.0
@@ -731,7 +743,7 @@ def attach(full: pd.DataFrame) -> pd.DataFrame:
     resolved_cov = float(covered_mask.mean()) if len(covered_mask) else 0.0
     injured_rate = (float(out.loc[covered_mask, "tm_injured"].mean())
                     if covered_mask.any() else 0.0)
-    print(f"  [transfermarkt] joined; id-resolved coverage {resolved_cov:.1%}, "
+    print(f"  [transfermarkt] joined; id+deadline-resolved coverage {resolved_cov:.1%}, "
           f"active-spell rate (of resolved) {injured_rate:.1%}")
     return out
 
