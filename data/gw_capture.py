@@ -369,7 +369,8 @@ def resolve_xp_for_gw(gw: int, deadline, snaps: pd.DataFrame) -> dict[int, float
 
 
 def build_gw_frame(histories: dict[int, list[dict]], boot: dict, gw: int,
-                    xp_map: dict[int, float] | None = None) -> pd.DataFrame:
+                    xp_map: dict[int, float] | None = None,
+                    fixtures: list[dict] | None = None) -> pd.DataFrame:
     """Pure transform: histories + bootstrap -> one GW's rows in the output schema.
 
     Keeps only rows whose `round` equals `gw`. Every history key is copied
@@ -377,6 +378,19 @@ def build_gw_frame(histories: dict[int, list[dict]], boot: dict, gw: int,
     full club name, which is the key data/odds.py's join and build_table.py's
     odds merge both expect (never `short_name`, which build_table.py's own
     watchlist-facing sibling data/snapshot.py uses for a different consumer).
+
+    `team` is resolved from the row's OWN fixture (`fixtures[].team_h`/`team_a`,
+    keyed by `was_home`), never from the player's CURRENT bootstrap team
+    assignment -- a player who has since transferred (discovered 2026-09-12,
+    Phase 8 plan 08-03's GW1 cross-check: `bootstrap.elements[].team` reflects
+    today's club, so a historical row joined against it silently retro-dates
+    every one of that player's past fixtures to their new club) must still
+    show the club they played for on the day of `gw`. Falls back to the
+    current-bootstrap-team join only when `fixtures` is not supplied or the
+    row's fixture id is absent from it, so existing direct callers (and the
+    schema-convention tests that never register a matching fixture id) are
+    unaffected.
+
     `xP` is resolved from `xp_map` (`resolve_xp_for_gw`'s output) by element
     id; a player absent from `xp_map` -- because the mapping is empty (no
     qualifying snapshot) or because that player's row was absent from the
@@ -386,6 +400,7 @@ def build_gw_frame(histories: dict[int, list[dict]], boot: dict, gw: int,
     xp_map = xp_map or {}
     elements = {el["id"]: el for el in boot["elements"]}
     teams = {t["id"]: t["name"] for t in boot["teams"]}
+    fixture_teams = {f["id"]: (f.get("team_h"), f.get("team_a")) for f in (fixtures or [])}
     rows = []
     for pid, hist in histories.items():
         el = elements.get(pid)
@@ -397,7 +412,9 @@ def build_gw_frame(histories: dict[int, list[dict]], boot: dict, gw: int,
             row = {k: h.get(k) for k in _HISTORY_KEYS}
             row["GW"] = h.get("round")
             row["name"] = f"{el.get('first_name', '')} {el.get('second_name', '')}"
-            row["team"] = teams.get(el.get("team"))
+            fx = fixture_teams.get(h.get("fixture"))
+            team_id = (fx[0] if h.get("was_home") else fx[1]) if fx is not None else el.get("team")
+            row["team"] = teams.get(team_id)
             row["position"] = _POS.get(el.get("element_type"))
             row["xP"] = xp_map.get(pid, pd.NA)
             rows.append(row)
@@ -510,7 +527,7 @@ def capture(*, gws: list[int] | None = None, force: bool = False,
         for gw in targets:
             deadline = _event_deadline(boot, gw)
             xp_map = resolve_xp_for_gw(gw, deadline, snaps) if deadline else {}
-            frame = build_gw_frame(histories, boot, gw, xp_map)
+            frame = build_gw_frame(histories, boot, gw, xp_map, fixtures)
             write_csv_atomic(frame, ledger_dir / f"gw{gw}.csv")
         if failures:
             print(f"[gw_capture] sweep completed with {failures} player fetch failure(s)")

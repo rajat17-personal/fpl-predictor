@@ -481,6 +481,44 @@ def test_build_gw_frame_wires_xp_map_onto_matching_rows():
     assert pd.isna(row2["xP"])
 
 
+def test_build_gw_frame_resolves_team_from_the_fixture_not_the_players_current_club():
+    """Regression (08-03 GW1 cross-check finding, 2026-09-12): a player's
+    CURRENT bootstrap team must never leak onto a historical row. Verified
+    live against vaastav's published GW1 file -- 17 of 610 rows disagreed on
+    `team` because `el.get('team')` reflects TODAY's club, silently
+    retro-dating every one of a since-transferred player's past fixtures onto
+    their new club. `team` must instead resolve from the fixture's own
+    `team_h`/`team_a`, keyed by `was_home`."""
+    boot = _boot_with_finished_events(n_events=1)
+    target = boot["elements"][0]
+    target["team"] = 9  # current club, as of a since-capture transfer
+    fixtures = [{"id": 42, "team_h": 3, "team_a": 5}]
+    histories = {target["id"]: [_history_row(target["id"], 1, fixture=42, was_home=True)]}
+
+    frame = gw_capture.build_gw_frame(histories, boot, 1, fixtures=fixtures)
+
+    row = frame[frame["element"] == target["id"]].iloc[0]
+    team_names = {t["id"]: t["name"] for t in boot["teams"]}
+    assert row["team"] == team_names[3]
+    assert row["team"] != team_names[9]
+
+
+def test_build_gw_frame_falls_back_to_current_team_when_fixture_not_supplied():
+    """Absent or non-matching fixtures data preserves the pre-fix join
+    (current bootstrap team) rather than raising or leaving `team` missing --
+    keeps every direct build_gw_frame caller that never registers a matching
+    fixture id (schema-convention tests, the xP wiring test above) unaffected."""
+    boot = _boot_with_finished_events(n_events=1)
+    target = boot["elements"][0]
+    histories = {target["id"]: [_history_row(target["id"], 1)]}
+
+    frame = gw_capture.build_gw_frame(histories, boot, 1)
+
+    row = frame[frame["element"] == target["id"]].iloc[0]
+    team_names = {t["id"]: t["name"] for t in boot["teams"]}
+    assert row["team"] == team_names[target["team"]]
+
+
 def test_resolution_line_names_snapshot_date_and_column_and_reports_fraction(capsys):
     snaps = pd.DataFrame({
         "player_id": [1, 2], "date": ["2026-08-31", "2026-08-31"],
