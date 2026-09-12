@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 current_phase: 08
 current_phase_name: Self-Hosted Gameweek Data Capture
 status: executing
-stopped_at: Completed 08-04-PLAN.md
-last_updated: "2026-09-12T07:54:18.008Z"
+stopped_at: Halted 08-05-PLAN.md at Task 1 (defer -- Phase 7 freeze still holds)
+last_updated: "2026-09-12T08:28:40.901Z"
 last_activity: 2026-09-12
 last_activity_desc: Phase 08 execution started
-state_head: 75191005a1ff52c4e7967ba004ab95a4a9826e44
+state_head: dfbfcd76b25bb12938eac80f5f1904eadb51a20c
 progress:
   total_phases: 10
   completed_phases: 8
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-11)
 
 Phase: 08 (Self-Hosted Gameweek Data Capture) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Plan 08-05 halted at Task 1 (developer answered `defer` — Phase 7 freeze on scripts/daily.sh still holds; see 08-05-SUMMARY.md). Re-run 08-05 once Phase 7's CUT-01 lands.
 Last activity: 2026-09-12 — Phase 08 execution started
 
 Progress: [████████░░] 80% (68/71 plans complete)
@@ -301,6 +301,7 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-03: team_strength.build_matches exempts config.CURRENT_SEASON from its systemic-reconstruction-failure guard (a genuinely broken past season still raises) — player_gw.parquet carries a legitimately in-progress season for the first time in this phase; the guard was never designed to see one
 - [Phase 08]: 08-04: fetch_vaastav_season now guards the current season's three files inside the function itself, holding under --force, and gains a cross_check=True escape hatch writing to a .vaastav-crosscheck filename — Closes the ownership boundary so no caller path (CLI or direct) can overwrite data.gw_capture's captured files, and formalizes the ad hoc cross-check 08-03 hand-rolled
 - [Phase 08]: 08-04: a past season whose vaastav files come back absent now prints a season-level [ingest] WARNING naming the vanished files, above the existing per-file MISS line — A source silently dropping a season is the failure this phase was created in response to; it must be visible the day it happens, not at the next retrain
+- [Phase 08]: Phase 08 Plan 05: developer answered defer to the Phase 7 freeze gate -- scripts/daily.sh stays untouched; the plan is halted, not complete, until Phase 7's CUT-01 cutover lands
 
 ### Pending Todos
 
@@ -337,6 +338,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-12T07:54:00.668Z
-Stopped at: Completed 08-04-PLAN.md
+Last session: 2026-09-12T08:28:40.612Z
+Stopped at: Halted 08-05-PLAN.md at Task 1 (defer -- Phase 7 freeze still holds)
 Resume file: None
