@@ -17,7 +17,9 @@ This module never modifies `data/snapshot.py`: it imports `snapshot_frame`
 and `SNAP_DIR` from it so the slim-column schema exists in exactly one place.
 
 Run:
+  python -m data.backfill_snapshot                     # fill every day currently missing
   python -m data.backfill_snapshot --days 2026-09-10    # backfill one or more explicit days
+  python -m data.backfill_snapshot --dry-run            # print the gap, fetch nothing
 """
 from __future__ import annotations
 
@@ -181,6 +183,38 @@ def backfill_day(day: dt.date, *, max_candidates: int = 3) -> bool:
     raise RuntimeError(f"{day.isoformat()}: all {len(candidates)} candidate captures failed") from last_exc
 
 
+def missing_days(existing: "set[dt.date] | list[dt.date]", today: dt.date) -> list[dt.date]:
+    """Every day from the earliest existing day through `today - 1` not in `existing`.
+
+    Pure, zero filesystem/network access. Empty `existing` -> empty list.
+    Never includes `today` -- today's capture is the cron's job, not the
+    backfill's.
+    """
+    existing_set = set(existing)
+    if not existing_set:
+        return []
+    earliest = min(existing_set)
+    last_day = today - dt.timedelta(days=1)
+    out = []
+    d = earliest
+    while d <= last_day:
+        if d not in existing_set:
+            out.append(d)
+        d += dt.timedelta(days=1)
+    return out
+
+
+def discover_missing(today: dt.date) -> list[dt.date]:
+    """Read `SNAP_DIR` and delegate to `missing_days`. Unparseable filenames are ignored."""
+    existing = set()
+    for f in SNAP_DIR.glob("*.parquet"):
+        try:
+            existing.add(dt.date.fromisoformat(f.stem))
+        except ValueError:
+            continue
+    return missing_days(existing, today)
+
+
 def parse_days(spec: str) -> list[dt.date]:
     """Parse a comma-separated list of ISO dates. Raises SystemExit naming the bad token."""
     days = []
@@ -198,16 +232,27 @@ def parse_days(spec: str) -> list[dt.date]:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--days", type=str, default=None,
-                     help="comma-separated list of ISO dates to backfill")
+                     help="comma-separated list of ISO dates to backfill (default: discover the gap)")
     ap.add_argument("--sleep", type=float, default=6.0,
                      help="seconds to sleep between days that hit the network (default: 6.0)")
     ap.add_argument("--max-candidates", type=int, default=3,
                      help="candidate captures to try per day before giving up (default: 3)")
+    ap.add_argument("--dry-run", action="store_true",
+                     help="print the resolved day list and exit without any network call")
     args = ap.parse_args(argv)
 
-    days = parse_days(args.days) if args.days else []
+    today = dt.datetime.now(dt.timezone.utc).date()
+    days = parse_days(args.days) if args.days else discover_missing(today)
+
+    if args.dry_run:
+        if days:
+            print(f"[backfill] would fetch {len(days)} day(s): {', '.join(d.isoformat() for d in days)}")
+        else:
+            print("[backfill] no missing days -- nothing to do")
+        return 0
+
     if not days:
-        print("[backfill] no days requested -- pass --days")
+        print("[backfill] no missing days -- nothing to do")
         return 0
 
     written = skipped = failed = 0
