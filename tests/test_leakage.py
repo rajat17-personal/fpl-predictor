@@ -240,8 +240,8 @@ def test_ep_next_lag_gate_matches_independent_masked_shift(feat):
     assert np.allclose(got.fillna(-1).values, exp.fillna(-1).values)
 
 
-@pytest.mark.skipif(not TRANSFERMARKT.exists(),
-                    reason="run `python -m data.transfermarkt --build` first")
+@pytest.mark.skipif(not (TRANSFERMARKT.exists() and RAW.exists()),
+                    reason="run `python -m data.transfermarkt --build` and the data pipeline first")
 def test_transfermarkt_injury_dates_precede_kickoff():
     """The todo's own explicit leakage requirement
     (.planning/todos/pending/2026-09-10-transfermarkt-injury-history.md):
