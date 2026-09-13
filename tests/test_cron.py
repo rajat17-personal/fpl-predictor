@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 
 import pytest
 import responses
@@ -282,7 +283,7 @@ def test_daily_sh_failure_is_non_zero_notifies_once_and_lets_later_steps_run(tmp
     import stat
     import subprocess
 
-    real_python = "/home/sraja/miniconda3/envs/python314/bin/python"
+    real_python = sys.executable
     invocation_log = tmp_path / "invocations.log"
     alert_log = tmp_path / "alerts.jsonl"
 
@@ -293,7 +294,7 @@ if [ "$1" = "-m" ] && [ "$2" = "models.price" ] && [ "$3" = "--train" ]; then
   exit 3
 fi
 if [ "$1" = "-m" ] && [ "$2" = "ops.notify" ]; then
-  exec {real_python} "$@"
+  exec "{real_python}" "$@"
 fi
 exit 0
 """)
