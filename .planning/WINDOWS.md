@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 3
+open_count: 4
 waived_count: 0
 fixed_count: 3
-total_count: 6
-last_updated: 2026-09-11T09:56:21.910Z
+total_count: 7
+last_updated: 2026-09-13T05:15:59.408Z
 ---
 
 # Broken Windows Ledger
@@ -21,6 +21,7 @@ last_updated: 2026-09-11T09:56:21.910Z
 | 4 | 10 | deviation | models/bracket/gate.py |  | Plan 10-10 Task 3's <verify> checked run_gate's train_seasons against backtest.walk_forward.TEST_SEASONS (6 rolling walk-forward seasons), which legitimately overlaps config.TRAIN_SEASONS by design; implemented against config.TEST_SEASONS (the real held-out season) instead, per T-10-10-03's actual intent | open |  | 2026-09-10T18:26:20.716Z |  |
 | 5 | 10 | deviation | requirements-experiments.txt |  | Executing this plan's literal install mechanism (uv pip sync requirements-experiments.txt --require-hashes) treated the WHOLE shared conda env python314 as its sync target and removed everything not in that one small lockfile -- including project-critical packages (torch, lightgbm, sklearn, fastapi, pulp) and unrelated non-project packages (jupyter/transformers/yt-dlp/wordcloud/etc). Recovered project deps via non-destructive uv pip install -r <file> --require-hashes against requirements.txt/requirements-dev.txt/requirements-rl.txt/requirements-experiments.txt plus one ad-hoc lxml reinstall; full pytest suite confirmed green after recovery. Non-project packages outside any lockfile are NOT recoverable to their exact prior versions. Future installs into this shared env must use 'uv pip install -r <file> --require-hashes', never '--sync'. | open |  | 2026-09-10T18:26:27.667Z |  |
 | 6 | 10 | deviation | tests/test_bracket.py |  | test_granularity_bracket_writes_gate_schema writes its monkeypatched toy MLP gate result directly to the live data/processed/experiments/bracket_gate_mlp.json (missing a config.EXPERIMENTS_DIR tmp_path monkeypatch) -- overwrites the real 10-11 measured result (pooled, 0.3942) every time the suite runs; restored manually three times in plan 10-13 | fixed |  | 2026-09-11T05:54:51.019Z | 2026-09-11T09:56:21.910Z |
+| 7 | quick | lint-warning | tests/test_ci_cd_artifacts.py |  | Pre-existing ruff F401 (pathlib, shutil, typing.Any unused) predates quick-260913-1ds; already failing CI's bare ruff check . lint gate | open |  | 2026-09-13T05:15:59.408Z |  |
 
 ````json
 [
@@ -95,6 +96,18 @@ last_updated: 2026-09-11T09:56:21.910Z
     "reason": "",
     "recorded_at": "2026-09-11T05:54:51.019Z",
     "resolved_at": "2026-09-11T09:56:21.910Z"
+  },
+  {
+    "id": 7,
+    "kind": "lint-warning",
+    "phase": "quick",
+    "file": "tests/test_ci_cd_artifacts.py",
+    "line": null,
+    "description": "Pre-existing ruff F401 (pathlib, shutil, typing.Any unused) predates quick-260913-1ds; already failing CI's bare ruff check . lint gate",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-09-13T05:15:59.408Z",
+    "resolved_at": null
   }
 ]
 ````

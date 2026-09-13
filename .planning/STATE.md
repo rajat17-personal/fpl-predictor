@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-09-12)
 Phase: 07 (Parity Validation & Cutover) — EXECUTING
 Plan: 2 of 6
 Status: Ready to execute
-Last activity: 2026-09-13 - Completed quick task 260913-0r8: backfill missing daily snapshots from Wayback Machine
+Last activity: 2026-09-13 - Completed quick task 260913-1ds: fixed CI (RL-stack importorskip guards + ruff unused imports)
 
 Progress: [███████████████████░] 73/76 plans ([████████░░] 80%)
 
@@ -335,6 +335,7 @@ Recent decisions affecting current work:
 | 260911-7fy | Fix test_granularity_bracket_writes_gate_schema polluting live bracket_gate_mlp.json (missing tmp_path monkeypatch) | 2026-09-11 | fe82fd4 | — | [260911-7fy-fix-test-granularity-bracket-writes-gate](./quick/260911-7fy-fix-test-granularity-bracket-writes-gate/) |
 | 260911-8as | Add certifi, beautifulsoup4, html5lib, lxml to production lockfiles so transfermarkt scraping survives env rebuilds | 2026-09-11 | b56b728 | — | [260911-8as-add-certifi-beautifulsoup4-html5lib-and-](./quick/260911-8as-add-certifi-beautifulsoup4-html5lib-and-/) |
 | 260913-0r8 | Create data/backfill_snapshot.py — backfill 9 missing daily snapshots (2026-09-01..06, 08..10) from Wayback Machine bootstrap-static captures | 2026-09-13 | c0d8e7b | — | [260913-0r8-create-data-backfill-snapshot-py-backfil](./quick/260913-0r8-create-data-backfill-snapshot-py-backfil/) |
+| 260913-1ds | Fix CI: importorskip guards for dev-only RL stack (gymnasium/torch collection errors) + drop 3 unused imports failing ruff | 2026-09-13 | 1d5e5f1 | — | [260913-1ds-fix-ci-pytest-collection-failures-import](./quick/260913-1ds-fix-ci-pytest-collection-failures-import/) |
 
 ## Deferred Items
 
