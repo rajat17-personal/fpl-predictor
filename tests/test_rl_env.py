@@ -14,11 +14,17 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
-from gymnasium import spaces
 
-import config
-from backtest import season as season_mod
-from optimize.rl_env import CHIPS_ORDER, TRANSFER_CAPS, FplStrategyEnv
+# gymnasium ships only in the dev-only requirements-rl.txt (D-09), so CI
+# (which installs only requirements.txt) must skip this whole module rather
+# than crash pytest collection.
+pytest.importorskip("gymnasium")
+
+from gymnasium import spaces  # noqa: E402
+
+import config  # noqa: E402
+from backtest import season as season_mod  # noqa: E402
+from optimize.rl_env import CHIPS_ORDER, TRANSFER_CAPS, FplStrategyEnv  # noqa: E402
 
 FEATURES = config.PROCESSED_DIR / "features.parquet"
 TEST_PREDS = config.PROCESSED_DIR / "test_predictions.parquet"
