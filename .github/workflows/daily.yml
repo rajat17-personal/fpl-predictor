@@ -22,18 +22,14 @@ jobs:
       - name: Run daily jobs
         env:
           PYTHONPATH: .
-        run: |
-          python -m data.snapshot
-          python -m models.price --train || true
-          python -m models.price
-          python -m predict.scoreboard
+          PYTHON: python
+        run: bash scripts/daily.sh
       - name: Commit outputs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # models/artifacts/ is gitignored today, so the price-model path below
-          # is a no-op element of this add — inherited work for Phase 6's
-          # cron-reliability requirement, not changed here.
-          git add data/snapshots web/data models/artifacts/price_model.joblib || true
-          git diff --cached --quiet || git commit -m "daily: snapshot + watchlist $(date -u +%F)"
+          git add data/snapshots web/data
+          if ! git diff --cached --quiet; then
+            git commit -m "daily: snapshot + watchlist $(date -u +%F)"
+          fi
           git push

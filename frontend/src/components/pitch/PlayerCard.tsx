@@ -15,6 +15,14 @@ export interface PlayerCardProps {
   mark?: PlayerMark;
   diff?: PlayerDiff;
   onMark?: (code: number, mark: PlayerMark) => void;
+  /** True only for a real (non-ghost) card rendered directly on the green
+   * pitch surface (GK/DEF/MID/FWD rows) -- never for Bench (bg-surface) or
+   * a GhostCard (bg-accent-bg). Swaps the stat-line classes to the
+   * pitch-stat tokens (07-03 contrast fix, UAT G-07-1): --color-ink-2 reads
+   * as low-contrast grey against the green pitch-1/pitch-2 gradient in both
+   * themes, so those two backgrounds get a dark semi-opaque backdrop plus
+   * light text instead. */
+  onPitch?: boolean;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -35,7 +43,15 @@ function fmtOwnership(ownership: number | null): string {
  * never JS media-query state. Reuses statusFlag.tsx's open/close shape at
  * a smaller scale (no outside-click/Escape — a single self-contained
  * trigger, not a persistent menu). */
-function RangeReveal({ geom, tooltip }: { geom: BandGeometry; tooltip: string }) {
+function RangeReveal({
+  geom,
+  tooltip,
+  onPitch,
+}: {
+  geom: BandGeometry;
+  tooltip: string;
+  onPitch?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const tooltipId = useId();
 
@@ -47,7 +63,9 @@ function RangeReveal({ geom, tooltip }: { geom: BandGeometry; tooltip: string })
         aria-expanded={open}
         aria-describedby={tooltipId}
         onClick={() => setOpen((v) => !v)}
-        className="min-h-[44px] min-w-[44px] font-mono text-label tabular-nums text-ink-2 underline decoration-dotted"
+        className={`min-h-[44px] min-w-[44px] rounded font-mono text-label tabular-nums underline decoration-dotted ${
+          onPitch ? "bg-pitch-stat-bg px-1 text-pitch-stat-ink" : "text-ink-2"
+        }`}
       >
         ±
       </button>
@@ -77,6 +95,7 @@ export function PlayerCard({
   mark = null,
   diff = "none",
   onMark,
+  onPitch = false,
 }: PlayerCardProps) {
   const kit = resolveKit(player.team_short, player.position);
   const geom = bandGeometry(player, player.p90 ?? player.xp);
@@ -159,8 +178,20 @@ export function PlayerCard({
     </>
   );
 
+  /* Outgoing-player marking (07-03 UAT G-07-2): the same dashed-outline idiom
+   * GhostCard uses for the incoming player, mirrored in the "bad" (red)
+   * token instead of "accent" (green) so a suggested swap reads as one
+   * out/in pair at a glance. Applied on the same outer element GhostCard's
+   * own wrapper occupies, replacing the previous bare opacity-50 (which
+   * carried no visible marking of its own beyond the sr-only text). */
+  const outClass =
+    diff === "out" ? "rounded-lg border-2 border-dashed border-bad bg-bad/10 p-1 opacity-70" : "";
+
   return (
-    <div ref={containerRef} className="relative flex w-full flex-col items-center gap-1 text-center">
+    <div
+      ref={containerRef}
+      className={`relative flex w-full flex-col items-center gap-1 text-center ${outClass}`}
+    >
       {onMark ? (
         <button
           type="button"
@@ -169,32 +200,34 @@ export function PlayerCard({
           aria-expanded={open}
           aria-controls={open ? menuId : undefined}
           onClick={() => setOpen((v) => !v)}
-          className={`relative flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1 ${
-            diff === "out" ? "opacity-50" : ""
-          }`}
+          className="relative flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1"
         >
           {visual}
         </button>
       ) : (
-        <div className={`relative flex flex-col items-center gap-1 ${diff === "out" ? "opacity-50" : ""}`}>
-          {visual}
-        </div>
+        <div className="relative flex flex-col items-center gap-1">{visual}</div>
       )}
 
       {diff === "out" && <span className="sr-only">Suggested transfer out</span>}
 
       <span className="w-full truncate font-label text-label text-ink">{player.name}</span>
-      <span className="font-mono text-label tabular-nums text-ink-2">
+      <span
+        className={`font-mono text-label tabular-nums ${
+          onPitch ? "rounded bg-pitch-stat-bg px-1 text-pitch-stat-ink" : "text-ink-2"
+        }`}
+      >
         £{player.price_m.toFixed(1)} · {player.xp.toFixed(1)}
       </span>
 
       <span
-        className="hidden font-mono text-label tabular-nums text-ink-2 min-[400px]:inline"
+        className={`hidden rounded font-mono text-label tabular-nums min-[400px]:inline ${
+          onPitch ? "bg-pitch-stat-bg px-1 text-pitch-stat-ink" : "text-ink-2"
+        }`}
         title={tooltip}
       >
         {geom.lo.toFixed(1)}–{geom.hi.toFixed(1)}
       </span>
-      <RangeReveal geom={geom} tooltip={tooltip} />
+      <RangeReveal geom={geom} tooltip={tooltip} onPitch={onPitch} />
 
       {onMark && open && (
         <div

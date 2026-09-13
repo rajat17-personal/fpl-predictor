@@ -1,0 +1,16 @@
+# Development-only stack for the RL chip-timing/transfer-count experiment
+# (Phase 09 plan 09-06/09-07, D-02). This lockfile exists solely for plan
+# 09-07's time-boxed MaskablePPO training run against optimize/rl_env.py. Per
+# D-09 this stack must NEVER be merged into requirements.txt or
+# requirements-dev.txt, and must NEVER be installed by the Docker image or by
+# any GitHub Actions workflow -- it is installed manually, once, on the
+# developer machine with `uv pip sync requirements-rl.txt --require-hashes`.
+# All four packages passed the D-12 blocking-human package-legitimacy gate
+# (09-06-PLAN.md Task 1; verbatim approval recorded in 09-06-SUMMARY.md).
+torch==2.12.0          # PyTorch; already installed+proven in this conda env
+                       # with CUDA (2.12.0+cu130, torch.cuda.is_available()
+                       # True) -- pinned below the newest 2.14.0 release
+                       # deliberately, per Task 1's approved evidence
+gymnasium==1.3.0       # Farama Foundation's RL environment API (Gym successor)
+stable-baselines3==2.9.0   # MaskablePPO's parent library (via sb3-contrib)
+sb3-contrib==2.9.0     # MaskablePPO + ActionMasker for the masked action space

@@ -18,9 +18,14 @@ import { gotoReady, watchOrigin } from "../helpers/page";
  * fmtRel's day-bucket keeps only whole days + whole hours -> "in 1d 1h".
  * fmtAbs (en-GB, UTC, weekday/day/month/hour/minute) of 2026-09-04T17:30:00Z
  * -> "Fri 4 Sept, 17:30" (verified against Node's own Intl this session).
+ *
+ * 07-03 UAT G-07-3: GwBanner.tsx re-split the same three facts across its
+ * two lines (nav-row desktop-width wrap fix) -- line 1 is now
+ * "GW{gw} · {absolute deadline}" and line 2 is "{countdown} · {freshness}",
+ * with nothing dropped from either fact.
  */
-const BANNER_LINE_1 = "GW3 deadline: Fri 4 Sept, 17:30 · in 1d 1h";
-const BANNER_LINE_2 = "generated just now";
+const BANNER_LINE_1 = "GW3 · Fri 4 Sept, 17:30";
+const BANNER_LINE_2 = "in 1d 1h · generated just now";
 
 test.describe("smoke: one path through the whole stack", () => {
   test("xP table renders the frozen top row and the deadline banner", async ({ page }) => {

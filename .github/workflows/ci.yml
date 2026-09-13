@@ -187,6 +187,13 @@ jobs:
       # container. Must run before the scanner and before any publish --
       # a broken image must never be scanned-and-forgotten or shipped.
       - run: bash scripts/smoke_test.sh local/fpl:ci
+      # Phase 7 (CUT-01, D-01/D-04/D-09): proves the FPL_FRONTEND=react env
+      # flip works inside the SAME built image, before the scanner and any
+      # publish, so the deploy milestone inherits a proven flip rather than
+      # an assumed one.
+      - run: bash scripts/smoke_test.sh local/fpl:ci
+        env:
+          SMOKE_REACT_MODE: 1
       # No exit-code input set -- the action's default of 0 is what makes
       # this scan report-only (D-10); a non-zero value would turn a report
       # into a gate this milestone deliberately does not want.

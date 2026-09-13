@@ -17,13 +17,13 @@ Run:
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 
 import numpy as np
 import pandas as pd
 
 import config
+from ops.jsonio import read_json, write_json
 
 ARTIFACT = config.ROOT / "models" / "artifacts" / "intervals.json"
 N_BINS = 8
@@ -82,7 +82,8 @@ def coverage_report(preds: pd.DataFrame, artifact: dict,
 def load_artifact() -> dict | None:
     if not ARTIFACT.exists():
         return None
-    return json.load(open(ARTIFACT))
+    return read_json(ARTIFACT, what="p10/p90 intervals artifact",
+                      remedy="python -m models.intervals")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -92,7 +93,7 @@ def main(argv: list[str] | None = None) -> int:
     preds = pd.read_parquet(config.PROCESSED_DIR / "test_predictions.parquet")
     art = fit_intervals(preds, args.xp_col)
     ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
-    json.dump(art, open(ARTIFACT, "w"), indent=1)
+    write_json(art, ARTIFACT, indent=1)
     cov = coverage_report(preds, art, args.xp_col)
     print(f"[intervals] saved {ARTIFACT.name}; p10-p90 coverage "
           + ", ".join(f"{k}={v:.3f}" for k, v in cov.items()))

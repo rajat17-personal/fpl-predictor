@@ -7,7 +7,7 @@ status: validated
 nyquist_compliant: true
 wave_0_complete: true
 created: "2026-09-03"
-validated: "2026-09-03"
+validated: "2026-09-11"
 ---
 
 # Phase 4 — Validation Strategy
@@ -47,6 +47,8 @@ validated: "2026-09-03"
 | 04-04-* | 04 | 3 | E2E-03 | — | N/A | e2e | `playwright test specs/xp-table.spec.ts` (10 tests) | ✅ | ✅ green |
 | 04-05-* | 05 | 3 | E2E-02 | — | Real ILP solve, no /api/* route mocking | e2e | `playwright test specs/team-solver.spec.ts specs/team-plan.spec.ts` (16 tests) | ✅ | ✅ green |
 | 04-06-* | 06 | 3 | E2E-04 | — | Scrubbed manager-name fixture policy honored | e2e | `playwright test specs/rate-my-team.spec.ts` (5 tests) | ✅ | ✅ green |
+| 04-07-* | 07 | gap-closure 1 | E2E-01 | T-04-07-01, T-04-07-04 | Fixture-mode OFF path restores production `_gw_pool` bindings (CR-01) | unit | `pytest tests/test_fixture_mode.py` (10 tests incl. `test_unset_env_restores_the_production_gw_pool` + per-test teardown identity assertion) | ✅ | ✅ green |
+| 04-08-* | 08 | gap-closure 2 | E2E-04 | T-04-08-01 | Ghost row keyed off sell target's own row; `"BENCH"` unreachable from API-supplied position strings | unit + e2e | `npm --prefix frontend run test` (5 new tests in `Pitch.test.tsx`/`RateDiff.test.tsx`) + `playwright test specs/rate-my-team.spec.ts` (Bench-group adjacency proof) | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -90,3 +92,50 @@ Existing infrastructure covers all phase requirements. (Playwright harness itsel
 | Escalated | 0 |
 
 All five phase requirements (E2E-01..E2E-05) verified COVERED by green automated tests: 42 Playwright E2E tests across 3 projects (normal/blank/dgw), 9 fixture-mode pytest tests, plus the fixture coherence verifier. Full-suite state at audit: Playwright 42/42, Vitest 363/363, pytest 76/76.
+
+## Validation Audit 2026-09-11
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 2 (map rows missing, no test gaps) |
+| Resolved | 2 |
+| Escalated | 0 |
+
+Re-audit after gap-closure plans 04-07 and 04-08 (executed 2026-09-04, after the original audit).
+Both were absent from the Per-Task Verification Map; rows added above. No new tests were needed —
+both plans shipped their own regression tests, re-verified green this session:
+
+- **04-07 (E2E-01, CR-01):** `tests/test_fixture_mode.py` now 10 tests including
+  `test_unset_env_restores_the_production_gw_pool` and a per-test teardown identity assertion —
+  green in today's full pytest run.
+- **04-08 (E2E-04, WINDOWS.md id=2):** 5 component tests added across `Pitch.test.tsx` /
+  `RateDiff.test.tsx` (bench-sell ghost path + centering guard) — green in today's Vitest run;
+  `rate-my-team.spec.ts` carries the Bench-group adjacency proof (5/5 in 04-VERIFICATION.md's
+  independent re-run).
+
+Suite state at this audit (grown since 2026-09-03 as later phases added tests):
+pytest 329 passed / 1 skipped (full run now ~5m41s — the phase-4-era "~3s quick run" estimate in
+the Test Infrastructure table predates the added model/backtest tests), Vitest 374/374.
+04-VERIFICATION.md: status `passed`, all 5 truths VERIFIED, both gaps closed.
+Requirements E2E-01..E2E-05: all COVERED. `nyquist_compliant: true` unchanged.
+
+## Validation Audit 2026-09-12
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+Re-audit; no changes to Phase 4 surfaces since the 2026-09-11 audit (intervening commits only
+added phase-5/phase-10 tests elsewhere). All 8 plan→requirement mappings re-checked against PLAN
+frontmatter, all mapped test files present, and every mapped automated command re-run green this
+session:
+
+- `pytest tests/test_fixture_mode.py` — 10/10 passed
+- `python e2e/scripts/capture_fixtures.py --verify` — OK (gw=3, 6 pool files, no upstream URLs)
+- Vitest `Pitch.test.tsx` + `RateDiff.test.tsx` — 34/34 passed
+- Full Playwright E2E suite — 42/42 passed across all 3 projects (the shell-geometry D-07 test
+  flagged as flaky on 2026-09-03 passed in this full-suite run)
+
+Requirements E2E-01..E2E-05: all COVERED. `nyquist_compliant: true` unchanged.

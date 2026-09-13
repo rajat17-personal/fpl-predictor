@@ -27,18 +27,51 @@ import pandas as pd
 import config
 
 # Per-match performance stats we roll into form features.
+# config.UNDERSTAT_COLS/config.FOTMOB_COLS are registered HERE, never in
+# CONTEXT_COLS below: those columns (us_npxg/us_xgchain/us_xgbuildup/us_shots/
+# us_key_passes, fm_tackles/fm_interceptions/fm_blocks/fm_clearances/
+# fm_recoveries/fm_duels_won) describe the MATCH THEY CAME FROM (a match
+# outcome), exactly like xg/xa/xgi/xgc above -- using them raw as a feature
+# for that same match would hand the model the result. Registering them here
+# means every one is only ever seen through _roll's shift(1)-then-rolling
+# windows, the same leakage-safety argument as every other stat in this list.
 ROLL_STATS = [
     "minutes", "starts", "total_points", "xp_fpl",
     "goals_scored", "assists", "clean_sheets", "goals_conceded", "saves",
     "bonus", "bps", "xg", "xa", "xgi", "xgc",
     "influence", "creativity", "threat", "ict_index",
-]
+] + config.UNDERSTAT_COLS + config.FOTMOB_COLS
 
 # Fixture-context features known BEFORE kickoff (safe to use as-is).
 # Optional cols (e.g. FBREF_COLS) are filtered to those actually present at runtime.
+# TEAM_STRENGTH_COLS is included unconditionally here (like every other optional
+# source) even though EXPERIMENTS["team_strength"] can be off -- the flag only
+# controls whether backtest/walk_forward.py's harness drops these columns before
+# handing the frame to train_predict, so an A/B is a flag away and never forces a
+# features.parquet rebuild. Do not "fix" this by gating inclusion here.
+#
+# config.AVAILABILITY_COLS (av_chance_pct, the av_status_* one-hot, plus
+# av_days_since_news/av_snapshot_age_days -- plan 10-04) belongs here, never
+# in ROLL_STATS: a point-in-time availability figure resolved as of the
+# gameweek deadline (data/availability.py::resolve_as_of) is already
+# leakage-safe on its own terms -- it is not a match outcome to be
+# shift(1)-then-rolled -- and _roll's rolling-mean machinery would apply the
+# wrong lookback horizon across double gameweeks and postponements, where
+# "the last N appearances" and "the last N calendar gameweeks" diverge.
+#
+# T-10-04-02: these eight columns must NEVER be `fillna(0)`-ed anywhere
+# downstream. `data/availability.py::attach`'s left merge produces NaN (not
+# 0.0) for a player-gameweek with no qualifying snapshot -- since the
+# av_status_* one-hot is 0.0 for four of five codes on every PRESENT row, a
+# `fillna(0)` on a missing row would be silently indistinguishable from
+# "available and definitely not injured/doubtful/suspended/unavailable". The
+# one-hot's zeros are only meaningful alongside a non-null
+# av_snapshot_age_days (proof the row actually resolved to a real snapshot).
 CONTEXT_COLS = (["was_home", "fdr_self", "fdr_opp", "is_dgw", "price_m",
                  "selected", "transfers_balance"]
-                + config.SET_PIECE_COLS + config.ODDS_COLS + config.FBREF_COLS)
+                + config.SET_PIECE_COLS + config.ODDS_COLS + config.FBREF_COLS
+                + config.TEAM_STRENGTH_COLS + config.AVAILABILITY_COLS
+                + config.INJURY_COLS)
 
 ID_COLS = ["season", "player_key", "player_code", "player_id", "name", "team",
            "position", "gw", "fixture_id", "kickoff_time"]
@@ -62,7 +95,12 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     feat = df[ID_COLS + ctx].copy()
 
     # --- rolling form over every horizon ---
-    for stat in ROLL_STATS:
+    # Skip a ROLL_STATS entry absent from df (e.g. config.UNDERSTAT_COLS when
+    # data/processed/understat.parquet doesn't exist / attach() never ran) --
+    # the same "optional col, no-op if missing" contract CONTEXT_COLS already
+    # has via `ctx` above; ROLL_STATS had no optional members before this.
+    roll_stats = [s for s in ROLL_STATS if s in df.columns]
+    for stat in roll_stats:
         for w in config.WINDOWS:
             feat[f"{stat}_r{w}"] = _roll(g, stat, w)
 

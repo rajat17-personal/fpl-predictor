@@ -1,6 +1,10 @@
+---
+last_mapped_commit: 382338e2c164a4433cd73cdbb12ffc9be2621493
+---
+
 # Testing Patterns
 
-**Analysis Date:** 2026-09-01
+**Analysis Date:** 2026-09-11
 
 ## Test Framework
 
@@ -9,7 +13,7 @@
 **Runner:**
 - pytest (Python testing framework)
 - Config: `pytest.ini` (`addopts = -p no:playwright -p no:seleniumbase` disables colliding plugins)
-- Runs: 6 test files in `tests/` directory
+- Runs: 22 test files in `tests/` directory
 
 **Assertion Library:**
 - pytest's built-in `assert` statements
@@ -18,7 +22,7 @@
 **Run Commands:**
 ```bash
 # All Python tests (from repo root, uses python314 conda env)
-/home/sraja/miniconda3/envs/python314/bin/python -m pytest tests/
+python -m pytest tests/
 
 # Specific test file
 python -m pytest tests/test_legality.py
@@ -62,6 +66,54 @@ npm run test -- --reporter=verbose src/routes/
 npm run test -- --coverage
 ```
 
+### Playwright (E2E)
+
+**Runner:**
+- Playwright Test 1.62.1
+- Config: `e2e/playwright.config.ts` (sophisticated multi-server fixture-mode setup)
+- Runs: 7 base spec files + 4 variant specs in `e2e/specs/` and `e2e/specs/variants/`
+
+**Key Setup:**
+- Builds React frontend once before any test runs (chained in `webServer.command` via `&&`)
+- Boots up to 3 concurrent uvicorn servers in fixture mode:
+  - `localhost:8100` (normal fixtures, default variant)
+  - `localhost:8101` (blank fixtures — 6 clubs with no GW fixtures)
+  - `localhost:8102` (dgw fixtures — double gameweek variant)
+- All servers serve the same pre-built `frontend/dist/` SPA from `check_dir=False` mount
+- Locale fixed to `en-GB`, timezone to `UTC` (mandatory for consistent deadline rendering across developer machines and CI)
+- Browser: Chromium only (no Firefox/Safari/WebKit variants in Phase 5)
+
+**Run Commands:**
+```bash
+# All specs with all variants (3 servers, full run)
+cd e2e && npm run test
+
+# Fast local run (normal variant only, single server)
+E2E_VARIANTS=0 npm run test
+
+# Specific spec file
+npm run test -- specs/xp-table.spec.ts
+
+# Specific test within a spec
+npm run test -- specs/xp-table.spec.ts -g "renders the frozen top 50"
+
+# Verbose reporter
+npm run test -- --reporter=verbose
+
+# Install Chromium (only needed first time)
+npm run install:browser
+
+# View HTML report after run
+npx playwright show-report
+```
+
+**CI Integration (see `.github/workflows/ci.yml`):**
+- Chained after Python + TypeScript tests (all must pass before E2E runs)
+- Full 3-server variant run (no `E2E_VARIANTS=0` narrowing)
+- Retries: 1 (CI only; local runs don't retry)
+- Python via `setup-python@v7.0.0` action (python on PATH is what uvicorn uses, no E2E_PYTHON env var)
+- Node via `setup-node@v7.0.0` action (cache includes both frontend/ and e2e/ package-lock.json)
+
 ## Test File Organization
 
 ### Python
@@ -71,19 +123,34 @@ npm run test -- --coverage
 - Separate from source code (not co-located)
 
 **Naming:**
-- Test modules: `test_*.py` (e.g., `test_legality.py`, `test_leakage.py`, `test_autosub.py`, `test_api.py`, `test_product.py`)
-- Test functions: `test_*` (e.g., `test_pick_squad_legal`, `test_intervals_fit_apply_coverage`)
+- Test modules: `test_*.py` (e.g., `test_legality.py`, `test_leakage.py`, `test_bracket.py`, `test_availability.py`, `test_api.py`, `test_product.py`, `test_cron.py`)
+- Test functions: `test_*` (e.g., `test_pick_squad_legal`, `test_external_preds_rejects_missing_required_column`)
 - Helper functions: `_*` prefix (e.g., `_pool()`, `_assert_legal_squad()`, `_idx()`, `_team()`)
 
 **Structure:**
 ```
 tests/
-├── conftest.py          # Shared fixtures (resets api.main module state)
-├── test_legality.py     # Squad legality property tests
-├── test_leakage.py      # Feature engineering leakage regression tests
-├── test_autosub.py      # Formation rule autosub tests
-├── test_api.py          # FastAPI contract tests (mocking FPL API)
-└── test_product.py      # Product layer builders, snapshots, exports
+├── conftest.py              # Shared fixtures (resets api.main module state)
+├── test_legality.py         # Squad legality property tests
+├── test_leakage.py          # Feature engineering leakage regression tests
+├── test_bracket.py          # External prediction ingestion validation (Phase 10-09)
+├── test_availability.py     # Player availability fixture tests
+├── test_api.py              # FastAPI contract tests (mocking FPL API)
+├── test_api_hardening.py    # API resilience and error path tests
+├── test_product.py          # Product layer builders, snapshots, exports
+├── test_cron.py             # Daily/weekly pipeline orchestration
+├── test_experiments.py      # Training/backtest experiments
+├── test_scoreboard.py       # Post-GW accuracy evaluation
+├── test_payloads.py         # Data payload schema validation
+├── test_fixture_mode.py     # Fixture-mode API behavior (static mount SPA fallback)
+├── test_chips.py            # Chip timing optimization
+├── test_obs.py              # Observability and logging
+├── test_reliability.py      # Retry logic and resilience
+├── test_react_seam.py       # Frontend integration seams
+├── test_crosswalk.py        # Player ID mapping
+├── test_capture_fixtures.py # Fixture capture/generation tooling
+├── test_rl_env.py           # RL environment validation
+└── test_transfermarkt.py    # Transfermarkt injury scraper tests
 ```
 
 ### TypeScript/React
@@ -124,6 +191,42 @@ frontend/src/
     └── ... (more components with tests)
 ```
 
+### Playwright (E2E)
+
+**Location:**
+- Spec files in `e2e/specs/` (normal tests)
+- Variant specs in `e2e/specs/variants/` (blank-*.spec.ts, dgw-*.spec.ts)
+- Helpers in `e2e/helpers/page.ts` (reusable navigation and fixture utilities)
+- Fixtures in `e2e/fixtures/v1/{normal,blank,dgw}/{api,web-data}/` (frozen JSON snapshots)
+
+**Naming:**
+- Spec files: `*.spec.ts` (e.g., `xp-table.spec.ts`, `team-solver.spec.ts`, `smoke.spec.ts`)
+- Variant specs: `{blank,dgw}-*.spec.ts` (e.g., `blank-xp-table.spec.ts`, `dgw-chips.spec.ts`)
+- Helper functions: `camelCase` (e.g., `gotoReady()`, `openCardMenu()`, `rowCount()`)
+- Test suites: `test.describe("Feature — what it validates")`
+- Test cases: `test("renders X correctly")`
+
+**Structure:**
+```
+e2e/
+├── playwright.config.ts       # Full server lifecycle, 3 fixture variants, browser setup
+├── helpers/
+│   └── page.ts               # Shared navigation, fixture constants, observers
+├── specs/
+│   ├── xp-table.spec.ts       # xP table (flagship page, E2E-03)
+│   ├── team-solver.spec.ts    # Team page — Squad tab solver (E2E-02)
+│   ├── team-plan.spec.ts      # Team page — Plan Transfers tab
+│   ├── rate-my-team.spec.ts   # Rate My Team utility
+│   ├── fixtures-prices.spec.ts # Fixtures & Prices page
+│   ├── shell-geometry.spec.ts  # Page shell layout & responsive behavior
+│   └── smoke.spec.ts          # Smoke test (one path through full stack)
+└── specs/variants/
+    ├── blank-xp-table.spec.ts     # xP table under blank-club variant
+    ├── blank-fixtures.spec.ts     # Fixtures page under blank-club variant
+    ├── dgw-chips.spec.ts          # Chip timing under DGW variant
+    └── dgw-fixtures.spec.ts       # Fixtures page under DGW variant
+```
+
 ## Test Structure
 
 ### Python
@@ -133,7 +236,7 @@ frontend/src/
 ```python
 """Module docstring: what this test suite covers and why.
 
-Example from test_legality.py: Property tests for optimizer output legality.
+Example from test_bracket.py: External prediction ingestion validation.
 """
 from __future__ import annotations
 
@@ -141,6 +244,10 @@ import pytest
 import config
 from optimize.squad_ilp import pick_squad
 
+# Module-scoped fixture for expensive data (shared across all tests in suite)
+@pytest.fixture(scope="module")
+def df_full():
+    return load_features()
 
 def _pool(seed: int, n: int = 80) -> pd.DataFrame:
     """Helper: generate random test pool."""
@@ -152,7 +259,11 @@ def _assert_legal_squad(s: pd.DataFrame, budget: float):
     assert len(s) == config.SQUAD_SIZE
     # Multiple asserts bundled into a helper for readability
 
+# Conditional fixture: skip entire test if data not present
+needs_data = pytest.mark.skipif(not (FEATURES.exists() and RAW.exists()),
+                                reason="run the data pipeline first")
 
+@needs_data
 @pytest.mark.parametrize("seed", range(5))
 def test_pick_squad_legal(seed):
     """Test that optimizer always outputs a legal squad."""
@@ -162,10 +273,12 @@ def test_pick_squad_legal(seed):
 
 **Patterns:**
 - Imports at top: config, modules under test, pytest, pandas/numpy if needed
-- Helper functions immediately after imports
-- Test functions below helpers
-- Fixtures used sparingly (defined in conftest.py or inline)
-- Docstrings explain what is being tested and WHY
+- Module-level docstring explaining scope and dependencies
+- Helper functions immediately after imports (private, prefixed with `_`)
+- Fixtures (pytest and module-scoped) below helpers
+- Test functions below fixtures
+- Docstrings explain WHAT is tested and WHY it matters
+- Conditional skips (`@needs_data`) for expensive data dependencies
 
 ### TypeScript/React
 
@@ -213,7 +326,7 @@ describe("XpTable (Task 1 — end-to-end slice)", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders known-row cell text with vanilla number formats, including – fallbacks", async () => {
+  it("renders known-row cell text with vanilla number formats", async () => {
     mockFetchOnce(rows);
     renderXpTable();
 
@@ -225,12 +338,76 @@ describe("XpTable (Task 1 — end-to-end slice)", () => {
 ```
 
 **Patterns:**
-- Helper functions (mocks, renderers) at top
+- Helper functions (mocks, renderers) at top, above test suites
 - `describe()` blocks organize related tests
 - `it()` blocks are independent test cases
 - `beforeEach()` / `afterEach()` for setup/cleanup (global state, mocks)
 - Comments explain WHY (especially for concurrent operations, edge cases)
 - Assertions use Testing Library queries (screen, within, fireEvent)
+- Fixtures imported as constants with TypeScript type casting
+
+### Playwright
+
+**Suite Organization:**
+
+```typescript
+import { test, expect, type Page } from "@playwright/test";
+import { gotoReady, watchOrigin, ENTRY, GW, PICKS_EVENT } from "../helpers/page";
+
+/*
+ * Team page — Squad tab (E2E-02). Every navigation uses gotoReady (clock
+ * pinned before nav, fonts settled after) per the suite-wide convention.
+ * `[aria-label$=" actions"]` (PlayerCard.tsx's `{name} actions` trigger) is
+ * this file's card-count/name-set proxy for an interactive (loaded/solved)
+ * pitch; the default model-squad pitch and the plan-flow pitch (team-plan.
+ * spec.ts) render no such trigger at all (no `onMark` passed — 03-01's
+ * view-only default and PlanTransfers.tsx's read-only per-week pitch), so
+ * counting the five `role="group"` rows' direct children is this file's
+ * card-count proxy for those.
+ *
+ * Every solve below is a genuine POST to /api/solve, run by the real
+ * PuLP/CBC ILP over the frozen prediction pool (D-10) — no Playwright
+ * route-mock interception anywhere in this file.
+ */
+
+const MAX_FREE_TRANSFERS = 5;
+const BUDGET = 100.0;
+
+async function openCardMenu(page: Page, name: string) {
+  await page.getByRole("button", { name: `${name} actions` }).click();
+  return page.getByRole("menu", { name: `${name} actions` });
+}
+
+async function rowCount(
+  page: Page,
+  label: "Goalkeeper" | "Defenders" | "Midfielders" | "Forwards" | "Bench",
+): Promise<number> {
+  return page.getByRole("group", { name: label }).locator("> div").count();
+}
+
+test.describe("Squad tab: default view (no entry)", () => {
+  test("renders the model squad view-only, with no team auto-submitted", async ({
+    page,
+  }) => {
+    await gotoReady(page, "/team");
+
+    await expect(page.getByRole("heading", { level: 1 }))
+      .toHaveText(`Model squad · GW${GW}`);
+    await expect(page.getByText("3-5-2", { exact: true })).toBeVisible();
+  });
+});
+```
+
+**Patterns:**
+- Multi-line doc comment at spec top: Explain WHAT the spec validates, WHY it matters, key assumptions/fixtures
+- Hand-derived expected values documented (e.g., "row 1 from e2e/fixtures/v1/normal/web-data/xp_table.json")
+- Helper functions (async, accepting `page: Page`) below imports, above test suites
+- Constants for test data (MAX_FREE_TRANSFERS, BUDGET, BLANK_CLUBS)
+- `test.describe()` groups related tests
+- `test()` blocks are independent (no cross-test state sharing via page)
+- All navigation via `gotoReady()` helper (clock pinned before, fonts settled after)
+- Assertions query by accessible role/text (preferred) not CSS selectors
+- Timeouts: 30 sec per test, 10 sec per assertion (from playwright.config.ts)
 
 ## Mocking
 
@@ -356,6 +533,61 @@ function renderXpTable() {
 - User interactions (use `fireEvent` or `userEvent` for real clicks)
 - localStorage when testing theme persistence (may use real localStorage in jsdom)
 
+### Playwright
+
+**Framework:** Native Playwright route interception; `@playwright/test` fixture system
+
+**Patterns (NOT used in e2e specs):**
+
+```typescript
+// Playwright HAS route interception capabilities, but the e2e suite
+// deliberately does NOT mock network calls. Instead:
+// - All fixtures are pre-baked as frozen JSON in e2e/fixtures/v1/{normal,blank,dgw}/
+// - uvicorn boots in fixture-mode (FPL_FIXTURE_DIR env var switches data source)
+// - Specs drive real API calls against fixture data (D-10)
+// - No route.abort(), no route.continue({ response }), no vi.fn()
+
+// Instead, every spec uses gotoReady() helper to pin clock/fonts before nav
+export async function gotoReady(page: Page, path: string): Promise<void> {
+  await page.clock.setFixedTime(FROZEN_NOW);
+  await page.goto(path);
+  await page.evaluate(() => document.fonts.ready);
+}
+
+// And watchOrigin() observer to verify no foreign requests:
+export function watchOrigin(page: Page): OriginWatch {
+  const foreign: string[] = [];
+  let testOrigin: string | null = null;
+  page.on("request", (request) => {
+    const requestOrigin = new URL(request.url()).origin;
+    if (testOrigin === null && request.isNavigationRequest()) {
+      testOrigin = requestOrigin;
+    } else if (requestOrigin !== testOrigin) {
+      foreign.push(request.url());
+    }
+  });
+  return { getForeignRequests: () => foreign };
+}
+
+// Test usage:
+test("no foreign requests fired", async ({ page }) => {
+  const origin = watchOrigin(page);
+  await gotoReady(page, "/");
+  expect(origin.getForeignRequests()).toEqual([]);
+});
+```
+
+**Why No Mocking:**
+- Fixture-mode uvicorn (booted by playwright.config.ts) is the system under test
+- Mocking network calls would skip testing the full request/response cycle
+- Pre-baked frozen fixtures guarantee deterministic test data across all runs
+- Clock pinning (via `setFixedTime()`) replaces need for time mocks — exact time is known in advance
+
+**What IS Controlled:**
+- Browser locale (`en-GB`) and timezone (`UTC`) — mandatory for deadline string consistency
+- Viewport size (when `opts.viewport` passed to `gotoReady()`)
+- Fixture set (via `E2E_VARIANTS=0` env var or `webServer.env` FPL_FIXTURE_DIR)
+
 ## Fixtures and Factories
 
 ### Python
@@ -381,12 +613,22 @@ def test_first_appearance_has_no_rolling_features(feat):
 FEATURES = config.PROCESSED_DIR / "features.parquet"
 needs_data = pytest.mark.skipif(not (FEATURES.exists() and RAW.exists()),
                                 reason="run the data pipeline first")
+
+# Module-scoped fixture: expensive, shared across test suite
+@pytest.fixture(scope="module")
+def te_2025(df_full):
+    """A real in-process LightGBM run's own `_preds_for` output for the
+    2025-26 test season -- the known-good input the round-trip test writes
+    to a parquet and reads back through the new seam."""
+    te, _models, _cols = _preds_for(df_full, "2025-26")
+    return te
 ```
 
 **Location:**
 - Inline in test files or in `conftest.py` (shared)
 - Fixtures defined at module level, before test functions
 - Scope: `"function"` (default), `"module"` (expensive data loads), `"session"` (rare)
+- Module-scoped fixtures are preferred for expensive operations (training models, loading large parquets)
 
 ### TypeScript/React
 
@@ -411,6 +653,39 @@ it("renders known rows", () => {
 - JSON fixtures in `frontend/src/test/fixtures/` (one file per API endpoint/contract)
 - Imported in tests as TypeScript constants with type casting
 - No factory functions; fixtures are static JSON matching exact API contracts
+
+### Playwright
+
+**Test Data:**
+
+```typescript
+// Frozen snapshots in e2e/fixtures/v1/{normal,blank,dgw}/{api,web-data}/
+// Example: e2e/fixtures/v1/normal/api/capture.json (shared constant source)
+import capture from "../fixtures/v1/normal/api/capture.json" with { type: "json" };
+
+export const FROZEN_NOW = new Date(capture.frozen_now_utc);
+export const GW = capture.gw;
+export const ENTRY = capture.entry;
+export const PICKS_EVENT = capture.picks_event;
+
+// Used throughout all specs:
+test("renders the deadline banner", async ({ page }) => {
+  await gotoReady(page, "/");
+  // Frozen clock knows the exact deadline from capture.json
+  // Spec never hardcodes a second copy of GW, ENTRY, etc.
+});
+```
+
+**Location:**
+- Frozen JSON snapshots in `e2e/fixtures/v1/{normal,blank,dgw}/` (immutable test data)
+- API captures (e.g., `capture.json`) shared via helpers (`e2e/helpers/page.ts`)
+- Web-data exports (e.g., `xp_table.json`, `captains.json`) matching `web/data/*.json` contract
+- Expected values hardcoded (hand-derived once from fixtures, never recomputed at test time)
+
+**Fixture Variants:**
+- **normal:** Default set (all 20 clubs have GW fixtures)
+- **blank:** 6 clubs with no fixtures that GW (ARS, AVL, BHA, BOU, BRE, CHE)
+- **dgw:** Double-gameweek set (some clubs with 2 fixtures, some with 0)
 
 ## Coverage
 
@@ -443,6 +718,19 @@ npm run test -- --coverage
 open coverage/index.html
 ```
 
+### Playwright
+
+**Requirements:** No coverage target configured (E2E tests don't measure code coverage)
+
+**Run & Report:**
+```bash
+# Run all specs and generate HTML report
+npm run test
+
+# View report in browser
+npx playwright show-report
+```
+
 ## Test Types
 
 ### Python
@@ -463,9 +751,14 @@ open coverage/index.html
 - Example: `test_blank_gw_holding_needs_metadata` (B1: blank GW position corruption), `test_autosub_*` (B2: formation rules)
 
 **Contract Tests:**
-- Scope: Verify API endpoint responses match contract (from test_api.py)
+- Scope: Verify API endpoint responses match contract (from test_api.py, test_api_hardening.py)
 - Approach: Mock FPL API, verify FastAPI routes return expected shapes
 - Example: `test_health_and_meta_contract`, `test_solve_endpoint_response`
+
+**Validation Tests:**
+- Scope: Verify data pipeline outputs (schema, constraints, leakage) — see test_bracket.py, test_leakage.py
+- Approach: Load real/external predictions, apply schema/validation gates
+- Example: `test_external_preds_rejects_missing_required_column`, `test_no_future_leakage`
 
 ### TypeScript/React
 
@@ -488,6 +781,40 @@ open coverage/index.html
 - Scope: Verify test harness itself (jsdom, TypeScript, Testing Library)
 - Approach: Minimal render of a component
 - Example: `harness.test.tsx` (proves jsdom present, JSX compiles, matchers registered)
+
+### Playwright
+
+**Smoke Test (Full Stack):**
+- Scope: One path through every layer (build → fixture-mode uvicorn → real API → real solver → Chromium rendering)
+- Approach: Navigate to `/`, pin clock, verify exact expected values
+- File: `e2e/specs/smoke.spec.ts`
+- Example: Verify banner text "GW{gw} · {deadline}" matches frozen capture
+
+**UI Contract Tests:**
+- Scope: Render specific pages, verify structure/content against frozen fixtures
+- Approach: Query by accessible role/text, assert cell values, row counts, formations
+- Example: `xp-table.spec.ts` (top 50 rows), `team-solver.spec.ts` (squad pitch)
+
+**Interaction Tests:**
+- Scope: Form submissions, navigation, state changes via user actions
+- Approach: Fill inputs, click buttons, verify URL changes and UI updates
+- Example: Team solver form (entry load, free transfer slider, solve button)
+
+**Layout & Geometry Tests:**
+- Scope: Responsive breakpoints, bounding boxes, viewport-specific rendering
+- Approach: Set viewport size, measure element positions/sizes after font load
+- File: `e2e/specs/shell-geometry.spec.ts`
+
+**Variant Tests:**
+- Scope: Behavior under different fixture sets (blank clubs, DGW)
+- Approach: Run same test logic against different `webServer` (different port/env)
+- Files: `e2e/specs/variants/{blank,dgw}-*.spec.ts`
+- Example: `blank-xp-table.spec.ts` verifies no blanked-club rows appear in the table
+
+**Network Isolation Tests:**
+- Scope: Verify no external requests (e.g., to fantasy.premierleague.com)
+- Approach: Use `watchOrigin()` helper, collect foreign URLs, assert empty
+- Example: `smoke.spec.ts` calls `expect(origin.getForeignRequests()).toEqual([])`
 
 ## Common Patterns
 
@@ -562,6 +889,58 @@ screen.getByLabelText("Player name")
 within(haalandRow).getByText("15.5")
 ```
 
+### Playwright
+
+**Clock Pinning & Font Wait:**
+
+```typescript
+test("renders deadline banner with exact time", async ({ page }) => {
+  await gotoReady(page, "/");  // Clock pinned BEFORE nav, fonts settled AFTER
+  // FROZEN_NOW is known from capture.json; banner renders predictable string
+  await expect(page.getByText("Fri 4 Sept, 17:30")).toBeVisible();
+});
+```
+
+**Network Observation:**
+
+```typescript
+test("no foreign requests fired", async ({ page }) => {
+  const origin = watchOrigin(page);
+  await gotoReady(page, "/team?entry=6980093");
+  expect(origin.getForeignRequests()).toEqual([]);
+});
+```
+
+**Hand-Derived Expectations:**
+
+```typescript
+// Every expected value is hardcoded once, never recomputed at test time
+const BANNER_LINE_1 = "GW3 · Fri 4 Sept, 17:30";
+const BANNER_LINE_2 = "in 1d 1h · generated just now";
+
+test("renders banner lines exactly", async ({ page }) => {
+  await gotoReady(page, "/");
+  await expect(page.getByText(BANNER_LINE_1, { exact: true })).toBeVisible();
+  await expect(page.getByText(BANNER_LINE_2, { exact: true })).toBeVisible();
+});
+```
+
+**Multi-Server Variants:**
+
+```typescript
+// This spec runs in the chromium-blank project only (see playwright.config.ts)
+// It verifies the blank-fixtures variant (6 clubs with no GW fixtures)
+test.describe("blank set xP table", () => {
+  test("no visible row belongs to a blanked club", async ({ page }) => {
+    await gotoReady(page, "/");
+    const teams = await page.locator("table tbody td:nth-child(3)").allTextContents();
+    expect(teams).not.toContain("ARS");  // Arsenal is blanked
+    expect(teams).not.toContain("AVL");  // Aston Villa is blanked
+    // etc.
+  });
+});
+```
+
 ## Test Execution Tips
 
 ### Python
@@ -581,6 +960,9 @@ python -m pytest tests/ -x
 
 # Debug with pdb on failure
 python -m pytest tests/ --pdb
+
+# From CI (full run with pytest output)
+python -m pytest
 ```
 
 ### TypeScript/React
@@ -607,6 +989,64 @@ npm run test -- --inspect-brk
 npm run test -- --reporter=verbose
 ```
 
+### Playwright
+
+```bash
+cd e2e
+
+# Full suite with all variants (3 servers)
+npm run test
+
+# Fast local run (normal variant only, 1 server)
+E2E_VARIANTS=0 npm run test
+
+# Specific spec file
+npm run test -- specs/xp-table.spec.ts
+
+# Specific test within spec
+npm run test -- specs/xp-table.spec.ts -g "renders the frozen top 50"
+
+# Verbose reporter
+npm run test -- --reporter=verbose
+
+# Debug mode (headed browser, inspects)
+npm run test -- --debug
+
+# View results from last run
+npx playwright show-report
+
+# Install Chromium (required first time)
+npm run install:browser
+
+# From CI (full run as it would be in CI)
+npm run test
+```
+
+## CI Test Chain
+
+The `.github/workflows/ci.yml` runs tests in a strict linear sequence:
+
+1. **lint-build** (ubuntu-latest)
+   - Lint Python code with `ruff check .`
+   - Build React frontend: `npm --prefix frontend run build`
+   - Upload `frontend/dist/` as artifact
+
+2. **test** (needs lint-build)
+   - Download `frontend/dist/` artifact
+   - Run Python tests: `python -m pytest`
+   - Run TypeScript tests: `npm --prefix frontend test`
+
+3. **e2e** (needs test)
+   - Rebuild frontend (owned by playwright.config.ts, not artifact-based)
+   - Boot 3 uvicorn fixture-mode servers
+   - Run Playwright specs: `npm --prefix e2e run test`
+
+This linear chain ensures:
+- Frontend is built once and verified before any test uses it
+- Python tests pass before E2E runs (E2E depends on Python API working)
+- E2E runs against the exact bundle Python tests verified
+- A broken lint/test stage never wastes time building an image
+
 ---
 
-*Testing analysis: 2026-09-01*
+*Testing analysis: 2026-09-11*

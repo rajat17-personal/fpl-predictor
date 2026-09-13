@@ -96,6 +96,12 @@ interface PitchRowProps {
   ghostPlayer?: PitchPlayer;
   ghostAfterCode?: number | null;
   label: string;
+  /** True for the GK/DEF/MID/FWD rows (green pitch surface exposed behind
+   * the card), false/omitted for Bench (bg-surface). Forwarded only to the
+   * real PlayerCard below, never to GhostCard's own internal card, which
+   * always sits on its own bg-accent-bg regardless of row (07-03 contrast
+   * fix, UAT G-07-1). */
+  onPitch?: boolean;
 }
 
 function PitchRow({
@@ -108,6 +114,7 @@ function PitchRow({
   ghostPlayer,
   ghostAfterCode,
   label,
+  onPitch,
 }: PitchRowProps) {
   const slots = buildRowSlots(players, ghostPlayer, ghostAfterCode);
   const parts = rowParts(slots.length);
@@ -133,6 +140,7 @@ function PitchRow({
               mark={marks[slot.player.player_code] ?? null}
               diff={diffs[slot.player.player_code] ?? "none"}
               onMark={onMark}
+              onPitch={onPitch}
             />
           )}
         </div>
@@ -227,6 +235,7 @@ export function Pitch({
             diffs={diffs}
             onMark={onMark}
             label="Goalkeeper"
+            onPitch
             {...rowGhost("GK")}
           />
           <PitchRow
@@ -237,6 +246,7 @@ export function Pitch({
             diffs={diffs}
             onMark={onMark}
             label="Defenders"
+            onPitch
             {...rowGhost("DEF")}
           />
           <PitchRow
@@ -247,6 +257,7 @@ export function Pitch({
             diffs={diffs}
             onMark={onMark}
             label="Midfielders"
+            onPitch
             {...rowGhost("MID")}
           />
           <PitchRow
@@ -257,6 +268,7 @@ export function Pitch({
             diffs={diffs}
             onMark={onMark}
             label="Forwards"
+            onPitch
             {...rowGhost("FWD")}
           />
         </div>

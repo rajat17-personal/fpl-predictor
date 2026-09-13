@@ -62,6 +62,15 @@
   --color-pitch-2: #1c7a45;
   --color-pitch-line: rgba(255, 255, 255, 0.55);
 
+  /* 07-03 UAT G-07-1: --color-ink-2 (the stat-line colour everywhere else)
+   * fails WCAG AA against both pitch-1 and pitch-2 -- a flat text colour
+   * cannot clear 4.5:1 against a gradient's light AND dark stop at once.
+   * A dark, semi-opaque backdrop behind the price/xP and range-line text
+   * fixes that at any point on the gradient, in both themes, without a
+   * `.dark` override (deliberately theme-invariant, unlike pitch-1/2). */
+  --color-pitch-stat-bg: rgba(0, 0, 0, 0.45);
+  --color-pitch-stat-ink: #ffffff;
+
   /* Spacing scale (multiples of 4) */
   --spacing-xs: 4px;
   --spacing-sm: 8px;

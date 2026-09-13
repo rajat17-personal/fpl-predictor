@@ -6,15 +6,16 @@ runtime branch (reload + env var) instead of per-test monkeypatch of _pool."""
 from __future__ import annotations
 
 import importlib
-import json
 
 import pytest
 
 import config
 import predict.live as live
+from ops.jsonio import read_json
 
 FIXTURE_DIR = config.ROOT / "e2e" / "fixtures" / "v1" / "normal"
-CAPTURE = json.load(open(FIXTURE_DIR / "api" / "capture.json"))
+CAPTURE_PATH = FIXTURE_DIR / "api" / "capture.json"
+CAPTURE = read_json(CAPTURE_PATH, what="frozen E2E capture.json fixture")
 GW = CAPTURE["gw"]
 ENTRY = CAPTURE["entry"]
 

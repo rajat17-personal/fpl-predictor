@@ -26,6 +26,7 @@ def fake_boot(n_per_pos=(3, 7, 7, 5)) -> dict:
             code += 1
             elements.append({
                 "id": code - 900, "code": code, "web_name": f"P{code}",
+                "first_name": f"First{code}", "second_name": f"Last{code}",
                 "team": (code % 10) + 1, "element_type": etype, "status": "a",
                 "chance_of_playing_next_round": None,
                 "now_cost": 40 + (code % 25), "cost_change_event": 0,
@@ -125,7 +126,7 @@ def test_solve_squad_contract(monkeypatch):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
     monkeypatch.delenv("FPL_API_KEYS", raising=False)
     c = TestClient(m.app)
 
@@ -176,7 +177,7 @@ def test_solve_request_bounds(monkeypatch, payload, expected_status):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
     monkeypatch.delenv("FPL_API_KEYS", raising=False)
     c = TestClient(m.app)
 
@@ -191,7 +192,7 @@ def test_solve_resolution_and_rounding(monkeypatch):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
     monkeypatch.delenv("FPL_API_KEYS", raising=False)
     c = TestClient(m.app)
 
@@ -249,7 +250,7 @@ def test_team_endpoint_contract(monkeypatch):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
 
     picks_url, summary_url, _ = _team_urls(TEAM_ENTRY, 1)
     responses.add(responses.GET, picks_url, json=fake_picks(boot), status=200)
@@ -276,7 +277,7 @@ def test_team_endpoint_missing_picks(monkeypatch):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
 
     picks_url, _, _ = _team_urls(TEAM_ENTRY, 1)
     responses.add(responses.GET, picks_url, status=404)
@@ -296,7 +297,7 @@ def test_team_endpoint_summary_failure_is_best_effort(monkeypatch):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
 
     picks_url, summary_url, _ = _team_urls(TEAM_ENTRY, 1)
     responses.add(responses.GET, picks_url, json=fake_picks(boot), status=200)
@@ -315,7 +316,7 @@ def test_rate_endpoint_contract(monkeypatch):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
     monkeypatch.delenv("FPL_API_KEYS", raising=False)
 
     picks_url, summary_url, history_url = _team_urls(TEAM_ENTRY, 1)
@@ -343,7 +344,7 @@ def test_rate_endpoint_missing_history_leaves_free_transfers_null(monkeypatch):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
     monkeypatch.delenv("FPL_API_KEYS", raising=False)
 
     picks_url, summary_url, history_url = _team_urls(TEAM_ENTRY, 1)
@@ -387,7 +388,7 @@ def test_require_key_three_modes(monkeypatch, env_value, header, expected_status
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
 
     if env_value is None:
         monkeypatch.delenv("FPL_API_KEYS", raising=False)
@@ -412,7 +413,7 @@ def test_rate_endpoint_require_key_modes(monkeypatch):
 
     boot = fake_boot()
     pool = fake_pool(boot)
-    monkeypatch.setattr(m, "_pool", lambda horizon=1: (pool, 1, boot))
+    monkeypatch.setattr(m, "_pool", lambda horizon=1: m.PoolSnapshot(pool, 1, boot, 0))
 
     picks_url, summary_url, history_url = _team_urls(TEAM_ENTRY, 1)
     responses.add(responses.GET, picks_url, json=fake_picks(boot), status=200)
@@ -465,13 +466,19 @@ def test_unauthenticated_endpoints_stay_open(monkeypatch, env_value, header):
 
 # ---------------------------------------------------------------- concurrency
 #
-# api/main.py `solve()` reads/writes `_solve_cache` with NO `_lock` held, while
-# `_refresh()` clears it INSIDE `_lock` — a race a sequential loop of TestClient
-# calls cannot reproduce, because overlapping requests are what create it. This
-# test asserts only "no crash, no corrupted state" — NOT cache-hit rate or
-# byte-identical bodies across concurrent calls, which api/main.py does not
-# guarantee today (that guarantee, and fixing the race, is Phase 6 REL-05's
-# job; this test's job is to make the race observable, not to fix it).
+# REL-05 (closed): `_cache_get`/`_cache_put` are the only two doors into
+# `_solve_cache`, and both hold `_lock` for their entire body — there is no
+# read or write path outside it, including `_refresh()`'s own clear. Every
+# cache key also embeds `_state["pool_version"]`, the counter `_refresh()`
+# bumps under that same lock on every successful reload, so a payload
+# computed against pool version N can never be returned once the version has
+# advanced to N+1: no later request can construct a key containing N. This
+# test fires 20 concurrent `/api/solve` calls overlapping a forced
+# `_refresh()` and asserts the version bump landed exactly once under that
+# concurrent load and the cache stayed within its bound — not merely that
+# nothing crashed. (Direct proof that a pre-refresh entry is unreachable
+# after the bump — driving `_cache_get`/`_cache_put` deterministically rather
+# than through a race — lives in tests/test_api_hardening.py.)
 
 def test_concurrent_solve_and_refresh(monkeypatch):
     from fastapi.testclient import TestClient
@@ -484,20 +491,28 @@ def test_concurrent_solve_and_refresh(monkeypatch):
     def slow_pool(horizon=1):
         calls["n"] += 1
         time.sleep(0.05)   # widen the overlap window deterministically
-        return pool, 1, boot
+        return m.PoolSnapshot(pool, 1, boot, 0)
 
     monkeypatch.setattr(m, "_pool", slow_pool)
+    monkeypatch.setattr(m, "_load_live", lambda force=True: (boot, []))
     monkeypatch.delenv("FPL_API_KEYS", raising=False)
 
     c = TestClient(m.app)
+    version_before = m._state["pool_version"]
 
     def worker(i: int):
         payload = {"horizon": 1 if i % 2 == 0 else 2, "free_transfers": i % 2}
         return c.post("/api/solve", json=payload)
 
-    with ThreadPoolExecutor(max_workers=8) as ex:
-        futures = [ex.submit(worker, i) for i in range(20)]
-        results = [f.result() for f in as_completed(futures)]
+    def refresher():
+        time.sleep(0.02)  # let some solve() calls start before the refresh lands
+        m._refresh(force=True)
+
+    with ThreadPoolExecutor(max_workers=9) as ex:
+        solve_futures = [ex.submit(worker, i) for i in range(20)]
+        refresh_future = ex.submit(refresher)
+        results = [f.result() for f in as_completed(solve_futures)]
+        refresh_future.result()
 
     assert len(results) == 20
     for r in results:
@@ -506,3 +521,9 @@ def test_concurrent_solve_and_refresh(monkeypatch):
         assert "gw" in body
         assert len(body["squad"]) > 0
     assert isinstance(m._state["pools"], dict)
+
+    # REL-05: the forced refresh bumped the version exactly once even though
+    # 20 solve() calls were reading/writing the cache concurrently, and the
+    # cache never grew past its configured ceiling.
+    assert m._state["pool_version"] == version_before + 1
+    assert len(m._solve_cache) <= m.SOLVE_CACHE_MAX

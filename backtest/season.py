@@ -32,6 +32,13 @@ _POS_MAX = {"GK": 1, "DEF": 5, "MID": 5, "FWD": 3}
 _POS_MIN = {"GK": 1, "DEF": 3, "MID": 2, "FWD": 1}   # FPL formation minima
 
 
+def _half_of(gw: int) -> str:
+    for half, gws_ in chips.HALVES.items():
+        if gw in gws_:
+            return half
+    raise ValueError(f"gw {gw} is not in any half")
+
+
 def _autosub(starters: list[int], squad: list[int], pos, mins, xp) -> list[int]:
     """Replace non-playing starters with bench players who played, exactly.
 
@@ -142,14 +149,63 @@ def _update_meta(meta: dict, pool: pd.DataFrame, squad: dict) -> None:
 
 def run_season(preds: pd.DataFrame, xp_col: str, *, use_chips: bool = True,
                max_transfers: int | None = None, record_chips: bool = False,
-               capt_col: str | None = None) -> pd.DataFrame:
+               capt_col: str | None = None, scheduler: str = "v1",
+               chips_hysteresis: float | None = None,
+               rl_seed: int | None = None) -> pd.DataFrame:
     """capt_col: separate prediction column for the captain slot (e.g. "xp_mean" —
-    the armband doubles points, so mean-objective xP is the right captain value)."""
+    the armband doubles points, so mean-objective xP is the right captain value).
+
+    scheduler: "v1" (default) uses the fixture-structure heuristic
+    (`chips.causal_schedule`); "v2" uses the xP-scored causal scheduler
+    (`chips.scored_schedule`, Phase 9 chips_v2 experiment); "rl" replays a
+    trained MaskablePPO policy (Phase 9 plan 09-07, `optimize/rl_train.py`)
+    gameweek by gameweek, deciding BOTH the chip and the transfer count for
+    that gameweek -- unlike v1/v2, which only decide chip timing and leave
+    transfers to the myopic optimiser under the top-level `max_transfers` cap.
+    Chip *application* below is otherwise identical across all three schedulers
+    -- only the choice of WHEN each chip fires (and, for "rl", how many
+    transfers to make) changes. `chips_hysteresis` only affects scheduler="v2"
+    (None -> that function's own config.CHIPS_V2_HYSTERESIS default).
+    `rl_seed` selects which of `config.RL_SEEDS`' trained policies to load for
+    scheduler="rl" (required in that case) -- `optimize/rl_env.py::load_policy`
+    raises `SystemExit` naming the training command if the policy is missing."""
+    if scheduler not in ("v1", "v2", "rl"):
+        raise ValueError(f"unknown scheduler {scheduler!r} -- expected one of 'v1', 'v2', 'rl'")
     gws = sorted(preds.gw.unique())
+    use_rl = use_chips and scheduler == "rl"
     # Causal scheduler: chip decisions only see fixtures a few GWs ahead, like a
     # real manager (default_schedule reads the final fixture list = look-ahead).
-    schedule = chips.causal_schedule(preds, xp_col) if use_chips else {}
+    if not use_chips:
+        schedule = {}
+    elif scheduler == "v2":
+        schedule = chips.scored_schedule(preds, xp_col, capt_col=capt_col,
+                                         hysteresis=chips_hysteresis)
+    elif scheduler == "rl":
+        schedule = {}   # decided per-gameweek by the policy below, not precomputed
+    else:
+        schedule = chips.causal_schedule(preds, xp_col)
     chip_deltas: list[dict] = []   # isolated marginal chip value (same team, w/ vs w/o)
+
+    rl_policy = None
+    rl_chip_used: dict[str, set[str]] = {"H1": set(), "H2": set()}
+    rl_gws_by_code: dict[int, set[int]] = {}
+    if use_rl:
+        if rl_seed is None:
+            raise ValueError("scheduler='rl' requires rl_seed (see config.RL_SEEDS)")
+        seasons_here = preds["season"].unique() if "season" in preds.columns else []
+        if len(seasons_here) != 1:
+            raise ValueError(
+                "scheduler='rl' requires preds for exactly one season (a 'season' "
+                f"column with one unique value), got {list(seasons_here)}")
+        # Deferred import: optimize.rl_env pulls in gymnasium (and, via
+        # load_policy, torch/sb3-contrib) -- a D-09-isolated, dev-only stack
+        # (requirements-rl.txt). Importing it at module load time here would
+        # also be circular (optimize.rl_env imports this module). Importing it
+        # only inside this "rl"-only branch means the weekly product's normal
+        # v1/v2 path never requires the RL dependency stack to be installed.
+        from optimize import rl_env as rl_env_mod
+        rl_policy = rl_env_mod.load_policy(str(seasons_here[0]), rl_seed)
+        rl_gws_by_code = preds.groupby("player_code")["gw"].apply(set).to_dict()
 
     # --- GW1: build the initial squad from scratch ---
     g0 = gws[0]
@@ -170,31 +226,44 @@ def run_season(preds: pd.DataFrame, xp_col: str, *, use_chips: bool = True,
         pool = build_gw_pool(preds, gw, xp_col, capt_col)
         pool = _pad_holdings(pool, squad, meta)
         pool_idx = pool.set_index("player_code")
-        chip = schedule.get(gw, "-")
+        if use_rl:
+            chip, rl_max_transfers = rl_env_mod.decide_action(
+                rl_policy, preds, gw, squad, meta, bank, ft, rl_chip_used, rl_gws_by_code)
+        else:
+            chip = schedule.get(gw, "-")
+            rl_max_transfers = None
 
         if chip in ("wc", "fh"):
             budget = _team_value(squad, pool, meta) + bank
             r = pick_squad(pool, budget=budget)
-            if chip == "wc":                       # permanent reset
-                squad, meta = _squad_from_pick(r)
-                bank = round(budget - r["cost"], 1)
             starters, squad_codes, captain = _pick_lists(r)
             capt_code = captain
             pts = _score(pool_idx, starters, squad_codes, captain, "normal")
-            # Free Hit value vs simply holding the current squad this gameweek.
-            if record_chips and chip == "fh":
+            # Free Hit / Wildcard isolated value vs simply holding the current
+            # squad this gameweek (zero transfers) -- measured against the
+            # PRE-reset squad/bank, before wc's permanent replacement below, so
+            # the baseline reflects the team the manager actually had. This is
+            # the same same-gameweek isolation FH/BB/TC already use, so all
+            # four are directly comparable; a wildcard's real value is largely
+            # the multi-gameweek squad it leaves behind, which this delta does
+            # NOT capture -- that shows up in the whole-season model+chips
+            # figure instead.
+            if record_chips and chip in ("fh", "wc"):
                 r0 = optimize_gw(pool, squad, bank, 0, mode="normal", max_transfers=0)
                 base = _score(pool_idx, r0["starters"], list(r0["squad"]),
                               r0["captain_code"], "normal")
-                chip_deltas.append({"gw": gw, "chip": "fh", "delta": pts - base})
+                chip_deltas.append({"gw": gw, "chip": chip, "delta": pts - base})
             if chip == "wc":                       # permanent reset
                 squad, meta = _squad_from_pick(r)
                 bank = round(budget - r["cost"], 1)
             n_tr, n_hit, capt = 0, 0, r["captain"]
             ft = min(config.MAX_FREE_TRANSFERS, ft + 1)
+            if use_rl:
+                rl_chip_used[_half_of(gw)].add(chip)
         else:
             mode = chip if chip in ("tc", "bb") else "normal"
-            r = optimize_gw(pool, squad, bank, ft, mode=mode, max_transfers=max_transfers)
+            eff_max_transfers = rl_max_transfers if use_rl else max_transfers
+            r = optimize_gw(pool, squad, bank, ft, mode=mode, max_transfers=eff_max_transfers)
             squad, bank = r["squad"], r["bank"]
             starters, capt_code = r["starters"], r["captain_code"]
             gross = _score(pool_idx, r["starters"], list(r["squad"]), r["captain_code"], mode)
@@ -206,6 +275,8 @@ def run_season(preds: pd.DataFrame, xp_col: str, *, use_chips: bool = True,
             pts = gross - config.TRANSFER_HIT * r["hits"]
             n_tr, n_hit, capt = r["transfers"], r["hits"], r["captain"]
             ft = min(config.MAX_FREE_TRANSFERS, max(0, ft - n_tr) + 1)
+            if use_rl and chip != "-":
+                rl_chip_used[_half_of(gw)].add(chip)
 
         _update_meta(meta, pool, squad)
         log.append({"gw": gw, "chip": chip, "transfers": n_tr, "hits": n_hit,

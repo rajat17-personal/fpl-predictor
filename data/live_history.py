@@ -16,7 +16,6 @@ gracefully to NaN exactly as in training cold-start rows.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 import time
 
@@ -25,6 +24,7 @@ import requests
 
 import config
 from features.engineer import ROLL_STATS
+from ops.jsonio import read_json
 
 _CACHE = config.RAW_DIR / "live" / "element_history.parquet"
 _HEADERS = {"User-Agent": "fpl-ml-project/0.1"}
@@ -44,7 +44,9 @@ _FIELD_MAP = {
 
 def fetch(force: bool = False, sleep: float = 0.08) -> pd.DataFrame:
     """Download every player's current-season history and cache it."""
-    boot = json.load(open(config.RAW_DIR / "live" / "bootstrap-static.json"))
+    boot_path = config.RAW_DIR / "live" / "bootstrap-static.json"
+    boot = read_json(boot_path, what="FPL bootstrap-static payload (live history)",
+                      remedy="python -m data.ingest")
     ids = [el["id"] for el in boot["elements"]]
     if _CACHE.exists() and not force:
         return pd.read_parquet(_CACHE)

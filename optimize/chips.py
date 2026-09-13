@@ -14,8 +14,12 @@ from __future__ import annotations
 
 import pandas as pd
 
+import config
+
 HALVES = {"H1": range(1, 20), "H2": range(20, 39)}
 WC_SLOT = {"H1": 8, "H2": 28}
+SCORED_DECAY = 0.84   # wc's forward-sum discount across the visibility window;
+# matches backtest/walk_forward.py::_plan_col's multi-GW discount exactly.
 
 
 def _fixture_structure(preds: pd.DataFrame) -> pd.DataFrame:
@@ -79,6 +83,103 @@ def causal_schedule(preds: pd.DataFrame, xp_col: str = "xp_med",
             if chip:
                 schedule[g] = chip
                 remaining.discard(chip)
+    return schedule
+
+
+def scored_schedule(preds: pd.DataFrame, xp_col: str = "xp_med", visibility: int = 4,
+                    hysteresis: float | None = None,
+                    capt_col: str | None = None) -> dict[int, str]:
+    """xP-scored causal chip schedule ("fire now vs. best visible later").
+
+    Keeps `causal_schedule`'s exact visibility-window shell (a decision at GW g
+    only ever sees g..g+visibility -- the B3 causal fix) but replaces the
+    fixture-structure if/elif decision body with a common scoring rule: fire
+    chip c at gameweek g when c's score at g is within `hysteresis` of the best
+    score c reaches anywhere in the visible window. An unused chip at the end
+    of its half fires at the latest free gameweek instead of going unused
+    (v1's end-of-half forcing rule, generalised to every chip).
+
+    Reads only `xp_col`/`capt_col`, `gw`, `player_code`, `team` -- NEVER a
+    realised-outcome column (`y_points`/`actual`/`y_minutes`), and the decision
+    at g never looks at a gameweek beyond `g + visibility`.
+
+    Proxy scores (the implementer's declared starting point, not received
+    truth -- the harness judges them):
+      - tc: the best single-player gameweek value at g, from `capt_col` when
+        given (so an adopted ceiling-EV armband also drives the Triple
+        Captain trigger) and from `xp_col` otherwise -- the extra captain
+        multiple is exactly one more copy of the best captain.
+      - bb: the sum of ranks 12-15 of the gameweek's descending xP vector --
+        the bench of a top-15 proxy squad, which Bench Boost turns into points.
+      - fh: the sum of ranks 1-11, scaled by the share of clubs blanking at g
+        (`bgw_clubs / n_clubs`) -- the fraction of a normal squad that would
+        otherwise score nothing.
+      - wc: the visibility-window-discounted forward sum of ranks 1-11 across
+        `window`, using the same 0.84 decay `backtest/walk_forward.py::
+        _plan_col` uses, so a wildcard fires into the best visible fixture run
+        rather than at a fixed calendar slot.
+    """
+    hysteresis = config.CHIPS_V2_HYSTERESIS if hysteresis is None else hysteresis
+    struct = _fixture_structure(preds).set_index("gw")
+    n_clubs = preds.team.nunique()
+
+    gwp = preds.groupby(["gw", "player_code"])[xp_col].sum().reset_index()
+    by_gw: dict[int, list[float]] = {
+        g: sorted(v[xp_col].tolist(), reverse=True) for g, v in gwp.groupby("gw")
+    }
+    capt_source = capt_col or xp_col
+    capt_gwp = (preds.groupby(["gw", "player_code"])[capt_source].sum().reset_index()
+                if capt_col else gwp.rename(columns={xp_col: capt_source}))
+    best_capt = capt_gwp.groupby("gw")[capt_source].max()
+
+    def top11(g: int) -> float:
+        return sum(by_gw.get(g, [])[:11])
+
+    def bench4(g: int) -> float:
+        return sum(by_gw.get(g, [])[11:15])
+
+    schedule: dict[int, str] = {}
+    for half, gws in HALVES.items():
+        half_gws = [g for g in gws if g in struct.index]
+        if not half_gws:
+            continue
+        remaining = {"wc", "fh", "bb", "tc"}
+
+        # Precompute every chip's score at every gameweek of this half up front
+        # -- each score depends only on that gameweek's own value (tc/bb/fh) or
+        # on gameweeks within its own g..g+visibility window (wc), never on
+        # anything the sequential firing loop below decides.
+        scores: dict[str, dict[int, float]] = {c: {} for c in remaining}
+        for g in half_gws:
+            window = [w for w in half_gws if g <= w <= g + visibility]
+            bgw_here = struct.loc[g, "bgw_clubs"]
+            scores["tc"][g] = float(best_capt.get(g, 0.0))
+            scores["bb"][g] = float(bench4(g))
+            scores["fh"][g] = float(top11(g) * (bgw_here / n_clubs if n_clubs else 0.0))
+            scores["wc"][g] = float(sum(
+                (SCORED_DECAY ** (w - g)) * top11(w) for w in window))
+
+        for g in half_gws:
+            window = [w for w in half_gws if g <= w <= g + visibility]
+            for c in ("wc", "fh", "bb", "tc"):
+                if c not in remaining:
+                    continue
+                best_in_window = max(scores[c][w] for w in window)
+                if scores[c][g] >= best_in_window - hysteresis:
+                    schedule[g] = c
+                    remaining.discard(c)
+                    break   # one chip max per gameweek
+
+        # End-of-half forcing rule (v1's spirit, generalised): a chip still
+        # unused by the end of the half fires at the latest gameweek that
+        # doesn't already have a chip, rather than being wasted.
+        if remaining:
+            free = [g for g in reversed(half_gws) if g not in schedule]
+            for c in ("wc", "fh", "bb", "tc"):
+                if c in remaining and free:
+                    schedule[free.pop(0)] = c
+                    remaining.discard(c)
+
     return schedule
 
 

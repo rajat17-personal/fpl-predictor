@@ -30,6 +30,7 @@ import pandas as pd
 
 import config
 from models import intervals
+from ops.jsonio import write_json
 from optimize.squad_ilp import pick_squad
 from predict.live import (_availability, _chip_note, _load_live, _next_gw,
                           build_horizon_pool, build_pool)
@@ -297,13 +298,13 @@ def export(horizon: int = 1) -> dict:
         "leaders.json": build_leaders(boot),
     }
     for name, payload in files.items():
-        json.dump(payload, open(WEB_DATA / name, "w"))
+        write_json(payload, WEB_DATA / name)
     # Frozen copy for the post-GW scoreboard: predictions + FPL's own ep_next.
     hist = [{k: r.get(k) for k in ("player_id", "player_code", "name", "team",
                                    "position", "xp", "xp_capt", "ep_next")}
             for r in table]
-    json.dump({"gw": gw, "meta": files["meta.json"], "players": hist},
-              open(WEB_DATA / "history" / f"gw{gw}.json", "w"))
+    write_json({"gw": gw, "meta": files["meta.json"], "players": hist},
+               WEB_DATA / "history" / f"gw{gw}.json")
     print(f"[export] GW{gw}: {len(table)} players -> {WEB_DATA}")
     return files
 

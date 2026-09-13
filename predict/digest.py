@@ -13,9 +13,9 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import html
-import json
 import sys
 
+from ops.jsonio import read_json
 from predict.export import WEB_DATA
 
 DIFFERENTIAL_MAX_OWN = 10.0     # % ownership ceiling for the differential pick
@@ -23,7 +23,9 @@ DIFFERENTIAL_MAX_OWN = 10.0     # % ownership ceiling for the differential pick
 
 def _load(name: str):
     p = WEB_DATA / name
-    return json.load(open(p)) if p.exists() else None
+    if not p.exists():
+        return None
+    return read_json(p, what=f"exported {name}", remedy="python -m predict.export")
 
 
 def build_digest() -> dict:

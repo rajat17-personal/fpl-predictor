@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 
+# --- CatBoost training-log output (auto-dumped to cwd by CatBoostRegressor.fit(),
+# --- models/bracket/gbdt.py) -- runtime logs, not source ---------------------
+catboost_info/
+
 # --- Node ---------------------------------------------------------------
 node_modules/
 frontend/node_modules/
@@ -14,6 +18,10 @@ dist/
 data/raw/
 data/processed/
 data/cron.log
+data/alerts.jsonl
+data/dual_site.pids
+data/dual_site.vanilla.log
+data/dual_site.react.log
 
 # --- Regenerable model output (rebuilt by models/train.py, models/price.py) ---
 models/artifacts/

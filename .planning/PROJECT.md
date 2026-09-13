@@ -31,20 +31,24 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 - ✓ FPL-style pitch renderer + team page: green-gradient pitch with neutral generated SVG kits, formation rows with continuous flex centering (any row size incl. 6-card ghost rows), Squad/Rate/Plan tabs, solver flow with numeric-code locks/excludes and stale-response guard — all 8 pages now rebuilt; UAT 4/4, 21 threats closed — Phase 3
 - ✓ Trademark posture for pitch visuals: neutral generated kits (no crests/sponsors/CDN imagery), sitewide disclaimer, committed decision doc (docs/decisions/pitch-kit-sourcing.md) signed off in UAT — Phase 3
 - ✓ Playwright E2E regression suite on frozen versioned fixtures (normal/blank/DGW) with a fixture-mode API server: team/pitch + solver flow, xP table + captains (exact cell values and sort order), rate-my-team incl. pitch visual diff, fixtures & prices pages — 42 specs, calendar-independent — Phase 4
+- ✓ CI/CD on GitHub Actions: hash-locked deps (uv --generate-hashes), ruff lint, 5-job chained ci.yml (lint-build → test → e2e → image → publish) with SHA-pinned actions, multi-stage Docker image + CBC smoke test, report-only Trivy scan, GHCR publish proven live (ghcr.io/rajat17-personal/fpl-predictor), branch protection on main, local preflight.sh mirror — Phase 5
+- ✓ Repo push hygiene: 140MB Chrome .deb removed, dispatch-only schedulers on py3.14 with hashed installs and bot identity, personal email redacted from tracked files, .gitignore reconciled — Phase 5
+- ✓ Security & config hardening: CORS restricted to a configured allowlist (wildcard = boot failure, live-browser verified), mode-600 `.env` secrets pattern with loud-warning loader, secret redaction on every log/alert egress — Phase 6
+- ✓ Reliability fixes: all bare file handles routed through ops.jsonio (self-tested repo-wide gate), atomic writes everywhere, cron per-step accounting with zero shell suppression, snapshot retry/backoff, pydantic validation of FPL payloads, bounded LRU+TTL solve cache with pool-version invalidation and the TOCTOU race closed via atomic snapshots — Phase 6
+- ✓ Observability: structured JSON logging with X-Request-ID correlation, distinct liveness/readiness endpoints, never-raising ops.notify alerting spine — cron + webhook confirmed live in UAT — Phase 6
+- ✓ Experiment framework + honest measurement of the xP/optimizer frontier: flag registry (`config.EXPERIMENTS`), leakage-tested enrichment joins (Understat, FotMob, Dixon-Coles team strength), external benchmark vs theFPLkiwi, Wildcard's isolated value measured (+14.2±9.0), RL-for-strategy time-boxed and beaten by the solver — all 8 experiments REJECTED on the pre-declared ≥2,280 bar (final combined 2262 = baseline); code merged default-off, IMPROVEMENTS.md Phase F ledger complete, product surface untouched — Phase 9
+- ✓ Phase 9 follow-up sweep under the same honest harness: as-of-deadline availability family + Transfermarkt injury backfill (both rejected on the dual criterion), 7-candidate model-class bracket (all HOLD, LightGBM keeps the seat), external-prediction/Colab ingestion seam, anacron-style snapshot catch-up cron, top-100 consensus + fplreview scoreboard benchmarks; 18-flag registry all default-off, product JSON contract regression-locked, IMPROVEMENTS.md Phase G ledger closed — plus post-review hardening (stale gw_deadlines read fixed, injured-unknown NaN contract enforced, experiment-flag combination errors loud) and a 94-threat security audit at 0 blocking-open — Phase 10
 
 ### Active
 
-- [ ] Hardened CI/CD on GitHub Actions: lint, pytest, API tests, Playwright, Docker image build + publish for the API (deploy step stubbed — no live hosting yet); note: pytest's SPA-fallback test needs a built `frontend/dist/` (gitignored) — CI must build the frontend before running the backend suite (04-REVIEW.md critical)
-- [ ] Security & config hardening: CORS restriction, pinned/locked dependencies, secrets via .env pattern, repo hygiene (remove 134MB Chrome .deb, proper .gitignore)
-- [ ] Reliability fixes: file-handle leaks, cron error traps (remove `|| true`, add retries), FPL API schema validation, graceful JSON-load failures, solve-cache invalidation/LRU
-- [ ] Observability: structured logging, health/monitoring endpoints, failure visibility/alerting for crons and FPL API outages
+- [ ] Parity validation & cutover (Phase 7, CUT-01): React and vanilla sites side by side through a full gameweek cycle; retire vanilla only after zero unexplained deltas
 
 ### Out of Scope
 
 - Live deployment to Cloudflare Pages / Hetzner — hosting not yet purchased; CI produces a deployable image, deployment automation is the next milestone
 - Auth (Supabase JWT) and payment integration — blocked on user's gateway/legal decision; `require_key()` stub stays the swap point
-- Model/decision-quality improvements — the model is validated and strong; meta-pattern shows extra sophistication doesn't pay right now (see IMPROVEMENTS.md for the deferred list)
-- FBref data integration — abandoned; site no longer serves advanced stat values
+- Model/decision-quality improvements — meta-pattern now measured, not assumed: Phase 9 ran the six recommended experiments honestly and every one was rejected on its pre-declared bar (IMPROVEMENTS.md Phase F); further xP gains need better signal, not more machinery
+- FBref data integration — confirmed not acquirable (Phase 9: Cloudflare blocks automation; Phase 10: even manual browser export serves only 2 of 12 defensive columns — acquisition-format defect, evidentiary CSVs committed); no new scraping infrastructure
 - A/B testing / feature-flag infrastructure — needed for model rollout experiments, but post-launch concern
 
 ## Context
@@ -75,11 +79,17 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 | Full React (Vite) rebuild, not incremental vanilla enhancement | Cleanest long-term base for a paid product; pitch UI wants componentization | — Pending |
 | React chosen directly (no framework research phase) | User preference; largest ecosystem for component/pitch libraries | — Pending |
 | Full parity: all 8 pages rebuilt this milestone | Avoid maintaining two frontends into launch | — Pending |
-| CI ends at build + test + published Docker image (no live deploy) | Hosting not purchased; keeps milestone unblocked by infra decisions | — Pending |
+| CI ends at build + test + published Docker image (no live deploy) | Hosting not purchased; keeps milestone unblocked by infra decisions | ✓ Good — Phase 5: main-branch run green through GHCR publish, deploy step stubbed |
+| Trivy scan report-only this milestone (D-10) | Gating on 187 base-image/dep CVEs would block launch prep on upstream fixes | — Pending: triage backlog for Phase 6 |
+| uv as lockfile compiler, kept out of runtime lockfiles (D-01) | Only tool producing hash-verified locks; pip freeze forbidden (D-02) | ✓ Good — Phase 5: clean-venv --require-hashes install proven |
+| Every push to GitHub is a human action (D-14); dispatch-only schedulers (D-12) | Pre-revenue repo safety; local WSL cron stays sole production scheduler | ✓ Good — Phase 5: first push caught 2 real CI bugs at the gate |
 | API test suite added before/alongside Playwright | E2E on an untested API inverts the pyramid; API tests are the missing base layer | ✓ Good — Phase 1 shipped the suite (contract, auth, concurrency) green |
 | Package-legitimacy gate: exact-pin installs against a human-approved list | Supply-chain hygiene for a pre-revenue solo project | ✓ Good — Phase 1: zero registry drift at install time |
 | TypeScript 6.x (not 7.x) + Vite 7.3.6/plugin-react 5.2.0 pins | ESLint support for TS 7.0 unstable; deliberate downgrade pins | ✓ Good — Phase 1 scaffold stable |
-| All three hardening areas in scope (security, reliability, observability) | These are the "production ready" bar the user asked for pre-monetization | — Pending |
+| All three hardening areas in scope (security, reliability, observability) | These are the "production ready" bar the user asked for pre-monetization | ✓ Good — Phase 6: all 10 requirements shipped, 49 threats closed, UAT 2/2 |
+| ops.jsonio as the single JSON I/O chokepoint, gated by a self-tested repo-wide scanner | A sweep without a regression gate decays; scanner has positive/negative controls so it can never silently stop detecting | ✓ Good — Phase 6: leak inventory gated at zero in CI |
+| Runtime proof as a real-uvicorn script (verify_hardening.sh), not more TestClient tests | CORS enforcement and log redaction are properties of a genuinely running process TestClient cannot exercise | ✓ Good — Phase 6: wired into preflight Gate 7/8 |
+| Atomic snapshot types (PoolSnapshot/GwPoolsSnapshot) + AST structural gate for cache concurrency | The REL-05 TOCTOU race survived four verification passes because tests stubbed the accessor; the guarantee is now structural, not observational | ✓ Good — Phase 6 wave 5 gap closure |
 | PARITY-DEVIATIONS.md ledger records every intentional vanilla→React delta | Phase 7 cutover must distinguish approved changes from regressions without relying on memory | ✓ Good — Phase 2 seeded all 8 known deviations |
 | Lockstep palette edits (React + vanilla in one commit) until CUT-01; fonts self-hosted via @fontsource, CDN removed | Vanilla stays authoritative pre-cutover; no third-party font requests leaking visitor IPs | ✓ Good — Phase 2, guarded by check-tokens.mjs on every test run |
 | Neutral generated SVG kits, not FPL CDN shirt imagery | Trademark/passing-off exposure; no third-party origin dependency; posture documented in a committed decision doc | ✓ Good — Phase 3, UAT-signed-off; revisit at payment-gateway legal review |
@@ -88,6 +98,13 @@ The weekly recommendations (xP table, squad, captains, transfers) must keep flow
 | E2E runs against a fixture-mode API server (`FPL_FIXTURE_DIR`), never the live FPL API | Suite must pass or fail on code, not the calendar; frozen v1 fixtures (normal/blank/DGW) with a manifest | ✓ Good — Phase 4: 42 specs deterministic |
 | Fixture-mode seam uses capture-once + explicit restore of `predict.live._gw_pool` | Module reload alone left production bindings permanently monkeypatched after teardown (CR-01) | ✓ Good — Phase 4 gap closure, identity-asserted in tests |
 | Rate-diff ghost card keyed off the sell target's actual pitch row (bench included) | Deriving row from the buy position rendered phantom rows and distorted the visual diff | ✓ Good — Phase 4 gap closure, adjacency-asserted in E2E |
+| Pre-declared mechanical adoption bar (≥2,280 pts, D-05/D-07) with all experiment code merged behind default-off flags (D-08) | Experiments must be judged by the honest harness before any product change; rejected work stays inspectable, never silently dropped | ✓ Good — Phase 9: 8/8 experiments rejected on the bar, zero product wiring needed, export contract locked by regression test |
+| RL dependency stack dev-only and hash-locked (`requirements-rl.txt`), never in Dockerfile/CI (D-09) | torch + gymnasium + SB3 are heavyweight experiment-only deps; production image must not carry them | ✓ Good — Phase 9: isolation proven by grep+parser assertion and byte-identical Dockerfile/workflows |
+| Captain by mean xP retained over ceiling-EV quantile blend | Ceiling-EV capture gain (+1.5pt) fell below the pre-declared ≥+2pt bar; mechanical rule decided | ✓ Good — Phase 9: verdict recorded with numbers in IMPROVEMENTS.md |
+| Availability + injury features rejected on pre-declared criteria (Phase 10 Tier-1) | availability_flags moved neither leg (+0 pts, +0.0000 Spearman); transfermarkt_injury regressed −20 vs fresh 6-season control | ✓ Good — Phase 10: verdicts + evidence in IMPROVEMENTS.md Phase G; flags stay default-off, code merged |
+| LightGBM keeps the stage-2 regressor seat: model-class bracket closed 7/7 HOLD | Ridge/XGB/CatBoost/MLP/GRU/transformer all failed the D-15 gate margin (0.010) against LightGBM's 0.3900 Spearman | ✓ Good — Phase 10: bracket harness + external-prediction seam remain as permanent infrastructure |
+| News-sentiment declined on cost despite fired trigger (D-02) | 9–14 days of throttled GDELT fetching vs mlpremier's documented negative prior on this exact feature | ✓ Recorded — Phase 10: "declined on cost" (distinct from "not triggered") in IMPROVEMENTS.md |
+| Shared conda env may never be uv-pip-synced; parser deps hash-locked into requirements.in | uv pip sync stripped the env mid-phase (WINDOWS 4-5) and broke scraping three times (certifi/html5lib/bs4) | ✓ Good — Phase 10: lockfiles recompiled additively; both read_html parser legs now CI-gated |
 
 ## Evolution
 
@@ -107,4 +124,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-04 after Phase 4*
+*Last updated: 2026-09-12 after Phase 10 (transition: UAT 63/63, code-review fixes applied, security verified)*

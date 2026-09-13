@@ -22,22 +22,30 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import threading
 import time
+import uuid
+from collections import OrderedDict
 from pathlib import Path
+from typing import NamedTuple
 
 import joblib
 import pandas as pd
 import requests
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 import config
 import predict.live as live
 from models import intervals
+from ops.jsonio import read_json
+from ops.jsonlog import configure_logging, log_event, redact
+from ops.payloads import validate_bootstrap, validate_fixtures
 from optimize.multi_period import solve_multi_period
 from optimize.squad_ilp import pick_squad
 from optimize.transfers import optimize_gw
@@ -45,6 +53,8 @@ from predict.live import (_gw_pool, _load_live, _next_gw, build_horizon_pool,
                           build_pool, _POS)
 
 POOL_TTL_S = 3600
+SOLVE_CACHE_MAX = 256      # hard entry ceiling on _solve_cache (REL-05)
+SOLVE_CACHE_TTL_S = POOL_TTL_S
 _HEADERS = {"User-Agent": "fpl-ml-project/0.1"}
 
 # --- E2E fixture-mode seam (Phase 4, E2E-01) --------------------------------
@@ -68,34 +78,214 @@ if _FIXTURE_ROOT:
           "no live FPL API calls, no model artifact load. This must never be "
           "set in a production/deploy configuration.")
 
+# --- Production react-mode seam (Phase 7, CUT-01 / D-01) --------------------
+# FPL_FRONTEND=react switches the production mount (the "else" branch at the
+# bottom of this file) from vanilla web/ to the built React app at
+# frontend/dist, with the live web/data export mounted at /data. This seam is
+# deliberately independent of _FIXTURE_ROOT above: it never reads
+# FPL_FIXTURE_DIR/FPL_FIXTURE_DATA_DIR, and the fixture branch always wins
+# when both are set (see the three-way mount split at the bottom of this
+# file). D-09 will later make this branch's directory the unconditional
+# default once the Phase 7 parity validation cycle completes.
+_REACT_MODE = os.environ.get("FPL_FRONTEND") == "react"
+if _REACT_MODE:
+    print("[frontend-seam] FPL_FRONTEND=react -- serving the built React app "
+          "(frontend/dist) at / and the live web/data export at /data. Real "
+          "production data, no fixtures.")
+
 
 def _fixture_json(*parts: str):
-    return json.load(open(_FIXTURE_API.joinpath(*parts)))
+    return read_json(_FIXTURE_API.joinpath(*parts), what="frozen fixture payload",
+                     remedy="see e2e/fixtures/v1/MANIFEST.md")
+
+
+def _cors_origins() -> list[str]:
+    """Resolve the browser trust boundary from FPL_CORS_ORIGINS (SEC-01).
+
+    Splits the comma-separated env var, strips whitespace, drops empty
+    entries. Unset or resolving to an empty list falls back to the local
+    development origins -- the Vite dev server and the uvicorn-served build,
+    on both localhost and 127.0.0.1 -- that Phases 1 and 4 already depend on.
+    A wildcard entry anywhere in the resolved list is a boot failure: an
+    unrestricted origin list is not an accepted configuration, so the process
+    refuses to start rather than defaulting wide open.
+    """
+    raw = os.environ.get("FPL_CORS_ORIGINS", "")
+    origins = [o.strip() for o in raw.split(",") if o.strip()]
+    if "*" in origins:
+        raise RuntimeError(
+            "FPL_CORS_ORIGINS must not contain '*' -- an unrestricted CORS "
+            "origin list is not an accepted configuration. Set one or more "
+            "explicit origins (comma-separated) instead."
+        )
+    if not origins:
+        return ["http://localhost:5173", "http://127.0.0.1:5173",
+                "http://localhost:8000", "http://127.0.0.1:8000"]
+    return origins
 
 
 app = FastAPI(title="FPL ML API", version="0.1")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
-                   allow_headers=["*"])
+_cors_origin_list = _cors_origins()
+app.add_middleware(CORSMiddleware, allow_origins=_cors_origin_list,
+                   allow_methods=["GET", "POST", "OPTIONS"],
+                   allow_headers=["Content-Type", "X-API-Key"],
+                   allow_credentials=False, max_age=600)
+configure_logging("api")
+_logger = logging.getLogger(__name__)
+log_event(_logger, "cors.configured", origin_count=len(_cors_origin_list),
+          origins=_cors_origin_list)
+
+
+def _route_template(request: Request) -> str:
+    """The matched route's path template (e.g. "/api/team/{entry}") when one
+    matched this request, falling back to the concrete URL path only for
+    unrouted 404s. This is what keeps a manager's numeric entry id out of
+    the request log for /api/team/{entry} and /api/rate/{entry} (OBS-01)."""
+    route = request.scope.get("route")
+    return route.path if route is not None else request.url.path
+
+
+def _request_log_fields(request: Request, request_id: str, status: int,
+                        duration_ms: float, **extra) -> dict:
+    """Assemble the fixed field set for one `http.request` record. Never
+    reads the request body, the query string, or any header value -- only
+    method, matched route template, status, duration and client address.
+    Passed through `redact` before being handed to `log_event`, which itself
+    redacts again on format -- belt and suspenders, so a secret that reaches
+    this dict by any future route is still blanked twice over."""
+    fields = {"request_id": request_id, "method": request.method,
+              "path": _route_template(request), "status": status,
+              "duration_ms": duration_ms}
+    if request.client is not None:
+        fields["client"] = request.client.host
+    fields.update(extra)
+    return redact(fields)
+
+
+@app.middleware("http")
+async def _log_requests(request: Request, call_next):
+    """Emit exactly one structured, secret-free `http.request` record per
+    HTTP request (OBS-01), with a correlatable id echoed back to the caller
+    via the X-Request-ID response header."""
+    request_id = uuid.uuid4().hex[:12]
+    start = time.perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        duration_ms = round((time.perf_counter() - start) * 1000, 1)
+        fields = _request_log_fields(request, request_id, 500, duration_ms,
+                                     error=f"{type(exc).__name__}: {exc}")
+        log_event(_logger, "http.request", level="error", **fields)
+        raise
+    duration_ms = round((time.perf_counter() - start) * 1000, 1)
+    fields = _request_log_fields(request, request_id, response.status_code, duration_ms)
+    log_event(_logger, "http.request", **fields)
+    response.headers["X-Request-ID"] = request_id
+    return response
+
 
 _lock = threading.Lock()
 
 
 def _initial_state() -> dict:
     """Factory for _state's pristine shape — single source of truth so tests
-    (and _refresh's cold-start check) never hardcode the dict's keys."""
+    (and _refresh's cold-start check) never hardcode the dict's keys.
+
+    `pool_version` is a monotonic counter bumped by `_refresh` on every
+    successful reload; it is folded into every solve-cache key so a payload
+    computed against an older pool can never be served after a refresh
+    (REL-05) — the version bump, not the cache clear, is what makes that
+    unreachable.
+    """
     return {"artifact": None, "boot": None, "fixtures": None, "gw": None,
-            "pools": {}, "loaded_at": 0.0}
+            "pools": {}, "loaded_at": 0.0, "ready": False, "last_error": None,
+            "pool_version": 0}
+
+
+class PoolSnapshot(NamedTuple):
+    """The pool `_pool()` built plus the gameweek, bootstrap payload and
+    `pool_version` it was built under -- all four read inside the SAME
+    critical section. 06-VERIFICATION.md recorded pairing any one of these
+    with a separately-read `version` (a second, later lock acquisition) as
+    the REL-05 TOCTOU defect: a refresh landing between the two reads tags a
+    pre-refresh pool with a post-refresh version, serving stale data under a
+    key that claims to be current. Consume this as one value, never split
+    across two lock acquisitions.
+    """
+    pool: object
+    gw: int
+    boot: dict
+    version: int
+
+
+class GwPoolsSnapshot(NamedTuple):
+    """The multi-gameweek analogue of `PoolSnapshot`, for the `/api/plan`
+    path: the per-gameweek pools plus the gameweek, bootstrap payload and
+    `pool_version` they were built under, all read inside the SAME critical
+    section. Same rule as `PoolSnapshot` -- pairing any field here with a
+    separately-read version is the REL-05 defect re-introduced.
+    """
+    pools: list
+    gw: int
+    boot: dict
+    version: int
 
 
 _state: dict = _initial_state()
-_solve_cache: dict = {}
+
+# Bounded LRU + TTL cache of solve/plan responses, keyed by a hash of the
+# request (including the pool version). Entries are `(stored_at, payload)`
+# tuples. `_cache_get`/`_cache_put` below are the ONLY two doors into this
+# structure — every access happens under `_lock` (REL-05).
+_solve_cache: "OrderedDict[str, tuple[float, dict]]" = OrderedDict()
+
+
+def _cache_get(key: str):
+    """The only read door into `_solve_cache`.
+
+    Locked for its whole body. Returns None on a miss. An entry older than
+    SOLVE_CACHE_TTL_S is discarded and treated as a miss. A live hit is moved
+    to the end of the ordering before being returned — that move is what
+    makes eviction least-recently-*used* rather than least-recently-inserted.
+    """
+    with _lock:
+        entry = _solve_cache.get(key)
+        if entry is None:
+            return None
+        stored_at, payload = entry
+        if time.time() - stored_at > SOLVE_CACHE_TTL_S:
+            _solve_cache.pop(key, None)
+            return None
+        _solve_cache.move_to_end(key)
+        return payload
+
+
+def _cache_put(key: str, payload) -> None:
+    """The only write door into `_solve_cache`.
+
+    Locked for its whole body. Stores the entry, moves it to the end, then
+    evicts from the front with `popitem(last=False)` while the cache exceeds
+    SOLVE_CACHE_MAX — per-entry eviction, never a full clear.
+    """
+    with _lock:
+        _solve_cache.update({key: (time.time(), payload)})
+        _solve_cache.move_to_end(key)
+        while len(_solve_cache) > SOLVE_CACHE_MAX:
+            _solve_cache.popitem(last=False)
 
 
 def _load_live_fixture(force: bool = True):
     """Fixture-mode replacement for predict.live._load_live: reads the
     committed, trimmed bootstrap-static.json/fixtures.json from disk instead
-    of predict.live._load_live's unconditional fetch_fpl_live download."""
-    return _fixture_json("bootstrap-static.json"), _fixture_json("fixtures.json")
+    of predict.live._load_live's unconditional fetch_fpl_live download. Runs
+    the same validators as the live path, in the "fixture" profile, so the
+    frozen E2E capture is exercised by the same validator on every fixture-mode
+    boot and the validator can never drift untested."""
+    boot = _fixture_json("bootstrap-static.json")
+    fixtures = _fixture_json("fixtures.json")
+    validate_bootstrap(boot, source=str(_FIXTURE_API / "bootstrap-static.json"), profile="fixture")
+    validate_fixtures(fixtures, source=str(_FIXTURE_API / "fixtures.json"))
+    return boot, fixtures
 
 
 def _gw_pool_fixture(boot: dict, fixtures: list, gw: int, artifact) -> pd.DataFrame:
@@ -108,7 +298,7 @@ def _gw_pool_fixture(boot: dict, fixtures: list, gw: int, artifact) -> pd.DataFr
     if not path.exists():
         raise HTTPException(503, f"no frozen pool for gw{gw} in fixture set "
                                  f"{_FIXTURE_API}")
-    return pd.DataFrame(json.load(open(path)))
+    return pd.DataFrame(read_json(path, what="frozen per-gameweek pool"))
 
 
 # CR-01 fix (04-VERIFICATION.md Gap 1): capture the production `_gw_pool`
@@ -158,15 +348,22 @@ def _refresh(force: bool = False) -> None:
         stale = time.time() - _state["loaded_at"] > POOL_TTL_S
         if not (force or stale or _state["boot"] is None):
             return
-        if _state["artifact"] is None:
-            # Fixture mode: a non-None sentinel, never the real (gitignored,
-            # absent-on-clean-checkout) joblib artifact (D-10, Pitfall 3).
-            _state["artifact"] = ("fixture-mode" if _FIXTURE_ROOT else joblib.load(
-                config.ROOT / "models" / "artifacts" / "xp_model.joblib"))
-        boot, fixtures = _load_live()
-        _state.update(boot=boot, fixtures=fixtures, gw=_next_gw(boot),
-                      pools={}, loaded_at=time.time())
-        _solve_cache.clear()
+        try:
+            if _state["artifact"] is None:
+                # Fixture mode: a non-None sentinel, never the real (gitignored,
+                # absent-on-clean-checkout) joblib artifact (D-10, Pitfall 3).
+                _state["artifact"] = ("fixture-mode" if _FIXTURE_ROOT else joblib.load(
+                    config.ROOT / "models" / "artifacts" / "xp_model.joblib"))
+            boot, fixtures = _load_live()
+            _state.update(boot=boot, fixtures=fixtures, gw=_next_gw(boot),
+                          pools={}, loaded_at=time.time(), ready=True, last_error=None,
+                          pool_version=_state["pool_version"] + 1)
+            _solve_cache.clear()
+        except Exception as exc:
+            _state["ready"] = False
+            _state["last_error"] = str(exc)
+            log_event(_logger, "pool.refresh_failed", level="error", error=str(exc))
+            raise
 
 
 def _with_bands(pool):
@@ -175,7 +372,7 @@ def _with_bands(pool):
     return pool if art is None else intervals.apply_intervals(pool, art)
 
 
-def _pool(horizon: int = 1):
+def _pool(horizon: int = 1) -> PoolSnapshot:
     _refresh()
     with _lock:
         key = horizon
@@ -185,23 +382,29 @@ def _pool(horizon: int = 1):
                     _state["artifact"])
             _state["pools"][key] = _with_bands(build(*args, horizon)
                                                if horizon > 1 else build(*args))
-        return _state["pools"][key], _state["gw"], _state["boot"]
+        return PoolSnapshot(_state["pools"][key], _state["gw"], _state["boot"],
+                            _state["pool_version"])
 
 
-def _gw_pools(start_gw: int, horizon: int) -> list:
-    """One pool per gameweek in [start_gw, start_gw+horizon), cached."""
-    _refresh()
-    with _lock:
-        out = []
-        for g in range(start_gw, start_gw + horizon):
-            key = f"gw{g}"
-            if key not in _state["pools"]:
-                p = _gw_pool(_state["boot"], _state["fixtures"], g,
-                             _state["artifact"])
-                p["actual"] = 0.0
-                _state["pools"][key] = _with_bands(p)
-            out.append(_state["pools"][key])
-        return out
+def _gw_pools_locked(start_gw: int, horizon: int) -> list:
+    """One pool per gameweek in [start_gw, start_gw+horizon), cached.
+
+    Caller must already hold `_lock`. This function takes no lock of its own
+    -- `_lock` is a plain `threading.Lock` (not reentrant), and this now runs
+    entirely inside `_gw_pools_meta`'s single critical section so the pools,
+    the gameweek, the bootstrap payload and the pool version all come from
+    one atomic read (REL-05).
+    """
+    out = []
+    for g in range(start_gw, start_gw + horizon):
+        key = f"gw{g}"
+        if key not in _state["pools"]:
+            p = _gw_pool(_state["boot"], _state["fixtures"], g,
+                         _state["artifact"])
+            p["actual"] = 0.0
+            _state["pools"][key] = _with_bands(p)
+        out.append(_state["pools"][key])
+    return out
 
 
 def _xi_band(pool, starters, captain_code, xi_xp) -> tuple[float, float] | None:
@@ -255,7 +458,7 @@ def _fetch_entry_history(entry: int) -> dict | None:
     """
     if _FIXTURE_ROOT:
         path = _FIXTURE_API / "entries" / str(entry) / "history.json"
-        return json.load(open(path)) if path.exists() else None
+        return read_json(path, what="frozen entry history") if path.exists() else None
     try:
         r = requests.get(f"{config.FPL_API}/entry/{entry}/history/",
                          headers=_HEADERS, timeout=15)
@@ -288,7 +491,7 @@ def _fetch_entry_picks(entry: int, gw: int) -> dict:
         if not path.exists():
             raise HTTPException(404, f"entry {entry}: no picks for GW{gw - 1} "
                                      "(bad id, or the season hasn't started)")
-        return json.load(open(path))
+        return read_json(path, what="frozen entry picks")
     r = requests.get(f"{config.FPL_API}/entry/{entry}/event/{gw - 1}/picks/",
                      headers=_HEADERS, timeout=30)
     if r.status_code == 404:
@@ -306,7 +509,7 @@ def _fetch_entry_summary(entry: int) -> dict | None:
     """
     if _FIXTURE_ROOT:
         path = _FIXTURE_API / "entries" / str(entry) / "summary.json"
-        return json.load(open(path)) if path.exists() else None
+        return read_json(path, what="frozen entry summary") if path.exists() else None
     try:
         s = requests.get(f"{config.FPL_API}/entry/{entry}/",
                          headers=_HEADERS, timeout=15)
@@ -382,6 +585,21 @@ def health():
             "pool_age_s": round(time.time() - _state["loaded_at"])}
 
 
+@app.get("/api/ready")
+def ready():
+    """Readiness probe, distinct from liveness: 200 only once a pool has
+    actually loaded; 503 with an actionable `reason` otherwise. Unlike
+    `/api/health`, this calls `_refresh()` and so may block on `_lock`."""
+    try:
+        _refresh()
+        return {"ready": True, "gw": _state["gw"],
+                "pool_age_s": round(time.time() - _state["loaded_at"])}
+    except Exception as exc:
+        return JSONResponse(status_code=503, content={
+            "ready": False, "reason": str(exc), "gw": None,
+            "pool_age_s": round(time.time() - _state["loaded_at"])})
+
+
 @app.get("/api/meta")
 def meta():
     _refresh()
@@ -392,8 +610,8 @@ def meta():
 
 @app.get("/api/team/{entry}")
 def team(entry: int):
-    _, gw, boot = _pool()
-    return _fetch_team(entry, gw, boot)
+    snap = _pool()
+    return _fetch_team(entry, snap.gw, snap.boot)
 
 
 def _squad_rows(pool, squad_codes, starters, captain_code):
@@ -413,11 +631,14 @@ def _squad_rows(pool, squad_codes, starters, captain_code):
 
 @app.post("/api/solve", dependencies=[Depends(require_key)])
 def solve(req: SolveRequest):
-    pool, gw, boot = _pool(req.horizon)
-    key = hashlib.sha1(json.dumps({"gw": gw, **req.model_dump()},
+    snap = _pool(req.horizon)
+    pool, gw, boot, pool_version = snap.pool, snap.gw, snap.boot, snap.version
+    key = hashlib.sha1(json.dumps({"gw": gw, "pool_version": pool_version,
+                                  **req.model_dump()},
                                   sort_keys=True, default=str).encode()).hexdigest()
-    if key in _solve_cache:
-        return _solve_cache[key]
+    cached = _cache_get(key)
+    if cached is not None:
+        return cached
     locks = _resolve(pool, req.locks)
     excludes = _resolve(pool, req.excludes)
 
@@ -458,7 +679,7 @@ def solve(req: SolveRequest):
                "xi_xp": r["xi_xp"],
                "squad": _squad_rows(pool, r["squad"], r["starters"],
                                     r["captain_code"])}
-    _solve_cache[key] = out
+    _cache_put(key, out)
     return out
 
 
@@ -473,11 +694,14 @@ def plan(req: PlanRequest):
     """True multi-week transfer plan: jointly optimises when to move, bank a
     free transfer, or take a hit over the horizon. Week 0 is the executable
     decision; later weeks are the current plan (re-solve each week)."""
-    pools, gw, boot = _gw_pools_meta(req.horizon)
-    key = hashlib.sha1(json.dumps({"plan": True, "gw": gw, **req.model_dump()},
+    snap = _gw_pools_meta(req.horizon)
+    pools, gw, boot, pool_version = snap.pools, snap.gw, snap.boot, snap.version
+    key = hashlib.sha1(json.dumps({"plan": True, "gw": gw, "pool_version": pool_version,
+                                  **req.model_dump()},
                                   sort_keys=True).encode()).hexdigest()
-    if key in _solve_cache:
-        return _solve_cache[key]
+    cached = _cache_get(key)
+    if cached is not None:
+        return cached
     t = _fetch_team(req.entry, gw, boot)
     ft = req.free_transfers
     if ft is None:
@@ -495,18 +719,29 @@ def plan(req: PlanRequest):
     out = {"entry": req.entry, "gw": gw, "horizon": req.horizon,
            "free_transfers_used": ft, "manager": t["manager"],
            "weeks": weeks}
-    _solve_cache[key] = out
+    _cache_put(key, out)
     return out
 
 
-def _gw_pools_meta(horizon: int):
+def _gw_pools_meta(horizon: int) -> GwPoolsSnapshot:
+    """Read the gameweek, build/fetch the per-gameweek pools, and read the
+    bootstrap payload and pool version -- all inside ONE locked block. Prior
+    to this fix, the gameweek and bootstrap reads happened with NO lock held
+    at all, on either side of a `_gw_pools()` call that took the lock for
+    itself: three separate views of `_state` in one expression. This is the
+    single critical section `/api/plan`'s cache key now depends on (REL-05).
+    """
     _refresh()
-    return _gw_pools(_state["gw"], horizon), _state["gw"], _state["boot"]
+    with _lock:
+        gw = _state["gw"]
+        pools = _gw_pools_locked(gw, horizon)
+        return GwPoolsSnapshot(pools, gw, _state["boot"], _state["pool_version"])
 
 
 @app.get("/api/rate/{entry}", dependencies=[Depends(require_key)])
 def rate(entry: int):
-    pool, gw, boot = _pool()
+    snap = _pool()
+    pool, gw, boot = snap.pool, snap.gw, snap.boot
     t = _fetch_team(entry, gw, boot)
     squad = {p["player_code"]: p["price_m"] for p in t["picks"]}
     held_meta = {p["player_code"]: p for p in t["picks"]}
@@ -546,6 +781,16 @@ def rate(entry: int):
 if _FIXTURE_ROOT:
     app.mount("/data", StaticFiles(directory=_FIXTURE_DATA, check_dir=False),
               name="fixture-data")
+    app.mount("/", StaticFiles(directory=config.ROOT / "frontend" / "dist",
+                               html=True, check_dir=False), name="site")
+elif _REACT_MODE:
+    # Production react branch (Phase 7, D-01): the live web/data export,
+    # never a fixture directory. /data MUST be registered before the
+    # catch-all "/" mount below -- same Starlette registration-order hazard
+    # the fixture branch above documents. D-09 will later fold this branch's
+    # directory choice into the unconditional default.
+    app.mount("/data", StaticFiles(directory=config.ROOT / "web" / "data",
+                                   check_dir=False), name="data")
     app.mount("/", StaticFiles(directory=config.ROOT / "frontend" / "dist",
                                html=True, check_dir=False), name="site")
 else:

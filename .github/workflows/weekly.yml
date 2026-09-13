@@ -26,15 +26,14 @@ jobs:
       - name: Export predictions + digest
         env:
           PYTHONPATH: .
-        run: |
-          python -m data.live_history
-          python -m predict.export
-          python -m models.price
-          python -m predict.digest
+          PYTHON: python
+        run: bash scripts/weekly.sh
       - name: Commit outputs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web/data data/raw/live || true
-          git diff --cached --quiet || git commit -m "weekly: GW export $(date -u +%F)"
+          git add web/data data/raw/live
+          if ! git diff --cached --quiet; then
+            git commit -m "weekly: GW export $(date -u +%F)"
+          fi
           git push

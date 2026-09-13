@@ -14,7 +14,9 @@ import sys
 import pandas as pd
 
 import config
-from data import fbref as fbref_mod, id_map, odds as odds_mod
+from data import (availability as avail_mod, fbref as fbref_mod, fotmob as fm_mod,
+                  id_map, odds as odds_mod, team_strength as ts_mod,
+                  transfermarkt as tm_mod, understat as us_mod)
 
 # Columns coerced to numeric (everything measurable); the rest stay as-is.
 _NUMERIC = {
@@ -144,6 +146,65 @@ def build() -> pd.DataFrame:
         full = fbref_mod.attach(full, id_map.load_id_map())
     except Exception as exc:
         print(f"  [fbref] skipped ({exc})")
+
+    # Optional team-strength (Dixon-Coles) ratings — no-op unless
+    # data/processed/team_strength.parquet exists. Always joined when present,
+    # independent of EXPERIMENTS["team_strength"]; see config.py's
+    # TEAM_STRENGTH_COLS comment for why the feature-selection gate lives in
+    # backtest/walk_forward.py instead.
+    try:
+        full = ts_mod.attach(full)
+    except Exception as exc:
+        print(f"  [team_strength] skipped ({exc})")
+
+    # Optional Understat non-penalty xG / involvement-chain stats — no-op unless
+    # data/processed/understat.parquet exists. Always joined when present,
+    # independent of EXPERIMENTS["understat"]; see config.py's UNDERSTAT_COLS
+    # comment for why the feature-selection gate lives in backtest/walk_forward.py
+    # instead. Computed unconditionally so an experiment toggle never forces a
+    # pipeline rebuild (same discipline as the team_strength block above).
+    try:
+        full = us_mod.attach(full)
+    except Exception as exc:
+        print(f"  [understat] skipped ({exc})")
+
+    # Optional FotMob per-match defensive-action stats -- no-op unless
+    # data/processed/fotmob.parquet exists. Always joined when present,
+    # independent of EXPERIMENTS["fotmob"]; see config.py's FOTMOB_COLS
+    # comment for why the feature-selection gate lives in
+    # backtest/walk_forward.py instead. Computed unconditionally so an
+    # experiment toggle never forces a pipeline rebuild (same discipline as
+    # the team_strength/understat blocks above).
+    try:
+        full = fm_mod.attach(full)
+    except Exception as exc:
+        print(f"  [fotmob] skipped ({exc})")
+
+    # Optional point-in-time availability (data/availability.py) -- no-op
+    # unless data/processed/availability.parquet exists. Always joined when
+    # present, independent of EXPERIMENTS["availability_flags"]; see
+    # config.py's AVAILABILITY_COLS comment for why the feature-selection
+    # gate lives in backtest/walk_forward.py instead. Computed
+    # unconditionally so an experiment toggle never forces a pipeline
+    # rebuild (same discipline as the team_strength/understat/fotmob blocks
+    # above).
+    try:
+        full = avail_mod.attach(full)
+    except Exception as exc:
+        print(f"  [availability] skipped ({exc})")
+
+    # Optional Transfermarkt injury-spell history (data/transfermarkt.py) --
+    # no-op unless data/external/transfermarkt/injury_spells.csv exists.
+    # Always joined when present, independent of
+    # EXPERIMENTS["transfermarkt_injury"]; see config.py's INJURY_COLS
+    # comment for why the feature-selection gate lives in
+    # backtest/walk_forward.py instead. Computed unconditionally so an
+    # experiment toggle never forces a pipeline rebuild (same discipline as
+    # the team_strength/understat/fotmob/availability blocks above).
+    try:
+        full = tm_mod.attach(full)
+    except Exception as exc:
+        print(f"  [transfermarkt] skipped ({exc})")
     print(f"  [pos]   position coverage after backfill: "
           f"{full['position'].notna().mean():.1%}")
 

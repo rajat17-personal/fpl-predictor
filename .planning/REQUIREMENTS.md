@@ -49,29 +49,29 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **CI-01**: GitHub Actions workflow — lint, typecheck, pytest + API tests on every push/PR
 - [x] **CI-02**: Frontend build + Playwright E2E job with cached browsers, run against uvicorn serving the built frontend + fixture data
 - [x] **CI-03**: Multi-stage Dockerfile on `python:3.14-slim` with locked deps, CBC solver installed, and a container smoke test (solver available + health check passes)
-- [ ] **CI-04**: Image published to GHCR with SHA-pinned actions and scoped `GITHUB_TOKEN`; deploy step stubbed
+- [x] **CI-04**: Image published to GHCR with SHA-pinned actions and scoped `GITHUB_TOKEN`; deploy step stubbed
 - [x] **CI-05**: Trivy image vulnerability scan job
 
 ### Security & Config
 
-- [ ] **SEC-01**: CORS restricted from `["*"]` to configured origins
+- [x] **SEC-01**: CORS restricted from `["*"]` to configured origins
 - [x] **SEC-02**: Dependencies pinned/locked (uv lock or equivalent), verified installable in a fresh environment with cp314 wheels
-- [ ] **SEC-03**: Secrets via `.env` pattern (mode 600), never in code, logs, or workflows
+- [x] **SEC-03**: Secrets via `.env` pattern (mode 600), never in code, logs, or workflows
 - [x] **SEC-04**: Repo hygiene — Chrome .deb removed, proper `.gitignore`, workflows tracked in git
 
 ### Reliability
 
-- [ ] **REL-01**: All file handles closed via context managers (fixes the leak inventory in CONCERNS.md)
-- [ ] **REL-02**: Cron error traps — remove `|| true`, add retry/backoff to snapshot, failures visible
-- [ ] **REL-03**: Pydantic schema validation on FPL bootstrap/fixtures payloads
-- [ ] **REL-04**: Graceful JSON-load failures in predict/* with actionable error messages
-- [ ] **REL-05**: Solve cache bounded (LRU/TTL) with the invalidation race fixed
+- [x] **REL-01**: All file handles closed via context managers (fixes the leak inventory in CONCERNS.md)
+- [x] **REL-02**: Cron error traps — remove `|| true`, add retry/backoff to snapshot, failures visible
+- [x] **REL-03**: Pydantic schema validation on FPL bootstrap/fixtures payloads
+- [x] **REL-04**: Graceful JSON-load failures in predict/* with actionable error messages
+- [x] **REL-05**: Solve cache bounded (LRU/TTL) with the invalidation race fixed
 
 ### Observability
 
-- [ ] **OBS-01**: Structured (JSON) request logging in the API
-- [ ] **OBS-02**: Health/readiness endpoints with liveness vs readiness semantics
-- [ ] **OBS-03**: Cron and FPL-API-outage failures surfaced/alertable (not buried in cron.log)
+- [x] **OBS-01**: Structured (JSON) request logging in the API
+- [x] **OBS-02**: Health/readiness endpoints with liveness vs readiness semantics
+- [x] **OBS-03**: Cron and FPL-API-outage failures surfaced/alertable (not buried in cron.log)
 
 ### Cutover
 
@@ -139,20 +139,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CI-01 | Phase 5 | Complete |
 | CI-02 | Phase 5 | Complete |
 | CI-03 | Phase 5 | Complete |
-| CI-04 | Phase 5 | Pending |
+| CI-04 | Phase 5 | Complete |
 | CI-05 | Phase 5 | Complete |
 | SEC-02 | Phase 5 | Complete |
 | SEC-04 | Phase 5 | Complete |
-| SEC-01 | Phase 6 | Pending |
-| SEC-03 | Phase 6 | Pending |
-| REL-01 | Phase 6 | Pending |
-| REL-02 | Phase 6 | Pending |
-| REL-03 | Phase 6 | Pending |
-| REL-04 | Phase 6 | Pending |
-| REL-05 | Phase 6 | Pending |
-| OBS-01 | Phase 6 | Pending |
-| OBS-02 | Phase 6 | Pending |
-| OBS-03 | Phase 6 | Pending |
+| SEC-01 | Phase 6 | Complete |
+| SEC-03 | Phase 6 | Complete |
+| REL-01 | Phase 6 | Complete |
+| REL-02 | Phase 6 | Complete |
+| REL-03 | Phase 6 | Complete |
+| REL-04 | Phase 6 | Complete |
+| REL-05 | Phase 6 | Complete |
+| OBS-01 | Phase 6 | Complete |
+| OBS-02 | Phase 6 | Complete |
+| OBS-03 | Phase 6 | Complete |
 | CUT-01 | Phase 7 | Pending |
 
 **Coverage:**
