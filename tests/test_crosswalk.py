@@ -47,7 +47,16 @@ def test_resolve_by_name_maps_known_fpl_name_to_its_own_player_code(crosswalk_pa
     assert int(result.iloc[0]) == int(known["player_code"])
 
 
-def test_resolve_by_name_returns_na_for_unknown_name(crosswalk_parquet):
+def test_resolve_by_name_returns_na_for_unknown_name(crosswalk_parquet, monkeypatch):
+    """An unresolvable name falls through both crosswalk tiers into the
+    historical-registry tier (`_fpl_name_index`), which loads the full id map
+    and needs season files a clean checkout does not have. Stand in a
+    zero-arg lambda returning an empty Int64 Series in its place -- mapping
+    against an empty index still yields NA for every key, so the assertion
+    stays meaningful while the test remains offline and deterministic.
+    `monkeypatch.setattr` on the module attribute supersedes the
+    `functools.lru_cache` wrapper wholesale, so no cached call ever fires."""
+    monkeypatch.setattr(crosswalk, "_fpl_name_index", lambda: pd.Series(dtype="Int64"))
     result = crosswalk.resolve_by_name(pd.Series(["Zzzznonexistent Qqqqplayer"]))
     assert pd.isna(result.iloc[0])
 
