@@ -14,12 +14,9 @@ and verifies observable behavior, not just structural presence.
 from __future__ import annotations
 
 import os
-import pathlib
 import re
-import shutil
 import stat
 import subprocess
-from typing import Any
 
 import pytest
 import yaml
